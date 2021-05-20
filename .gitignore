@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# logs
+logs
+
+# Editors
+.vscode
+
+# Configuration
+*config.toml
