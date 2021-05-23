@@ -24,7 +24,7 @@ os.makedirs(log_dir, exist_ok=True)
 
 # Default formats
 fmt = "%(asctime)s %(levelname)s %(name)s - [%(lineno)d]: %(message)s"
-datefmt="%Y/%m/%d %H:%M:%S"
+datefmt = "%Y/%m/%d %H:%M:%S"
 
 colored_formatter = coloredlogs.ColoredFormatter(
     fmt=fmt,
@@ -45,7 +45,10 @@ formatter = logging.Formatter(
 
 # file handler
 file_handler = logging.handlers.RotatingFileHandler(
-    log_file, maxBytes=5 * (2 ** 12), backupCount=5, encoding="utf-8",
+    log_file,
+    maxBytes=5 * (2 ** 12),
+    backupCount=5,
+    encoding="utf-8",
 )
 file_handler.setFormatter(formatter)
 file_handler.setLevel(logging.TRACE)

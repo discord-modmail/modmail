@@ -144,7 +144,7 @@ class ChannelConfig(BaseSettings):
 
 class DevConfig(BaseSettings):
     """
-    Developer specific configuration. 
+    Developer specific configuration.
     These settings should not be changed unless you know what you're doing.
     """
 

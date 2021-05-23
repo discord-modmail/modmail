@@ -30,7 +30,7 @@ def main():
     #     pass
 
     bot = ModmailBot()
-    log.notice('running bot')
+    log.notice("running bot")
     bot.run(bot.config.bot.token)
 
 
