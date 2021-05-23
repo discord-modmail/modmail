@@ -56,4 +56,3 @@ flake8 = "python -m flake8"
 line-length = 99
 target-version = ['py38']
 include = '\.pyi?$'
-

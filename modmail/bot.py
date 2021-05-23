@@ -33,13 +33,13 @@ class ModmailBot(commands.Bot):
             try:
                 self.unload_extension(ext)
             except Exception:
-                log.error(f'Exception occured while unloading {ext.name}', exc_info=1)
+                log.error(f"Exception occured while unloading {ext.name}", exc_info=1)
 
         for cog in list(self.cogs):
             try:
                 self.remove_cog(cog)
             except Exception:
-                log.error(f'Exception occured while removing cog {cog.name}', exc_info=1)
+                log.error(f"Exception occured while removing cog {cog.name}", exc_info=1)
 
         await super().close()
 
