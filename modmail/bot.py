@@ -1,5 +1,5 @@
 import logging
-from contextlib import suppress
+
 import discord
 from aiohttp import ClientSession
 from discord.ext import commands
@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 class ModmailBot(commands.Bot):
     """
     Base bot instance.
+
+    Has an aiohttp.ClientSession and a ModmailConfig instance.
     """
 
     def __init__(self, **kwargs):
@@ -20,13 +22,12 @@ class ModmailBot(commands.Bot):
         super().__init__(command_prefix=self.get_prefix, **kwargs)
         self.http_session = ClientSession()
 
-    async def get_prefix(self, message=None):
+    async def get_prefix(self, message: discord.Message = None) -> str:
+        """Returns the bot prefix, but also allows the bot to work with user mentions."""
         return [self.config.bot.prefix, f"<@{self.user.id}> ", f"<@!{self.user.id}> "]
 
     async def close(self) -> None:
-        """
-        Safely close HTTP session and extensions when bot is shutting down.
-        """
+        """Safely close HTTP session and extensions when bot is shutting down."""
         await super().close()
 
         for ext in list(self.extensions):
@@ -49,6 +50,7 @@ class ModmailBot(commands.Bot):
     def add_cog(self, cog: commands.Cog) -> None:
         """
         Delegate to super to register `cog`.
+
         This only serves to make the info log, so that extensions don't have to.
         """
         super().add_cog(cog)
