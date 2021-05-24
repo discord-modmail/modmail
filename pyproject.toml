@@ -12,6 +12,12 @@ python = "^3.8"
 coloredlogs = "^15.0"
 pydantic = "^1.8.2"
 starlette = "^0.14.2"
+jinja2 = "^3.0.1"
+aiofiles = "^0.7.0"
+uvicorn = "^0.13.4"
+
+[tool.poetry.extras]
+uvicorn = ["standard"]
 
 [tool.poetry.dev-dependencies]
 black = "~=21.5b1"
