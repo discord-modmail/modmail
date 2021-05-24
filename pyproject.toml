@@ -36,3 +36,8 @@ lint = "pre-commit run --all-files"
 precommit = "pre-commit install"
 black = "black --check ."
 flake8 = "python -m flake8"
+
+[tool.black]
+line-length = 99
+target-version = ['py38']
+include = '\.pyi?$'
