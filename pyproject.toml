@@ -30,3 +30,9 @@ taskipy = "^1.6.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.taskipy.tasks]
+lint = "pre-commit run --all-files"
+precommit = "pre-commit install"
+black = "black --check ."
+flake8 = "python -m flake8"
