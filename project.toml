@@ -1,5 +1,5 @@
 [[build.buildpacks]]
-uri = "https://github.com/moneymeets/python-poetry-buildpack.git"
+uri = "https://github.com/moneymeets/python-poetry-buildpack/archive/master.tar.gz"
 
 [[build.buildpacks]]
 uri = "heroku/python"
