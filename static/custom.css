@@ -9,13 +9,12 @@
 
 .hover\:gradtranslate::before {
   content: "";
-  display: block;
+  display: none;
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  height: 0;
-  transition: height 0.25s;
+  height: 12%;
 }
 
 .hover\:gradtranslate:hover {
@@ -25,6 +24,12 @@
 .hover\:gradtranslate:active, .hover\:gradtranslate:focus {
   transform: translateY(-7%);
   background-color: #eee; /* Move this to tailwind in a bit */
+}
+
+.hover\:gradtranslate:hover::before,
+.hover\:gradtranslate:focus::before,
+.hover\:gradtranslate:active::before {
+  display: block;
 }
 
 .focus\:borderflair::after {
@@ -45,10 +50,6 @@
   border-color: #ccc;
 }
 
-.hover\:gradtranslate:hover::before {
-  height: 10%;
-}
-
 /* Move these into tailwind.css later */
 .btn\:gradtranslate {
   position: relative;
@@ -57,13 +58,12 @@
 
 .btn\:gradtranslate::before {
   content: "";
-  display: block;
+  display: none;
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  height: 0;
-  transition: height 0.25s;
+  height: 10%;
 }
 
 .btn\:gradtranslate:hover {
