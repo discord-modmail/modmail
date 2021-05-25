@@ -33,6 +33,10 @@
 
 
 /* Some random firefox resets */
-button::-moz-focus-inner {
-  border: 0;
+:focus {
+  outline:none;
+}
+
+*::-moz-focus-inner {
+  border: none;
 }
