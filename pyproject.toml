@@ -14,7 +14,8 @@ pydantic = "^1.8.2"
 starlette = "^0.14.2"
 jinja2 = "^3.0.1"
 aiofiles = "^0.7.0"
-uvicorn = "^0.13.4"
+python-dotenv = "^0.17.1"
+uvicorn = {extras = ["standard"], version = "^0.13.4"}
 
 [tool.poetry.extras]
 uvicorn = ["standard"]
@@ -38,6 +39,8 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
+start = "uvicorn main:app"
+debug = "uvicorn main:app --reload"
 lint = "pre-commit run --all-files"
 precommit = "pre-commit install"
 black = "black --check ."
