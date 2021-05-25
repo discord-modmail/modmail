@@ -1,0 +1,102 @@
+.tracking-extreme {
+  letter-spacing: 0.275em;
+}
+
+.hover\:gradtranslate {
+  position: relative;
+  transition: transform 0.25s, background-color 0.25s;
+}
+
+.hover\:gradtranslate::before {
+  content: "";
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 12%;
+}
+
+.hover\:gradtranslate:hover {
+  transform: translateY(-10%);
+}
+
+.hover\:gradtranslate:active, .hover\:gradtranslate:focus {
+  transform: translateY(-7%);
+  background-color: #eee; /* Move this to tailwind in a bit */
+}
+
+.hover\:gradtranslate:hover::before,
+.hover\:gradtranslate:focus::before,
+.hover\:gradtranslate:active::before {
+  display: block;
+}
+
+.focus\:borderflair::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  left: -4px;
+  bottom: -4px;
+  border-radius: inherit;
+  z-index: -1;
+  border: 5px solid rgba(204, 204, 204, 0.0);
+  transition: border-color 0.25s;
+}
+
+.focus\:borderflair:focus::after {
+  border-color: #ccc;
+}
+
+/* Move these into tailwind.css later */
+.btn\:gradtranslate {
+  position: relative;
+  transition: transform 0.25s, background-color 0.25s;
+}
+
+.btn\:gradtranslate::before {
+  content: "";
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 10%;
+}
+
+.btn\:gradtranslate:hover {
+  transform: translateY(-7%);
+}
+
+.btn\:gradtranslate:active, .btn\:gradtranslate:focus {
+  transform: translateY(-5%);
+}
+
+.btn\:borderflair::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  left: -2px;
+  bottom: -2px;
+  border-radius: inherit;
+  z-index: -1;
+  border: 3px solid rgba(37, 99, 235, 0.0);
+  transition: border-color 0.25s;
+}
+
+.btn\:borderflair:focus::after {
+  border-color: rgba(37, 99, 235, 1.0);
+}
+
+/* Some random firefox resets */
+:focus {
+  outline:none;
+}
+
+*::-moz-focus-inner {
+  border: none;
+}
