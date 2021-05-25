@@ -1,11 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Title</title>
+  <link type="text/css" href="/static/tailwind.css" rel="stylesheet">
+  <link type="text/css" href="/static/custom.css" rel="stylesheet">
 </head>
-<body>
-Homepage
+<body class="h-full w-full flex flex-col justify-center">
+  <div class="flex justify-center items-center p-6 flex-grow-0 w-full">
+    <h1 class="text-5xl font-medium text-black tracking-extreme uppercase">Modmail</h1>
+  </div>
+  <div class="flex items-center justify-center flex-grow-0 flex-wrap">
+    {% for server in servers %}
+      <a class="pr-6 max-w-sm m-6 bg-white rounded-xl shadow-md flex items-center space-x-4 hover:gradtranslate" href="{{ server.invite }}" rel="noopener nowindow" target="_blank">
+        <div class="flex-shrink-0">
+          <img class="h-24 w-24 rounded-l-lg" src="{{ server.icon_url }}" alt="{{ server.name }} Logo">
+        </div>
+        <div>
+          <div class="text-xl font-medium text-black">{{ server.name }}</div>
+          <p class="text-gray-500">{{ server.tagline }}</p>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
 </body>
 </html>
