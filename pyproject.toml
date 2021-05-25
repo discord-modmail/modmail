@@ -6,7 +6,7 @@ license = "MIT"
 
 authors = [
     "aru <genericusername414@gmail.com>",
-    "bast <bast@fastmail.com",
+    "bast <bast@fastmail.com"
 ]
 
 maintainers = ["'ARU <genericusername414@gmail.com>"]
@@ -15,13 +15,12 @@ readme = "README.md"
 repository = "https://github.com/onerandomusername/modmail"
 homepage = "https://github.com/onerandomusername/modmail"
 keywords = ["discord", "modmail"]
-packages = [
-    {include = "modmail"}
-]
+
+packages = [{ include = "modmail" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-aiohttp = {extras = ["speedups"], version = "^3.7.4"}
+aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
 "discord.py" = "1.6.0"
@@ -31,9 +30,11 @@ starlette = "^0.14.2"
 jinja2 = "^3.0.1"
 aiofiles = "^0.7.0"
 toml = "^0.10.2"
-uvicorn = {extras = ["standard"], version = "^0.13.4"}
+uvicorn = { extras = ["standard"], version = "^0.13.4" }
+
 [tool.poetry.extras]
 uvicorn = ["standard"]
+
 [tool.poetry.dev-dependencies]
 flake8 = "~=3.8"
 black = "~=21.5b1"
@@ -53,7 +54,8 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
-start = "uvicorn main:app"
+start = "python -m modmail"
+site = "uvicorn main:app"
 debug = "uvicorn main:app --reload"
 lint = "pre-commit run --all-files"
 precommit = "pre-commit install"
