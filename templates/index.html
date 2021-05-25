@@ -7,11 +7,11 @@
   <link type="text/css" href="/static/tailwind.css" rel="stylesheet">
   <link type="text/css" href="/static/custom.css" rel="stylesheet">
 </head>
-<body class="h-full w-full flex flex-col justify-center">
+<body class="h-full w-full flex flex-col justify-center pt-12 pb-12">
   <div class="flex justify-center items-center p-6 flex-grow-0 w-full">
     <h1 class="text-5xl font-medium text-black tracking-extreme uppercase">Modmail</h1>
   </div>
-  <div class="flex items-center justify-center flex-grow-0 flex-wrap">
+  <div class="flex items-center justify-center flex-grow-1 flex-wrap">
     {% for server in servers %}
       <a class="pr-6 max-w-sm m-6 bg-white rounded-xl shadow-md flex items-center space-x-4 hover:gradtranslate focus:borderflair" href="{{ server.invite }}" rel="noopener nowindow" target="_blank">
         <div class="flex-shrink-0">
@@ -23,6 +23,9 @@
         </div>
       </a>
     {% endfor %}
+  </div>
+  <div class="flex justify-center items-center p-6 flex-grow-0 w-full absolute bottom-6">
+    <a class="btn btn:gradtranslate btn:borderflair hover:bg-blue-700 active:bg-blue-800 focus:bg-blue-800" href="/login">Login</a>
   </div>
 </body>
 </html>
