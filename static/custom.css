@@ -22,7 +22,7 @@
   transform: translateY(-10%);
 }
 
-.hover\:gradtranslate:active {
+.hover\:gradtranslate:active, .hover\:gradtranslate:focus {
   transform: translateY(-7%);
   background-color: #eee; /* Move this to tailwind in a bit */
 }
