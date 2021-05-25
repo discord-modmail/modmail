@@ -13,7 +13,7 @@
   </div>
   <div class="flex items-center justify-center flex-grow-0 flex-wrap">
     {% for server in servers %}
-      <a class="pr-6 max-w-sm m-6 bg-white rounded-xl shadow-md flex items-center space-x-4 hover:gradtranslate" href="{{ server.invite }}" rel="noopener nowindow" target="_blank">
+      <a class="pr-6 max-w-sm m-6 bg-white rounded-xl shadow-md flex items-center space-x-4 hover:gradtranslate focus:borderflair" href="{{ server.invite }}" rel="noopener nowindow" target="_blank">
         <div class="flex-shrink-0">
           <img class="h-24 w-24 rounded-l-lg" src="{{ server.icon_url }}" alt="{{ server.name }} Logo">
         </div>
