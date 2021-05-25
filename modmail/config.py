@@ -64,7 +64,10 @@ def toml_user_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]:
     Here we happen to choose to use the `env_file_encoding` from Config
     when reading `config-default.toml`
     """
-    return dict(**toml.load(USER_CONFIG_PATH))
+    if USER_CONFIG_PATH:
+        return dict(**toml.load(USER_CONFIG_PATH))
+    else:
+        return dict()
 
 
 class BaseSettings(PydanticBaseSettings):
