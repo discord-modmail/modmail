@@ -7,7 +7,7 @@ module.exports = {
     extend: {},
   },
   purge: {
-    content: ['./templates/**/*.html',],
+    content: ['.site/templates/**/*.html',],
     options: {
       keyframes: true,
     },
