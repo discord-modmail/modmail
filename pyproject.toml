@@ -46,6 +46,8 @@ lint = "pre-commit run --all-files"
 precommit = "pre-commit install"
 black = "black --check ."
 flake8 = "python -m flake8"
+disttailwind = "NODE_ENV=production npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css"
+devtailwind = "npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css"
 export = "poetry export -o requirements.txt --without-hashes"
 
 [tool.black]
