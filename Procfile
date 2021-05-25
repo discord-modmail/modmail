@@ -1,1 +1,1 @@
-worker: python -m modmail
+web: python -m modmail
