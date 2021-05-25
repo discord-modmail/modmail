@@ -1,0 +1,38 @@
+.tracking-extreme {
+  letter-spacing: 0.275em;
+}
+
+.hover\:gradtranslate {
+  position: relative;
+  transition: transform 0.25s, background-color 0.25s;
+}
+
+.hover\:gradtranslate::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 0;
+  transition: height 0.25s;
+}
+
+.hover\:gradtranslate:hover {
+  transform: translateY(-10%);
+}
+
+.hover\:gradtranslate:active {
+  transform: translateY(-7%);
+  background-color: #eee; /* Move this to tailwind in a bit */
+}
+
+.hover\:gradtranslate:hover::before {
+  height: 10%;
+}
+
+
+/* Some random firefox resets */
+button::-moz-focus-inner {
+  border: 0;
+}
