@@ -4,6 +4,7 @@ version = "0.0.1"
 description = "A webserver application for managing and interacting with our modmail bot."
 authors = [
     "aru <genericusername414@gmail.com>",
+    "bast <bast@fastmail.com",
 ]
 license = "MIT"
 
