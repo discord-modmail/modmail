@@ -23,7 +23,7 @@ python = "^3.8"
 aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
-"discord.py" = "1.6.0"
+"discord.py" = "1.7.0"
 pydantic = "^1.8.2"
 python-dotenv = "~=0.17.1"
 starlette = "^0.14.2"
