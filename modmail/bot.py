@@ -57,3 +57,6 @@ class ModmailBot(commands.Bot):
         log.info(f"Cog loaded: {cog.qualified_name}")
 
 
+    async def on_ready(self):
+        """Send basic login success message."""
+        log.info("Logged in as %s", self.user)
