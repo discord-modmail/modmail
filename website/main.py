@@ -47,5 +47,5 @@ routes = [
     Mount("/static", StaticFiles(directory="website/static"), name="static"),
 ]
 
-if __name__ == "__main__":
+if __name__ in ["__main__", "main"]:
     app = Starlette(debug=True, routes=routes)
