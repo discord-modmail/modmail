@@ -57,4 +57,3 @@ class ModmailBot(commands.Bot):
         log.info(f"Cog loaded: {cog.qualified_name}")
 
 
-bot = ModmailBot(intents=discord.Intents.all())
