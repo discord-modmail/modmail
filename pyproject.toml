@@ -4,7 +4,11 @@ version = "0.0.1"
 description = "A modmail bot for Discord. Python 3.7+ compatiable"
 license = "MIT"
 
-authors = ["'ARU <genericusername414@gmail.com>"]
+authors = [
+    "aru <genericusername414@gmail.com>",
+    "bast <bast@fastmail.com"
+]
+
 maintainers = ["'ARU <genericusername414@gmail.com>"]
 
 readme = "README.md"
@@ -12,20 +16,24 @@ repository = "https://github.com/onerandomusername/modmail"
 homepage = "https://github.com/onerandomusername/modmail"
 keywords = ["discord", "modmail"]
 
-packages = [
-    {include = "modmail"}
-]
+packages = [{ include = "modmail" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-aiohttp = {extras = ["speedups"], version = "^3.7.4"}
+aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
 "discord.py" = "1.6.0"
 pydantic = "^1.8.2"
 python-dotenv = "~=0.17.1"
+starlette = "^0.14.2"
+jinja2 = "^3.0.1"
+aiofiles = "^0.7.0"
 toml = "^0.10.2"
+uvicorn = { extras = ["standard"], version = "^0.13.4" }
 
+[tool.poetry.extras]
+uvicorn = ["standard"]
 
 [tool.poetry.dev-dependencies]
 flake8 = "~=3.8"
@@ -47,10 +55,14 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
 start = "python -m modmail"
+site = "uvicorn main:app --app-dir site"
+site-debug = "uvicorn main:app --app-dir site --reload --reload-dir site"
 lint = "pre-commit run --all-files"
 precommit = "pre-commit install"
 black = "black --check ."
 flake8 = "python -m flake8"
+disttailwind = "NODE_ENV=production npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css"
+devtailwind = "npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css"
 export = "poetry export -o requirements.txt --without-hashes"
 
 [tool.black]
