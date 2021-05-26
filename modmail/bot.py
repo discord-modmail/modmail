@@ -16,6 +16,7 @@ class ModmailBot(commands.Bot):
 
     Has an aiohttp.ClientSession and a ModmailConfig instance.
     """
+
     main_task: asyncio.Task
 
     def __init__(self, **kwargs):
@@ -71,6 +72,6 @@ class ModmailBot(commands.Bot):
 
         self.main_task.add_done_callback(ensure_exception)
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         """Send basic login success message."""
         log.info("Logged in as %s", self.user)
