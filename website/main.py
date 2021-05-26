@@ -4,7 +4,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
 
-templates = Jinja2Templates(directory="site/templates")
+templates = Jinja2Templates(directory="website/templates")
 
 
 async def homepage(request: Request) -> templates.TemplateResponse:
@@ -44,7 +44,7 @@ async def homepage(request: Request) -> templates.TemplateResponse:
 
 routes = [
     Route("/", endpoint=homepage),
-    Mount("/static", StaticFiles(directory="site/static"), name="static"),
+    Mount("/static", StaticFiles(directory="website/static"), name="static"),
 ]
 
 app = Starlette(debug=True, routes=routes)
