@@ -31,6 +31,7 @@ jinja2 = "^3.0.1"
 aiofiles = "^0.7.0"
 toml = "^0.10.2"
 uvicorn = { extras = ["standard"], version = "^0.13.4" }
+starlette-discord = "^0.1.1"
 
 [tool.poetry.extras]
 uvicorn = ["standard"]
