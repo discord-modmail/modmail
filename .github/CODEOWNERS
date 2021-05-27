@@ -1,12 +1,16 @@
-
-
-# Set myself to default owner for all files
+# Default owner
 * @onerandomusername
 
-/.github/workflows/ @Shivansh-007
+# CI and Tools
+/.github/workflows/     @Shivansh-007
+poetry.lock             @Shivansh-007 @onerandomusername
+pyproject.toml          @Shivansh-007 @onerandomusername
 
-/modmail/ @onerandomusername @bast0006 @Shivansh-007
+# The modmail bot itself
+/modmail/               @onerandomusername @discord-modmail/bot
 
-/website/ @bast0006 @dawnofmidnight
+# Modmail site
+/website/               @bast0006 @discord-modmail/site
 
-/shared/ @onerandomusername @Shivansh-007 @bast0006
+# Shared section between the bot and site
+/shared/                @onerandomusername @Shivansh-007 @bast0006
