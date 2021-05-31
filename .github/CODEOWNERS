@@ -1,0 +1,16 @@
+# Default owner
+* @onerandomusername
+
+# CI and Tools
+/.github/workflows/     @Shivansh-007
+poetry.lock             @Shivansh-007 @onerandomusername
+pyproject.toml          @Shivansh-007 @onerandomusername
+
+# The modmail bot itself
+/modmail/               @onerandomusername @discord-modmail/bot
+
+# Modmail site
+/website/               @bast0006 @discord-modmail/site
+
+# Shared section between the bot and site
+/shared/                @onerandomusername @Shivansh-007 @bast0006

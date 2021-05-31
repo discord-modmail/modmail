@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 import discord
@@ -15,6 +16,8 @@ class ModmailBot(commands.Bot):
 
     Has an aiohttp.ClientSession and a ModmailConfig instance.
     """
+
+    main_task: asyncio.Task
 
     def __init__(self, **kwargs):
         self.config = CONFIG
@@ -56,5 +59,19 @@ class ModmailBot(commands.Bot):
         super().add_cog(cog)
         log.info(f"Cog loaded: {cog.qualified_name}")
 
+    async def nonblocking_start(self) -> None:
+        """Start an instance of the bot without blocking and triggering exceptions properly."""
+        log.notice("Starting bot")
+        self.main_task = asyncio.create_task(self.start(CONFIG.bot.token))
 
-bot = ModmailBot(intents=discord.Intents.all())
+        def ensure_exception(fut: asyncio.Future) -> None:
+            """Ensure an exception in a task is raised without hard awaiting."""
+            if fut.done() and not fut.cancelled():
+                return
+            fut.result()
+
+        self.main_task.add_done_callback(ensure_exception)
+
+    async def on_ready(self) -> None:
+        """Send basic login success message."""
+        log.info("Logged in as %s", self.user)

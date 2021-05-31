@@ -55,9 +55,10 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
-start = "python -m modmail"
+bot = "python -m modmail"
 site = "uvicorn main:app --app-dir website"
 site-debug = "uvicorn main:app --app-dir website --reload --reload-dir website"
+run = "uvicorn launcher:app --workers 1"
 lint = "pre-commit run --all-files"
 precommit = "pre-commit install"
 black = "black --check ."
