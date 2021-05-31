@@ -64,7 +64,7 @@ black = "black --check ."
 flake8 = "python -m flake8"
 disttailwind = "NODE_ENV=production npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css"
 devtailwind = "npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css"
-export = "poetry export -o requirements.txt --without-hashes"
+export = "echo '# Do not manually edit.\n# Generate with \"poetry run task export\"\n' > requirements.txt && poetry export --without-hashes >> requirements.txt"
 
 [tool.black]
 line-length = 99
