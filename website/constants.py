@@ -1,6 +1,7 @@
-import dotenv
 from os import environ
 from typing import NamedTuple
+
+import dotenv
 
 dotenv.load_dotenv()
 

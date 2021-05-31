@@ -1,11 +1,11 @@
 from starlette.applications import Starlette
-from starlette.responses import RedirectResponse, JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 from starlette.routing import Mount, Request, Route
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from starlette_discord.client import DiscordOAuthClient
 
-from website.constants import REDIRECT_URI, Client
+from website.constants import Client, REDIRECT_URI
 
 templates = Jinja2Templates(directory="website/templates")
 client = DiscordOAuthClient(Client.client_id, Client.client_secret, REDIRECT_URI)
@@ -19,21 +19,21 @@ async def homepage(request: Request) -> templates.TemplateResponse:
             "tagline": "The Modmail support server!",
             "invite": " https://discord.gg/HFCJP2K8",
             "icon_url": "https://cdn.discordapp.com/icons/"
-                        "798235512208490526/447db05557370a52b4c01c9144eff96b.png",
+            "798235512208490526/447db05557370a52b4c01c9144eff96b.png",
         },
         {
             "name": "Catver",
             "tagline": "This is just test data, don't look too far into it.",
             "invite": "#",
             "icon_url": "https://cdn.discordapp.com/icons/"
-                        "111218511413551104/62d3f30e68b878ef7f1f729e6d19e2ad.png",
+            "111218511413551104/62d3f30e68b878ef7f1f729e6d19e2ad.png",
         },
         {
             "name": "Smh Dawn",
             "tagline": "I thought you were going to ask in those servers for stuff :joy:",
             "invite": "#",
             "icon_url": "https://cdn.discordapp.com/icons/"
-                        "830406883978379264/7608bd774d8467ef81cca61f7f397d9f.png",
+            "830406883978379264/7608bd774d8467ef81cca61f7f397d9f.png",
         },
     ]
 
@@ -47,11 +47,13 @@ async def homepage(request: Request) -> templates.TemplateResponse:
 
 
 async def login_with_discord(_: Request) -> RedirectResponse:
+    """Redirect to Discord OAuth2 login."""
     return client.redirect()
 
 
 async def callback(request: Request) -> JSONResponse:
-    code = request.query_params['code']
+    """Callback handler for discord login."""
+    code = request.query_params["code"]
     u = await client.login(code)
     return JSONResponse(u)
 
