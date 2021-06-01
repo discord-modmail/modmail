@@ -5,10 +5,10 @@ from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from starlette_discord.client import DiscordOAuthClient
 
-from website.constants import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI
+from website.constants import DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, REDIRECT_URI
 
 templates = Jinja2Templates(directory="website/templates")
-client = DiscordOAuthClient(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
+client = DiscordOAuthClient(DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, REDIRECT_URI)
 
 
 async def homepage(request: Request) -> templates.TemplateResponse:

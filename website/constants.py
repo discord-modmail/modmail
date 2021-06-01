@@ -5,5 +5,5 @@ import dotenv
 dotenv.load_dotenv()
 
 REDIRECT_URI = environ.get("REDIRECT_URI")
-CLIENT_ID = environ.get("CLIENT_ID")
-CLIENT_SECRET = environ.get("CLIENT_SECRET")
+DISCORD_CLIENT_ID = environ.get("CLIENT_ID")
+DISCORD_CLIENT_SECRET = environ.get("CLIENT_SECRET")
