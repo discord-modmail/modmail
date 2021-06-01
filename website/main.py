@@ -1,10 +1,14 @@
 from starlette.applications import Starlette
+from starlette.responses import JSONResponse, RedirectResponse
 from starlette.routing import Mount, Request, Route
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
+from starlette_discord.client import DiscordOAuthClient
 
+from website.constants import DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, REDIRECT_URI
 
 templates = Jinja2Templates(directory="website/templates")
+client = DiscordOAuthClient(DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, REDIRECT_URI)
 
 
 async def homepage(request: Request) -> templates.TemplateResponse:
@@ -42,8 +46,22 @@ async def homepage(request: Request) -> templates.TemplateResponse:
     )
 
 
+async def login_with_discord(_: Request) -> RedirectResponse:
+    """Redirect to Discord OAuth2 login."""
+    return client.redirect()
+
+
+async def callback(request: Request) -> JSONResponse:
+    """Callback handler for discord login."""
+    code = request.query_params["code"]
+    u = await client.login(code)
+    return JSONResponse(u)
+
+
 routes = [
     Route("/", endpoint=homepage),
+    Route("/login", endpoint=login_with_discord),
+    Route("/callback", endpoint=callback),  # NOTE: REDIRECT_URI should be this path.
     Mount("/static", StaticFiles(directory="website/static"), name="static"),
 ]
 

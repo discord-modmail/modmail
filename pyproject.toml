@@ -23,7 +23,7 @@ python = "^3.8"
 aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
-"discord.py" = "1.6.0"
+"discord.py" = "1.7.0"
 pydantic = "^1.8.2"
 python-dotenv = "~=0.17.1"
 starlette = "^0.14.2"
@@ -31,6 +31,7 @@ jinja2 = "^3.0.1"
 aiofiles = "^0.7.0"
 toml = "^0.10.2"
 uvicorn = { extras = ["standard"], version = "^0.13.4" }
+starlette-discord = "^0.1.1"
 
 [tool.poetry.extras]
 uvicorn = ["standard"]

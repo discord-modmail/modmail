@@ -3,7 +3,8 @@ max-line-length=110
 application_import_names=modmail,website
 docstring-convention=all
 import-order-style=pycharm
-exclude=modmail/config.py,__pycache__,
+exclude=modmail/config.py,website/constants.py
+        __pycache__,
         .cache,.git,
         .md,.svg,.png
         tests,

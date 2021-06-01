@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import typing as t
 
 import discord
 from aiohttp import ClientSession
@@ -25,7 +26,7 @@ class ModmailBot(commands.Bot):
         super().__init__(command_prefix=self.get_prefix, **kwargs)
         self.http_session = ClientSession()
 
-    async def get_prefix(self, message: discord.Message = None) -> str:
+    async def get_prefix(self, message: discord.Message = None) -> t.List[str]:
         """Returns the bot prefix, but also allows the bot to work with user mentions."""
         return [self.config.bot.prefix, f"<@{self.user.id}> ", f"<@!{self.user.id}> "]
 
