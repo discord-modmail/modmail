@@ -355,17 +355,6 @@ flake8 = ">=3"
 pydocstyle = ">=2.1"
 
 [[package]]
-name = "flake8-import-order"
-version = "0.18.1"
-description = "Flake8 and pylama plugin that checks the ordering of import statements."
-category = "dev"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-pycodestyle = "*"
-
-[[package]]
 name = "flake8-isort"
 version = "4.0.0"
 description = "flake8 plugin that integrates isort ."
@@ -1100,7 +1089,7 @@ uvicorn = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "9757d774cf1e9f53e81ca66a910c3926f81673a1808bead4099a5e59f4d92b6b"
+content-hash = "7911c1e85a6f32510391f71bc4cb9d9b01bd9cd5d3c44d2849be394a52a9f56b"
 
 [metadata.files]
 aiodns = [
@@ -1416,10 +1405,6 @@ flake8-bugbear = [
 flake8-docstrings = [
     {file = "flake8-docstrings-1.6.0.tar.gz", hash = "sha256:9fe7c6a306064af8e62a055c2f61e9eb1da55f84bb39caef2b84ce53708ac34b"},
     {file = "flake8_docstrings-1.6.0-py2.py3-none-any.whl", hash = "sha256:99cac583d6c7e32dd28bbfbef120a7c0d1b6dde4adb5a9fd441c4227a6534bde"},
-]
-flake8-import-order = [
-    {file = "flake8-import-order-0.18.1.tar.gz", hash = "sha256:a28dc39545ea4606c1ac3c24e9d05c849c6e5444a50fb7e9cdd430fc94de6e92"},
-    {file = "flake8_import_order-0.18.1-py2.py3-none-any.whl", hash = "sha256:90a80e46886259b9c396b578d75c749801a41ee969a235e163cfe1be7afd2543"},
 ]
 flake8-isort = [
     {file = "flake8-isort-4.0.0.tar.gz", hash = "sha256:2b91300f4f1926b396c2c90185844eb1a3d5ec39ea6138832d119da0a208f4d9"},

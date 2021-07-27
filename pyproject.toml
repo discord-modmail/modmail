@@ -42,7 +42,6 @@ flake8-annotations = "~=2.3"
 flake8-bandit = "^2.1.2"
 flake8-bugbear = "~=20.1"
 flake8-docstrings = "~=1.5"
-flake8-import-order = "~=0.18"
 flake8-isort = "^4.0.0"
 flake8-string-format = "~=0.3"
 flake8-tidy-imports = "~=4.1"
@@ -64,6 +63,7 @@ black = { cmd = "black --check .", help = "dry run of black" }
 bot = { cmd = "python -m modmail", help = "Run bot" }
 devtailwind = { cmd = "npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css", help = "run tailwind in dev mode" }
 disttailwind = { cmd = "NODE_ENV=production npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css", help = "run tailwind in dist?" }
+pre_export = "poetry update --lock"
 export = { cmd = "echo \"Exporting installed packages to requirements.txt.\" && echo '# Do not manually edit.\n# Generate with \"poetry run task export\"\n' > requirements.txt && poetry export --without-hashes >> requirements.txt", help = "Export installed packages in requirements.txt format" }
 flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
 lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
@@ -83,5 +83,5 @@ source = ["modmail", "website"]
 
 [tool.black]
 line-length = 110
-target-version = ['py39']
+target-version = ['py38']
 include = '\.pyi?$'
