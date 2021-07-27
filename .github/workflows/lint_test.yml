@@ -34,6 +34,11 @@ env:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python_version: ['3.8', '3.9']
+    env:
+      PYTHON_VERSION: ${{ matrix.python_version }}
     steps:
       - name: Add custom PYTHONUSERBASE to PATH
         run: echo '${{ env.PYTHONUSERBASE }}/bin/' >> $GITHUB_PATH
@@ -108,6 +113,11 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python_version: ['3.8', '3.9']
+    env:
+      PYTHON_VERSION: ${{ matrix.python_version }}
     steps:
       - name: Add custom PYTHONUSERBASE to PATH
         run: echo '${{ env.PYTHONUSERBASE }}/bin/' >> $GITHUB_PATH
