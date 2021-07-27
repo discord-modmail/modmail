@@ -82,6 +82,6 @@ source = ["modmail", "website"]
 
 
 [tool.black]
-line-length = 99
+line-length = 110
 target-version = ['py39']
 include = '\.pyi?$'
