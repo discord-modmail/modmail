@@ -126,14 +126,12 @@ dmypy.json
 .pyre/
 
 # Editors
+.vscode
 .vscode/
 .idea/
 
 # logs
 logs
-
-# Editors
-.vscode
 
 # Configuration
 *config.toml

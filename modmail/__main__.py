@@ -1,6 +1,5 @@
 import logging
 
-
 try:
     # noinspection PyUnresolvedReferences
     from colorama import init
