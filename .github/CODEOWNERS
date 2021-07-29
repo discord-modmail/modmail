@@ -2,7 +2,7 @@
 * @onerandomusername
 
 # CI and Tools
-/.github/workflows/     @Shivansh-007
+/.github/workflows/     @Shivansh-007 @onerandomusername
 poetry.lock             @Shivansh-007 @onerandomusername
 pyproject.toml          @Shivansh-007 @onerandomusername
 

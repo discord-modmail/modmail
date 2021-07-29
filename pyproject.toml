@@ -1,53 +1,57 @@
 [tool.poetry]
 name = "Modmail"
 version = "0.0.1"
-description = "A modmail bot for Discord. Python 3.7+ compatiable"
+description = "A modmail bot for Discord. Python 3.8+ compatiable"
 license = "MIT"
 
-authors = [
-    "aru <genericusername414@gmail.com>",
-    "bast <bast@fastmail.com"
-]
+authors = ["aru <genericusername414@gmail.com>", "bast <bast@fastmail.com"]
 
-maintainers = ["'ARU <genericusername414@gmail.com>"]
+maintainers = ["aru <genericusername414@gmail.com>"]
 
 readme = "README.md"
-repository = "https://github.com/onerandomusername/modmail"
-homepage = "https://github.com/onerandomusername/modmail"
+repository = "https://github.com/discord-modmail/modmail"
+homepage = "https://github.com/discord-modmail/modmail"
 keywords = ["discord", "modmail"]
 
 packages = [{ include = "modmail" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+aiofiles = "^0.7.0"
 aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
 "discord.py" = "1.7.0"
+jinja2 = "^3.0.1"
 pydantic = "^1.8.2"
 python-dotenv = "~=0.17.1"
 starlette = "^0.14.2"
-jinja2 = "^3.0.1"
-aiofiles = "^0.7.0"
+starlette-discord = "^0.1.1"
 toml = "^0.10.2"
 uvicorn = { extras = ["standard"], version = "^0.13.4" }
-starlette-discord = "^0.1.1"
 
 [tool.poetry.extras]
 uvicorn = ["standard"]
 
 [tool.poetry.dev-dependencies]
+black = "^21.7b0"
+codecov = "^2.1.11"
+coverage = { extras = ["toml"], version = "^5.5" }
 flake8 = "~=3.8"
-black = "~=21.5b1"
 flake8-annotations = "~=2.3"
+flake8-bandit = "^2.1.2"
 flake8-bugbear = "~=20.1"
 flake8-docstrings = "~=1.5"
-flake8-import-order = "~=0.18"
+flake8-isort = "^4.0.0"
 flake8-string-format = "~=0.3"
 flake8-tidy-imports = "~=4.1"
 flake8-todo = "~=0.7"
+isort = "^5.9.2"
 pep8-naming = "~=0.11"
 pre-commit = "~=2.1"
+pytest = "^6.2.4"
+pytest-cov = "^2.12.1"
+pytest-xdist = { version = "^2.3.0", extras = ["psutil"] }
 taskipy = "^1.6.0"
 
 [build-system]
@@ -55,19 +59,29 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
-bot = "python -m modmail"
-site = "uvicorn main:app --app-dir website"
-site-debug = "uvicorn main:app --app-dir website --reload --reload-dir website"
-run = "uvicorn launcher:app --workers 1"
-lint = "pre-commit run --all-files"
-precommit = "pre-commit install"
-black = "black --check ."
-flake8 = "python -m flake8"
-disttailwind = "NODE_ENV=production npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css"
-devtailwind = "npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css"
-export = "echo '# Do not manually edit.\n# Generate with \"poetry run task export\"\n' > requirements.txt && poetry export --without-hashes >> requirements.txt"
+black = { cmd = "black --check .", help = "dry run of black" }
+bot = { cmd = "python -m modmail", help = "Run bot" }
+devtailwind = { cmd = "npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css", help = "run tailwind in dev mode" }
+disttailwind = { cmd = "NODE_ENV=production npx tailwindcss-cli@latest build ./src/tailwind.css -o ./static/tailwind.css", help = "run tailwind in dist?" }
+pre_export = "poetry update --lock"
+export = { cmd = "echo \"Exporting installed packages to requirements.txt.\" && echo '# Do not manually edit.\n# Generate with \"poetry run task export\"\n' > requirements.txt && poetry export --without-hashes >> requirements.txt", help = "Export installed packages in requirements.txt format" }
+flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
+lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
+precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
+report = { cmd = "coverage report", help = "Show coverage report from previously run tests." }
+run = { cmd = "uvicorn launcher:app --workers 1", help = "Run bot and site through uvicorn as a server" }
+site = { cmd = "uvicorn main:app --app-dir website", help = "run just the site" }
+site-debug = { cmd = "uvicorn main:app --app-dir website --reload --reload-dir website", help = "run site only in debug mode" }
+test = { cmd = "pytest --cov-report= --cov", help = "Runs tests and save results to a coverage report" }
+test-nocov = { cmd = "pytest", help = "Runs tests without creating a coverage report" }
+
+
+[tool.coverage.run]
+branch = true
+source = ["modmail", "website"]
+
 
 [tool.black]
-line-length = 99
+line-length = 110
 target-version = ['py38']
 include = '\.pyi?$'
