@@ -21,7 +21,7 @@ aiofiles = "^0.7.0"
 aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
-"discord.py" = "1.7.0"
+"discord.py" = {git = "https://github.com/Rapptz/discord.py.git", rev = "master"}
 jinja2 = "^3.0.1"
 pydantic = "^1.8.2"
 python-dotenv = "~=0.17.1"
