@@ -26,7 +26,7 @@ jinja2 = "^3.0.1"
 pydantic = "^1.8.2"
 python-dotenv = "~=0.17.1"
 starlette = "^0.14.2"
-starlette-discord = "^0.1.1"
+starlette-discord = {git = "https://github.com/onerandomusername/starlette-discord", rev = "remove-dpy"}
 toml = "^0.10.2"
 uvicorn = { extras = ["standard"], version = "^0.13.4" }
 
