@@ -1,6 +1,7 @@
-name: "Bug Report: Discord bot"
+name: "Bug Report: Discord Bot"
 description: File a bug report for the modmail bot.
-labels: ["a: bot", "s: need triage", "t: bug"]
+labels: ["a: bot", "s: needs triage", "t: bug"]
+assignees: onerandomusername
 body:
 - type: checkboxes
   attributes:

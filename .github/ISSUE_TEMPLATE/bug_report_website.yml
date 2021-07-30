@@ -1,6 +1,7 @@
 name: "Bug Report: Website/Dashboard"
 description: File a bug report for the modmail website/dashboard.
-labels: ["a: bot", "s: need triage", "t: bug"]
+labels: ["a: website", "s: needs triage", "t: bug"]
+assignees: bast0006
 body:
 - type: checkboxes
   attributes:

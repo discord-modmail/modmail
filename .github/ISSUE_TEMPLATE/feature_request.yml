@@ -1,6 +1,6 @@
 name: "Feature request"
 description: Suggest a new feature for the bot and/or website.
-labels: ["s: need triage", "t: feature"]
+labels: ["s: needs triage", "t: feature"]
 body:
 - type: checkboxes
   attributes:
@@ -18,8 +18,8 @@ body:
       Is this feature for the bot or the website?
       A bot feature would be like a new command, where a website feature would be additional info or options.
     options:
-      - label: bot
-      - label: website
+      - bot
+      - website
   validations:
     required: true
 - type: textarea
