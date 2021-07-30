@@ -3,13 +3,13 @@ description: File a bug report for the modmail bot.
 labels: ["a: bot", "s: needs triage", "t: bug"]
 assignees: onerandomusername
 body:
-- type: checkboxes
+- type: input
   attributes:
     label: Is there an existing issue for this?
     description: Please search to see if an issue already exists for the bug you encountered.
-    options:
-    - label: I have searched the existing issues
-      required: true
+    placeholder: I have searched the existing issues.
+  validations:
+    required: true
 - type: textarea
   attributes:
     label: Current Behavior
