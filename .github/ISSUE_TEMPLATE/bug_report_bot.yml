@@ -32,9 +32,9 @@ body:
   validations:
     required: true
 - type: dropdown
+  id: hosting_method
   attributes:
     label: Select your hosting method
-    id: hosting_method
     description: |
       This is the place where modmail is running.
     multiple: false
@@ -45,7 +45,7 @@ body:
       - local hosting
       - cloud vm
       - other
-    validations:
+  validations:
       required: true
 - type: textarea
   attributes:

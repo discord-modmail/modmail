@@ -10,9 +10,9 @@ body:
     - label: I have searched the existing issues
       required: true
 - type: input
+  id: webpage
   attributes:
     label: Affected webpages
-    id: webpage
     placeholder: /manage, https://example.com/manage
   validations:
     required: false
@@ -39,9 +39,9 @@ body:
   validations:
     required: true
 - type: dropdown
+  id: hosting_method
   attributes:
     label: Select your hosting method
-    id: hosting_method
     description: |
       This is the place where the bot is running.
     multiple: false
@@ -52,7 +52,7 @@ body:
       - local hosting
       - cloud vm
       - other
-    validations:
+  validations:
       required: true
 - type: textarea
   attributes:

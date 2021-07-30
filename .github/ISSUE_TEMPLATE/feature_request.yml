@@ -10,8 +10,8 @@ body:
     - label: I have searched the existing issues
       required: true
 - type: dropdown
+  id: projects
   attributes:
-    id: projects
     label: Relevant components
     multiple: true
     description: |
