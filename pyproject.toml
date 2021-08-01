@@ -52,9 +52,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
 black = { cmd = "black --check .", help = "dry run of black" }
-pre_export = "echo 'Exporting installed packages to requirements.txt.\nThis task automatically relocks the lock file using \"poetry lock\"' && poetry lock"
-export = { cmd = "echo '# Do not manually edit.\n# Generate with \"poetry run task export\"\n' > requirements.txt && poetry export --without-hashes >> requirements.txt", help = "Export installed packages in requirements.txt format" }
-post_export = '''echo "Done exporting."'''
 flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
 lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
@@ -62,6 +59,18 @@ report = { cmd = "coverage report", help = "Show coverage report from previously
 run = { cmd = "python -m modmail", help = "Run bot" }
 test = { cmd = "pytest --cov-report= --cov", help = "Runs tests and save results to a coverage report" }
 test-nocov = { cmd = "pytest", help = "Runs tests without creating a coverage report" }
+
+[tool.taskipy.tasks.export]
+cmd = """
+echo 'Exporting installed packages to requirements.txt.\n\
+This task automatically relocks the lock file using "poetry lock --no-update"' && \
+poetry lock --no-update && \
+echo '# Do not manually edit.\n# Generate with "poetry run task export"\n' > requirements.txt && \
+echo "Exporting..." && \
+poetry export --without-hashes >> requirements.txt && \
+echo "Done exporting."
+"""
+help = "Export installed packages in requirements.txt format"
 
 
 [tool.coverage.run]
