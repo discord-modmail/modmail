@@ -9,19 +9,6 @@ body:
     placeholder: I have searched the existing issues.
   validations:
     required: true
-- type: dropdown
-  id: projects
-  attributes:
-    label: Relevant components
-    multiple: true
-    description: |
-      Is this feature for the bot or the website?
-      A bot feature would be like a new command, where a website feature would be additional info or options.
-    options:
-      - bot
-      - website
-  validations:
-    required: true
 - type: textarea
   attributes:
     label: What is the feature?
