@@ -75,8 +75,12 @@ test-nocov = { cmd = "pytest", help = "Runs tests without creating a coverage re
 
 [tool.coverage.run]
 branch = true
-source = ["modmail"]
+source_pkgs = ["modmail"]
+source = ["tests"]
 
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
 
 [tool.black]
 line-length = 110
