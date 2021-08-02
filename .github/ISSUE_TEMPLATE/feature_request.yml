@@ -2,13 +2,13 @@ name: "Feature request"
 description: Suggest a new feature for the bot and/or website.
 labels: ["s: needs triage", "t: feature"]
 body:
-- type: input
+- type: checkboxes
   attributes:
     label: Is there an existing issue for this?
     description: Please search to see if an issue already exists for the bug you encountered.
-    placeholder: I have searched the existing issues.
-  validations:
-    required: true
+    options:
+    - label: I have searched the existing issues and there is no existing issue.
+      required: true
 - type: textarea
   attributes:
     label: What is the feature?
