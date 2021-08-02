@@ -1,5 +1,5 @@
 name: "Feature request"
-description: Suggest a new feature for the bot and/or website.
+description: Suggest a new feature for our bot.
 labels: ["s: needs triage", "t: feature"]
 body:
 - type: checkboxes
