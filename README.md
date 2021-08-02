@@ -5,5 +5,10 @@
 [![Python](https://img.shields.io/static/v1?label=Python&message=3.8+|+3.9&color=blue&logo=Python&style=flat)](https://www.python.org/downloads/ "Python 3.8 | 3.9")
 [![License](https://img.shields.io/github/license/discord-modmail/modmail?style=flat&label=License)](./LICENSE "License file")
 [![Code Style](https://img.shields.io/static/v1?label=Code%20Style&message=black&color=000000&style=flat)](https://github.com/psf/black "The uncompromising python formatter")
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fdiscord-modmail%2Fmodmail.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fdiscord-modmail%2Fmodmail?ref=badge_shield)
 
 An MIT licensed modmail bot for Discord.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fdiscord-modmail%2Fmodmail.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fdiscord-modmail%2Fmodmail?ref=badge_large)
