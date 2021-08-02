@@ -22,8 +22,6 @@ coverage:
         only_pulls: false
       bot:
         paths: "bot/"
-      site:
-        paths: "website/"
 
 parsers:
   gcov:
