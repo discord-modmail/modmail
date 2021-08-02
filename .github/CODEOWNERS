@@ -9,7 +9,4 @@ pyproject.toml          @Shivansh-007 @onerandomusername
 # The modmail bot itself
 /modmail/               @onerandomusername @bast0006 @discord-modmail/bot
 
-# Shared section between the bot and site
-/shared/                @onerandomusername @Shivansh-007 @bast0006
-
 SECURITY.md             @bast0006
