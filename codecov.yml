@@ -21,7 +21,7 @@ coverage:
         informational: false
         only_pulls: false
       bot:
-        paths: "modmail/"
+        paths: ["modmail/"]
 
 parsers:
   gcov:
