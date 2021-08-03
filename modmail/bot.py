@@ -23,8 +23,8 @@ class ModmailBot(commands.Bot):
     def __init__(self, **kwargs):
         self.config = CONFIG
         self.internal = INTERNAL
-        super().__init__(command_prefix=self.get_prefix, **kwargs)
         self.http_session: ClientSession = None
+        super().__init__(command_prefix=self.get_prefix, **kwargs)
 
     async def create_session(self) -> None:
         """Create an aiohttp client session."""
