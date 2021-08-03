@@ -71,10 +71,11 @@ codecov-validate = { cmd= "curl --data-binary @codecov.yml https://codecov.io/va
 flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
 lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
+pytest-docs = { cmd = "pytest --no-cov --docs tests/docs.md", help = "Create docs for tests using pytest-docs."}
 report = { cmd = "coverage report", help = "Show coverage report from previously run tests." }
 run = { cmd = "python -m modmail", help = "Run bot" }
-test = { cmd = "pytest --cov-report= --cov", help = "Runs tests and save results to a coverage report" }
-test-nocov = { cmd = "pytest", help = "Runs tests without creating a coverage report" }
+test = { cmd = "pytest --cov-report= --cov --docs tests/docs.md", help = "Runs tests and save results to a coverage report" }
+test-nocov = { cmd = "pytest --no-cov", help = "Runs tests without creating a coverage report" }
 
 
 [tool.coverage.run]
@@ -82,6 +83,7 @@ branch = true
 source_pkgs = ["modmail"]
 
 [tool.pytest.ini_options]
+addopts = "--cov -ra"
 minversion = "6.0"
 testpaths = ["tests"]
 
