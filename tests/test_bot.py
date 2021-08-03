@@ -1,11 +1,11 @@
-import pytest
-
 """
-Test modmail basics
+Test modmail basics.
 
 - import module
 - create a bot object
 """
+import pytest
+
 from modmail.bot import ModmailBot
 
 
@@ -54,3 +54,9 @@ async def test_bot_close(bot):
         await bot.close()
     resp = stdout.getvalue()
     assert resp == ""
+
+
+@pytest.mark.dependency(depends=["create_bot"])
+def test_bot_main():
+    """Import modmail.__main__."""
+    from modmail.__main__ import main

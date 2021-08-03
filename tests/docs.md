@@ -1,4 +1,10 @@
 # tests.test_bot
+
+Test modmail basics.
+
+- import module
+- create a bot object
+
 ##
 ### test_bot_creation
 Create discord bot.
@@ -17,6 +23,11 @@ Close bot.
 
 **Markers:**
 - asyncio
+- dependency  (depends=['create_bot'])
+### test_bot_main
+Import modmail.__main__.
+
+**Markers:**
 - dependency  (depends=['create_bot'])
 # tests.test_logs
 ##
