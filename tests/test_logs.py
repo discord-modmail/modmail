@@ -1,30 +1,57 @@
-import unittest
+import contextlib
+import io
+import logging
+
+import pytest
+
+from modmail.log import ModmailLogger
 
 """
-Test custom logger
+Test custom logging levels
 """
 
 
-class Test_Logs(unittest.TestCase):
-    """Import modmail"""
+@pytest.mark.dependency(name="create_logger")
+def test_create_logging():
+    """Import logging from modmail.log."""
+    log = logging.getLogger(__name__)
+    assert isinstance(log, ModmailLogger)
 
-    def test_import(self):
-        """
-        Import modmail
-        """
-        from modmail import log
 
-        self.assertTrue(True)
+@pytest.fixture
+def log() -> ModmailLogger:
+    """
+    Pytest fixture.
 
-    def test_logging(self):
-        """
-        Log.
-        """
-        import logging
+    ModmailLogger logging instance
+    """
+    log: ModmailLogger = logging.getLogger(__name__)
+    return log
 
-        from modmail.log import ModmailLogger
 
-        log = logging.getLogger(__name__)
-        self.assertIsInstance(log, ModmailLogger)
-        log.notice("ALERT")
-        log.trace("minor minor info")
+@pytest.mark.dependency(depends=["create_logger"])
+def test_notice_level(log):
+    """Test notice logging level."""
+    stdout = io.StringIO()
+    notice_test_phrase = "Kinda important info"
+    with contextlib.redirect_stderr(stdout):
+        log.notice(notice_test_phrase)
+    resp = stdout.getvalue()
+    assert notice_test_phrase in resp
+    assert "NOTICE" in resp
+
+
+@pytest.mark.dependency(depends=["create_logger"])
+@pytest.mark.skip()
+def test_trace_level(log):
+    """Test trace logging level."""
+    logging.getLogger().setLevel(logging.TRACE)
+    trace_test_phrase = "Getting in the weeds"
+    stdout = io.StringIO()
+
+    with contextlib.redirect_stderr(stdout):
+        log.trace(trace_test_phrase)
+    resp = stdout.getvalue()
+
+    assert "TRACE" in resp
+    assert trace_test_phrase in resp
