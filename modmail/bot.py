@@ -24,6 +24,10 @@ class ModmailBot(commands.Bot):
         self.config = CONFIG
         self.internal = INTERNAL
         super().__init__(command_prefix=self.get_prefix, **kwargs)
+        self.http_session: ClientSession = None
+
+    async def create_session(self) -> None:
+        """Create an aiohttp client session."""
         self.http_session = ClientSession()
 
     async def get_prefix(self, message: discord.Message = None) -> t.List[str]:
@@ -59,19 +63,6 @@ class ModmailBot(commands.Bot):
         """
         super().add_cog(cog)
         log.info(f"Cog loaded: {cog.qualified_name}")
-
-    async def nonblocking_start(self) -> None:
-        """Start an instance of the bot without blocking and triggering exceptions properly."""
-        log.notice("Starting bot")
-        self.main_task = asyncio.create_task(self.start(CONFIG.bot.token))
-
-        def ensure_exception(fut: asyncio.Future) -> None:
-            """Ensure an exception in a task is raised without hard awaiting."""
-            if fut.done() and not fut.cancelled():
-                return
-            fut.result()
-
-        self.main_task.add_done_callback(ensure_exception)
 
     async def on_ready(self) -> None:
         """Send basic login success message."""
