@@ -10,7 +10,7 @@ log: ModmailLogger = logging.getLogger(__name__)
 
 
 class Meta(commands.Cog):
-    """The description for Ping goes here."""
+    """Meta commands to get info about the bot itself."""
 
     def __init__(self, bot: ModmailBot):
         self.bot = bot
