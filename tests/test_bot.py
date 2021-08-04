@@ -12,7 +12,7 @@ from modmail.bot import ModmailBot
 @pytest.mark.dependency(name="create_bot")
 @pytest.mark.asyncio
 async def test_bot_creation():
-    """Create discord bot."""
+    """Ensure we can make a ModmailBot instance."""
     bot = ModmailBot()
     assert isinstance(bot, ModmailBot)
 
@@ -25,7 +25,7 @@ def bot() -> ModmailBot:
     """
     Pytest fixture.
 
-    ModmailBot instance
+    ModmailBot instance.
     """
     bot: ModmailBot = ModmailBot()
     return bot
@@ -45,7 +45,7 @@ async def test_bot_aiohttp(bot):
 @pytest.mark.dependency(depends=["create_bot"])
 @pytest.mark.asyncio
 async def test_bot_close(bot):
-    """Close bot."""
+    """Ensure bot closes without error."""
     import contextlib
     import io
 
