@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Modmail"
-version = "0.0.1"
+version = "0.1.0"
 description = "A modmail bot for Discord. Python 3.8+ compatiable"
 license = "MIT"
 

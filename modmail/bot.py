@@ -6,7 +6,7 @@ import discord
 from aiohttp import ClientSession
 from discord.ext import commands
 
-from .config import CONFIG, INTERNAL
+from modmail.config import CONFIG, INTERNAL
 
 log = logging.getLogger(__name__)
 
@@ -36,8 +36,6 @@ class ModmailBot(commands.Bot):
 
     async def close(self) -> None:
         """Safely close HTTP session and extensions when bot is shutting down."""
-        await super().close()
-
         for ext in list(self.extensions):
             try:
                 self.unload_extension(ext)
@@ -50,10 +48,20 @@ class ModmailBot(commands.Bot):
             except Exception:
                 log.error(f"Exception occured while removing cog {cog.name}", exc_info=1)
 
-        await super().close()
-
         if self.http_session:
             await self.http_session.close()
+
+        await super().close()
+
+    def load_extensions(self) -> None:
+        """Load all enabled extensions."""
+        # Must be done here to avoid a circular import.
+        from modmail.utils.extensions import EXTENSIONS
+
+        extensions = set(EXTENSIONS)  # Create a mutable copy.
+
+        for extension in extensions:
+            self.load_extension(extension)
 
     def add_cog(self, cog: commands.Cog) -> None:
         """
@@ -63,6 +71,15 @@ class ModmailBot(commands.Bot):
         """
         super().add_cog(cog)
         log.info(f"Cog loaded: {cog.qualified_name}")
+
+    def remove_cog(self, cog: commands.Cog) -> None:
+        """
+        Delegate to super to unregister `cog`.
+
+        This only serves to make the debug log, so that extensions don't have to.
+        """
+        super().remove_cog(cog)
+        log.trace(f"Cog unloaded: {cog}")
 
     async def on_ready(self) -> None:
         """Send basic login success message."""

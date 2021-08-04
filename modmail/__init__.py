@@ -1,10 +1,14 @@
 import logging
 import logging.handlers
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import coloredlogs
 
 from .log import ModmailLogger
+
+if TYPE_CHECKING:
+    from modmail.bot import ModmailBot
 
 logging.TRACE = 5
 logging.NOTICE = 25
@@ -55,3 +59,5 @@ logging.getLogger("websockets").setLevel(logging.ERROR)
 logging.getLogger("asyncio").setLevel(logging.INFO)
 
 root.debug("Logging initialization complete")
+
+instance: "ModmailBot" = None  # Global ModmailBot instance.
