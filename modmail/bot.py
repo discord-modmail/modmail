@@ -2,6 +2,7 @@ import asyncio
 import logging
 import typing as t
 
+import arrow
 import discord
 from aiohttp import ClientSession
 from discord.ext import commands
@@ -24,6 +25,7 @@ class ModmailBot(commands.Bot):
         self.config = CONFIG
         self.internal = INTERNAL
         self.http_session: ClientSession = None
+        self.start_time = arrow.utcnow()
         super().__init__(command_prefix=self.get_prefix, **kwargs)
 
     async def create_session(self) -> None:
