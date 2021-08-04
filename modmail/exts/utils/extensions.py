@@ -23,8 +23,6 @@ UNLOAD_BLACKLIST = {
 }
 BASE_PATH_LEN = len(exts.__name__.split("."))
 
-log.notice(UNLOAD_BLACKLIST)
-
 
 class Action(Enum):
     """Represents an action to perform on an extension."""
