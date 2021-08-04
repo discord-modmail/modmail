@@ -32,11 +32,13 @@ def log() -> ModmailLogger:
 @pytest.mark.dependency(depends=["create_logger"])
 def test_notice_level(log):
     """Test notice logging level."""
-    stdout = io.StringIO()
     notice_test_phrase = "Kinda important info"
+    stdout = io.StringIO()
+
     with contextlib.redirect_stderr(stdout):
         log.notice(notice_test_phrase)
     resp = stdout.getvalue()
+
     assert notice_test_phrase in resp
     assert "NOTICE" in resp
 
@@ -45,7 +47,6 @@ def test_notice_level(log):
 @pytest.mark.skip()
 def test_trace_level(log):
     """Test trace logging level."""
-    logging.getLogger().setLevel(logging.TRACE)
     trace_test_phrase = "Getting in the weeds"
     stdout = io.StringIO()
 
