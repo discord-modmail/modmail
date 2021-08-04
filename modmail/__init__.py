@@ -15,7 +15,7 @@ logging.NOTICE = 25
 logging.addLevelName(logging.TRACE, "TRACE")
 logging.addLevelName(logging.NOTICE, "NOTICE")
 
-LOG_LEVEL = 20
+LOG_LEVEL = 5
 fmt = "%(asctime)s %(levelname)10s %(name)15s - [%(lineno)5d]: %(message)s"
 datefmt = "%Y/%m/%d %H:%M:%S"
 
@@ -43,13 +43,14 @@ file_handler.setFormatter(
 file_handler.setLevel(logging.TRACE)
 
 coloredlogs.install(
-    level=LOG_LEVEL,
+    level=logging.TRACE,
     fmt=fmt,
     datefmt=datefmt,
 )
 
 # Create root logger
 root: ModmailLogger = logging.getLogger()
+root.setLevel(LOG_LEVEL)
 root.addHandler(file_handler)
 
 # Silence irrelevant loggers
