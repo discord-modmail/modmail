@@ -1,21 +1,21 @@
 # Do not manually edit.
 # Generate with "poetry run task export"
 
-aiodns==3.0.0; python_version >= "3.6" and python_full_version >= "3.8.0"
+aiodns==3.0.0; python_version >= "3.6" or python_version >= "3.6" and python_full_version >= "3.8.0"
 aiohttp==3.7.4.post0; python_version >= "3.6"
 arrow==1.1.1; python_version >= "3.6"
-async-timeout==3.0.1; python_full_version >= "3.8.0" and python_version >= "3.6"
-attrs==21.2.0; python_full_version >= "3.8.0" and python_version >= "3.6"
-brotlipy==0.7.0; python_version >= "3.6" and python_full_version >= "3.8.0"
-cchardet==2.1.7; python_version >= "3.6" and python_full_version >= "3.8.0"
+async-timeout==3.0.1; python_full_version >= "3.5.3" and python_version >= "3.6" or python_version >= "3.6" and python_full_version >= "3.8.0"
+attrs==21.2.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6" or python_version >= "3.6" and python_full_version >= "3.8.0"
+brotlipy==0.7.0; python_version >= "3.6" or python_version >= "3.6" and python_full_version >= "3.8.0"
+cchardet==2.1.7; python_version >= "3.6" or python_version >= "3.6" and python_full_version >= "3.8.0"
 cffi==1.14.6; python_version >= "3.6"
-chardet==4.0.0; python_full_version >= "3.8.0" and python_version >= "3.6"
+chardet==4.0.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6" or python_version >= "3.6" and python_full_version >= "3.8.0"
 colorama==0.4.4; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 coloredlogs==15.0.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 discord.py @ git+https://github.com/Rapptz/discord.py.git@master ; python_full_version >= "3.8.0"
 humanfriendly==9.2; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 idna==3.2; python_version >= "3.6"
-multidict==5.1.0; python_version >= "3.6" and python_full_version >= "3.8.0"
+multidict==5.1.0; python_version >= "3.6" and python_full_version >= "3.8.0" or python_version >= "3.6"
 pycares==4.0.0; python_version >= "3.6"
 pycparser==2.20; python_version >= "3.6" and python_full_version < "3.0.0" or python_version >= "3.6" and python_full_version >= "3.4.0"
 pydantic==1.8.2; python_full_version >= "3.6.1"
@@ -24,5 +24,5 @@ python-dateutil==2.8.2; python_version >= "3.6" and python_full_version < "3.0.0
 python-dotenv==0.17.1
 six==1.16.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.6"
 toml==0.10.2; (python_version >= "2.6" and python_full_version < "3.0.0") or (python_full_version >= "3.3.0")
-typing-extensions==3.10.0.0; python_version >= "3.6" and python_full_version >= "3.8.0"
-yarl==1.6.3; python_version >= "3.6" and python_full_version >= "3.8.0"
+typing-extensions==3.10.0.0; python_version >= "3.6" or python_full_version >= "3.6.1" or python_version >= "3.6" and python_full_version >= "3.8.0"
+yarl==1.6.3; python_version >= "3.6" and python_full_version >= "3.8.0" or python_version >= "3.6"
