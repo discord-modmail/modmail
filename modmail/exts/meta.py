@@ -15,9 +15,9 @@ class Meta(commands.Cog):
     def __init__(self, bot: ModmailBot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(name="ping", aliases=("pong",))
     async def ping(self, ctx: Context) -> None:
-        """Check response time."""
+        """Ping the bot to see its latency and state."""
         await ctx.send(f"{round(self.bot.latency * 1000)}ms")
 
     @commands.command(name="uptime")
