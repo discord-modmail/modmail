@@ -26,6 +26,11 @@ class Meta(commands.Cog):
         timestamp = self.bot.start_time.format("X").split(".")[0]
         await ctx.send(f"Start time: <t:{timestamp}:R>")
 
+    @commands.command(name="prefix")
+    async def prefix(self, ctx: commands.Context) -> None:
+        """Return the configured prefix."""
+        await ctx.send(f"My current prefix is `{self.bot.config.bot.prefix}`")
+
 
 def setup(bot: ModmailBot) -> None:
     """Load the Meta cog."""
