@@ -8,7 +8,7 @@ try:
 except ImportError:
     pass
 
-from .bot import ModmailBot
+from modmail.bot import ModmailBot
 
 log = logging.getLogger(__name__)
 
