@@ -75,7 +75,7 @@ class Plugin(commands.Converter):
             raise commands.BadArgument(f":x: Could not find the extension `{argument}`.")
 
 
-class Plugin_Manager(commands.Cog, name="Plugin Manager"):
+class PluginManager(commands.Cog, name="Plugin Manager"):
     """Extension management commands."""
 
     def __init__(self, bot: ModmailBot):
@@ -268,4 +268,4 @@ class Plugin_Manager(commands.Cog, name="Plugin Manager"):
 
 def setup(bot: ModmailBot) -> None:
     """Load the Plugins manager cog."""
-    bot.add_cog(Plugin_Manager(bot))
+    bot.add_cog(PluginManager(bot))
