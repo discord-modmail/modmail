@@ -21,9 +21,11 @@ BOT_MODES = BotModes
 class CogMetadata:
     """Cog metadata class to determine if cog should load at runtime depending on bot configuration."""
 
+    # prod mode
+    # set this to true if the cog should always load
+    production: bool = False
     # load if bot is in development mode
     # development mode is when the bot has its metacogs loaded, like the eval and extension cogs
-    production: bool = False
     develop: bool = False
     # plugin development mode
     # used for loading bot plugins that help with plugin debugging
