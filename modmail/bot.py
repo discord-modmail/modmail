@@ -1,9 +1,7 @@
 import asyncio
 import logging
-import typing as t
 
 import arrow
-import discord
 from aiohttp import ClientSession
 from discord.ext import commands
 
@@ -26,15 +24,11 @@ class ModmailBot(commands.Bot):
         self.internal = INTERNAL
         self.http_session: ClientSession = None
         self.start_time = arrow.utcnow()
-        super().__init__(command_prefix=self.get_prefix, **kwargs)
+        super().__init__(command_prefix=commands.when_mentioned_or(self.config.bot.prefix), **kwargs)
 
     async def create_session(self) -> None:
         """Create an aiohttp client session."""
         self.http_session = ClientSession()
-
-    async def get_prefix(self, message: discord.Message = None) -> t.List[str]:
-        """Returns the bot prefix, but also allows the bot to work with user mentions."""
-        return [self.config.bot.prefix, f"<@{self.user.id}> ", f"<@!{self.user.id}> "]
 
     async def close(self) -> None:
         """Safely close HTTP session and extensions when bot is shutting down."""
