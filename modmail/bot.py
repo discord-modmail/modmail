@@ -62,8 +62,9 @@ class ModmailBot(commands.Bot):
 
         extensions = set(EXTENSIONS)  # Create a mutable copy.
 
-        for extension in extensions:
-            self.load_extension(extension)
+        for extension, should_load in extensions:
+            if should_load:
+                self.load_extension(extension)
 
     def add_cog(self, cog: commands.Cog) -> None:
         """

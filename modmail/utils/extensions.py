@@ -15,7 +15,7 @@ from modmail.utils.cogs import BOT_MODES, calc_mode
 BOT_MODE = calc_mode(CONFIG.dev)
 log: ModmailLogger = logging.getLogger(__name__)
 log.trace(f"BOT_MODE value: {BOT_MODE}")
-log.debug(f"Dev mode status: {bool(BOT_MODE & BOT_MODES.devel)}")
+log.debug(f"Dev mode status: {bool(BOT_MODE & BOT_MODES.develop)}")
 log.debug(f"Plugin dev mode status: {bool(BOT_MODE & BOT_MODES.plugin_dev)}")
 
 
@@ -44,23 +44,20 @@ def walk_extensions() -> Iterator[str]:
         if module.name.endswith("utils.extensions"):
             # due to circular imports, the utils.extensions cog is not able to utilize the cog metadata class
             # it is hardcoded here as a dev cog in order to prevent it from causing bugs
-            if BOT_MODE & BOT_MODES.devel:
-                yield module.name
+            yield module.name, BOT_MODES.develop & BOT_MODE
             continue
-        log.debug(module.name)
 
         imported = importlib.import_module(module.name)
         if (cog_metadata := getattr(imported, "COG_METADATA", None)) is not None:
             # check if this cog is dev only or plugin dev only
-            load_cog = bool(((cog_metadata.devel << 1) + (cog_metadata.plugin_dev << 2)) & BOT_MODE)
+            load_cog = bool(calc_mode(cog_metadata) & BOT_MODE)
             log.trace(f"Load cog {module.name!r}?: {load_cog}")
-            if load_cog:
-                yield module.name
+            yield module.name, load_cog
             continue
 
-        log.warn(f"Cog {module.name!r} is missing a COG_METADATA variable. Assuming its a normal cog.")
+        log.notice(f"Cog {module.name!r} is missing a COG_METADATA variable. Assuming its a normal cog.")
 
-        yield module.name
+        yield (module.name, True)
 
 
 EXTENSIONS = frozenset(walk_extensions())

@@ -5,10 +5,8 @@ from discord.ext.commands import Context
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import CogMetadata
 
 log: ModmailLogger = logging.getLogger(__name__)
-COG_METADATA = CogMetadata()
 
 
 class Meta(commands.Cog):

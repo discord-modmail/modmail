@@ -153,7 +153,7 @@ class DevConfig(BaseSettings):
 
     log_level: conint(ge=0, le=50) = getattr(logging, "NOTICE", 25)
     production: bool = True
-    devel: bool = False
+    develop: bool = False
     plugin_dev: bool = False
 
 

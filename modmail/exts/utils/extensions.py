@@ -24,7 +24,7 @@ UNLOAD_BLACKLIST = {
 }
 BASE_PATH_LEN = len(exts.__name__.split("."))
 
-COG_METADATA = CogMetadata(devel=True)
+COG_METADATA = CogMetadata(develop=True)
 
 
 class Action(Enum):
@@ -50,14 +50,17 @@ class Extension(commands.Converter):
             return argument
 
         argument = argument.lower()
+        extensions = []
+        for ext, _nul in EXTENSIONS:
+            extensions.append(ext)
 
-        if argument in EXTENSIONS:
+        if argument in extensions:
             return argument
         elif (qualified_arg := f"{exts.__name__}.{argument}") in EXTENSIONS:
             return qualified_arg
 
         matches = []
-        for ext in EXTENSIONS:
+        for ext in extensions:
             if argument == unqualify(ext):
                 matches.append(ext)
 
@@ -140,7 +143,9 @@ class Extensions(commands.Cog):
             return
 
         if "**" in extensions:
-            extensions = EXTENSIONS
+            extensions = []
+            for ext, _nul in EXTENSIONS:
+                extensions.append(ext)
         elif "*" in extensions:
             extensions = set(self.bot.extensions.keys()) | set(extensions)
             extensions.remove("*")
@@ -178,8 +183,10 @@ class Extensions(commands.Cog):
     def group_extension_statuses(self) -> t.Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""
         categories = {}
-
-        for ext in EXTENSIONS:
+        extensions = []
+        for ext, _nul in EXTENSIONS:
+            extensions.append(ext)
+        for ext in extensions:
             if ext in self.bot.extensions:
                 status = ":thumbsup:"
             else:
