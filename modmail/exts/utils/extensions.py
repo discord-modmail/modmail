@@ -13,7 +13,7 @@ from discord.ext.commands import Context, group
 from modmail import exts
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import CogMetadata
+from modmail.utils.cogs import ExtMetadata
 from modmail.utils.extensions import EXTENSIONS, unqualify
 
 log: ModmailLogger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ UNLOAD_BLACKLIST = {
 }
 BASE_PATH_LEN = len(exts.__name__.split("."))
 
-COG_METADATA = CogMetadata(develop=True)
+EXT_METADATA = ExtMetadata(develop=True)
 
 
 class Action(Enum):

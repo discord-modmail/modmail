@@ -47,14 +47,14 @@ def walk_extensions() -> Iterator[str]:
                 # If it lacks a setup function, it's not an extension.
                 continue
 
-        if (cog_metadata := getattr(imported, "COG_METADATA", None)) is not None:
+        if (ext_metadata := getattr(imported, "EXT_METADATA", None)) is not None:
             # check if this cog is dev only or plugin dev only
-            load_cog = bool(calc_mode(cog_metadata) & BOT_MODE)
+            load_cog = bool(calc_mode(ext_metadata) & BOT_MODE)
             log.trace(f"Load cog {module.name!r}?: {load_cog}")
             yield module.name, load_cog
             continue
 
-        log.notice(f"Cog {module.name!r} is missing a COG_METADATA variable. Assuming its a normal cog.")
+        log.notice(f"Cog {module.name!r} is missing an EXT_METADATA variable. Assuming its a normal cog.")
 
         yield (module.name, True)
 

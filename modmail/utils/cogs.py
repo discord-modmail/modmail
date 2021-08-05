@@ -18,8 +18,8 @@ BOT_MODES = BotModes
 
 
 @dataclass()
-class CogMetadata:
-    """Cog metadata class to determine if cog should load at runtime depending on bot configuration."""
+class ExtMetadata:
+    """Ext metadata class to determine if extension should load at runtime depending on bot configuration."""
 
     # prod mode
     # set this to true if the cog should always load
@@ -32,7 +32,7 @@ class CogMetadata:
     plugin_dev: bool = False
 
 
-def calc_mode(metadata: CogMetadata) -> int:
+def calc_mode(metadata: ExtMetadata) -> int:
     """Calculate the combination of different variables and return the binary combination."""
     mode = int(getattr(metadata, "production", False))
     mode = mode + int(getattr(metadata, "develop", False) << 1) or 0
