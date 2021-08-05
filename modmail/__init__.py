@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import coloredlogs
 
-from .log import ModmailLogger
+from modmail.log import ModmailLogger
 
 if TYPE_CHECKING:
     from modmail.bot import ModmailBot
@@ -42,11 +42,11 @@ file_handler.setFormatter(
 
 file_handler.setLevel(logging.TRACE)
 
-coloredlogs.install(
-    level=logging.TRACE,
-    fmt=fmt,
-    datefmt=datefmt,
-)
+# configure trace color
+_LEVEL_STYLES = dict(coloredlogs.DEFAULT_LEVEL_STYLES)
+_LEVEL_STYLES["trace"] = _LEVEL_STYLES["spam"]
+
+coloredlogs.install(level=logging.TRACE, fmt=fmt, datefmt=datefmt, level_styles=_LEVEL_STYLES)
 
 # Create root logger
 root: ModmailLogger = logging.getLogger()
@@ -59,6 +59,5 @@ logging.getLogger("websockets").setLevel(logging.ERROR)
 # Set asyncio logging back to the default of INFO even if asyncio's debug mode is enabled.
 logging.getLogger("asyncio").setLevel(logging.INFO)
 
-root.debug("Logging initialization complete")
 
 instance: "ModmailBot" = None  # Global ModmailBot instance.
