@@ -1,5 +1,6 @@
 import logging
 import logging.handlers
+import typing
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -16,8 +17,8 @@ logging.addLevelName(logging.TRACE, "TRACE")
 logging.addLevelName(logging.NOTICE, "NOTICE")
 
 LOG_LEVEL = 5
-fmt = "%(asctime)s %(levelname)10s %(name)15s - [%(lineno)5d]: %(message)s"
-datefmt = "%Y/%m/%d %H:%M:%S"
+_FMT = "%(asctime)s %(levelname)10s %(name)15s - [%(lineno)5d]: %(message)s"
+_DATEFMT = "%Y/%m/%d %H:%M:%S"
 
 logging.setLoggerClass(ModmailLogger)
 
@@ -35,8 +36,8 @@ file_handler = logging.handlers.RotatingFileHandler(
 
 file_handler.setFormatter(
     logging.Formatter(
-        fmt=fmt,
-        datefmt=datefmt,
+        fmt=_FMT,
+        datefmt=_DATEFMT,
     )
 )
 
@@ -46,7 +47,7 @@ file_handler.setLevel(logging.TRACE)
 _LEVEL_STYLES = dict(coloredlogs.DEFAULT_LEVEL_STYLES)
 _LEVEL_STYLES["trace"] = _LEVEL_STYLES["spam"]
 
-coloredlogs.install(level=logging.TRACE, fmt=fmt, datefmt=datefmt, level_styles=_LEVEL_STYLES)
+coloredlogs.install(level=logging.TRACE, fmt=_FMT, datefmt=_DATEFMT, level_styles=_LEVEL_STYLES)
 
 # Create root logger
 root: ModmailLogger = logging.getLogger()
@@ -60,4 +61,4 @@ logging.getLogger("websockets").setLevel(logging.ERROR)
 logging.getLogger("asyncio").setLevel(logging.INFO)
 
 
-instance: "ModmailBot" = None  # Global ModmailBot instance.
+instance: typing.Optional["ModmailBot"] = None  # Global ModmailBot instance.
