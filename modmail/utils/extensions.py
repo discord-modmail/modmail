@@ -35,12 +35,6 @@ def walk_extensions() -> Iterator[str]:
             # Ignore module/package names starting with an underscore.
             continue
 
-        if module.ispkg:
-            imported = importlib.import_module(module.name)
-            if not inspect.isfunction(getattr(imported, "setup", None)):
-                # If it lacks a setup function, it's not an extension.
-                continue
-
         if module.name.endswith("utils.extensions"):
             # due to circular imports, the utils.extensions cog is not able to utilize the cog metadata class
             # it is hardcoded here as a dev cog in order to prevent it from causing bugs
@@ -48,6 +42,11 @@ def walk_extensions() -> Iterator[str]:
             continue
 
         imported = importlib.import_module(module.name)
+        if module.ispkg:
+            if not inspect.isfunction(getattr(imported, "setup", None)):
+                # If it lacks a setup function, it's not an extension.
+                continue
+
         if (cog_metadata := getattr(imported, "COG_METADATA", None)) is not None:
             # check if this cog is dev only or plugin dev only
             load_cog = bool(calc_mode(cog_metadata) & BOT_MODE)
