@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from enum import IntEnum
 
+from discord.ext import commands
+
 
 class BotModes(IntEnum):
     """
@@ -35,6 +37,21 @@ class ExtMetadata:
 def calc_mode(metadata: ExtMetadata) -> int:
     """Calculate the combination of different variables and return the binary combination."""
     mode = int(getattr(metadata, "production", False))
-    mode = mode + int(getattr(metadata, "develop", False) << 1) or 0
+    mode += int(getattr(metadata, "develop", False) << 1) or 0
     mode = mode + (int(getattr(metadata, "plugin_dev", False)) << 2)
     return mode
+
+
+class ModmailCog(commands.Cog):
+    """
+    The base class that all cogs must inherit from.
+
+    A cog is a collection of commands, listeners, and optional state to
+    help group commands together. More information on them can be found on
+    the :ref:`ext_commands_cogs` page.
+
+    When inheriting from this class, the options shown in :class:`CogMeta`
+    are equally valid here.
+    """
+
+    pass
