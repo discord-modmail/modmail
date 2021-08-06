@@ -7,7 +7,7 @@ from discord.ext import commands
 class BitwiseAutoEnum(IntEnum):
     """Enum class which generates binary value for each item."""
 
-    def _generate_next_value_(name, start, count, last_values) -> int:  # noqa: ANN001
+    def _generate_next_value_(name, start, count, last_values) -> int:  # noqa: ANN001 N805
         return 1 << count
 
 
