@@ -2,13 +2,12 @@ import logging
 import logging.handlers
 import typing
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import coloredlogs
 
 from modmail.log import ModmailLogger
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from modmail.bot import ModmailBot
 
 logging.TRACE = 5
@@ -16,9 +15,11 @@ logging.NOTICE = 25
 logging.addLevelName(logging.TRACE, "TRACE")
 logging.addLevelName(logging.NOTICE, "NOTICE")
 
-LOG_LEVEL = 5
-_FMT = "%(asctime)s %(levelname)10s %(name)15s - [%(lineno)5d]: %(message)s"
-_DATEFMT = "%Y/%m/%d %H:%M:%S"
+# this logging level is low because if it is not low,
+# child logger will not be able to be at a lower level for debugging
+ROOT_LOG_LEVEL = 5
+FMT = "%(asctime)s %(levelname)10s %(name)15s - [%(lineno)5d]: %(message)s"
+DATEFMT = "%Y/%m/%d %H:%M:%S"
 
 logging.setLoggerClass(ModmailLogger)
 
@@ -36,22 +37,22 @@ file_handler = logging.handlers.RotatingFileHandler(
 
 file_handler.setFormatter(
     logging.Formatter(
-        fmt=_FMT,
-        datefmt=_DATEFMT,
+        fmt=FMT,
+        datefmt=DATEFMT,
     )
 )
 
 file_handler.setLevel(logging.TRACE)
 
 # configure trace color
-_LEVEL_STYLES = dict(coloredlogs.DEFAULT_LEVEL_STYLES)
-_LEVEL_STYLES["trace"] = _LEVEL_STYLES["spam"]
+LEVEL_STYLES = dict(coloredlogs.DEFAULT_LEVEL_STYLES)
+LEVEL_STYLES["trace"] = LEVEL_STYLES["spam"]
 
-coloredlogs.install(level=logging.TRACE, fmt=_FMT, datefmt=_DATEFMT, level_styles=_LEVEL_STYLES)
+coloredlogs.install(level=logging.TRACE, fmt=FMT, datefmt=DATEFMT, level_styles=LEVEL_STYLES)
 
 # Create root logger
 root: ModmailLogger = logging.getLogger()
-root.setLevel(LOG_LEVEL)
+root.setLevel(ROOT_LOG_LEVEL)
 root.addHandler(file_handler)
 
 # Silence irrelevant loggers
