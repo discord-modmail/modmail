@@ -26,7 +26,7 @@ EXT_METADATA = ExtMetadata(production=True, develop=True, plugin_dev=True)
 
 
 class Action(Enum):
-    """Represents an action to perform on an extension."""
+    """Represents an action to perform on an plugin."""
 
     # Need to be partial otherwise they are considered to be function definitions.
     LOAD = functools.partial(ModmailBot.load_extension)
@@ -36,7 +36,7 @@ class Action(Enum):
 
 class Plugin(commands.Converter):
     """
-    Fully qualify the name of an extension and ensure it exists.
+    Fully qualify the name of an plugin and ensure it exists.
 
     The * and ** values bypass this when used with the reload command.
     """
@@ -66,32 +66,32 @@ class Plugin(commands.Converter):
             matches.sort()
             names = "\n".join(matches)
             raise commands.BadArgument(
-                f":x: `{argument}` is an ambiguous extension name. "
+                f":x: `{argument}` is an ambiguous plugin name. "
                 f"Please use one of the following fully-qualified names.```\n{names}```"
             )
         elif matches:
             return matches[0]
         else:
-            raise commands.BadArgument(f":x: Could not find the extension `{argument}`.")
+            raise commands.BadArgument(f":x: Could not find the plugin `{argument}`.")
 
 
 class PluginManager(commands.Cog, name="Plugin Manager"):
-    """Extension management commands."""
+    """Plugin management commands."""
 
     def __init__(self, bot: ModmailBot):
         self.bot = bot
 
     @group(name="plugins", aliases=("plug", "plugs"), invoke_without_command=True)
-    async def extensions_group(self, ctx: Context) -> None:
-        """Load, unload, reload, and list loaded extensions."""
+    async def plugins_group(self, ctx: Context) -> None:
+        """Load, unload, reload, and list loaded plugins."""
         await ctx.send_help(ctx.command)
 
-    @extensions_group.command(name="load", aliases=("l",))
+    @plugins_group.command(name="load", aliases=("l",))
     async def load_command(self, ctx: Context, *plugs: Plugin) -> None:
         r"""
-        Load extensions given their fully qualified or unqualified names.
+        Load plugins given their fully qualified or unqualified names.
 
-        If '\*' or '\*\*' is given as the name, all unloaded extensions will be loaded.
+        If '\*' or '\*\*' is given as the name, all unloaded plugins will be loaded.
         """  # noqa: W605
         if not plugs:
             await ctx.send_help(ctx.command)
@@ -103,12 +103,12 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
         msg = self.batch_manage(Action.LOAD, *plugs)
         await ctx.send(msg)
 
-    @extensions_group.command(name="unload", aliases=("ul",))
+    @plugins_group.command(name="unload", aliases=("ul",))
     async def unload_command(self, ctx: Context, *plugs: Plugin) -> None:
         r"""
-        Unload currently loaded extensions given their fully qualified or unqualified names.
+        Unload currently loaded plugins given their fully qualified or unqualified names.
 
-        If '\*' or '\*\*' is given as the name, all loaded extensions will be unloaded.
+        If '\*' or '\*\*' is given as the name, all loaded plugins will be unloaded.
         """  # noqa: W605
         if not plugs:
             await ctx.send_help(ctx.command)
@@ -121,15 +121,15 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
 
         await ctx.send(msg)
 
-    @extensions_group.command(name="reload", aliases=("r",))
+    @plugins_group.command(name="reload", aliases=("r",))
     async def reload_command(self, ctx: Context, *plugs: Plugin) -> None:
         r"""
-        Reload extensions given their fully qualified or unqualified names.
+        Reload plugins given their fully qualified or unqualified names.
 
-        If an extension fails to be reloaded, it will be rolled-back to the prior working state.
+        If an plugin fails to be reloaded, it will be rolled-back to the prior working state.
 
-        If '\*' is given as the name, all currently loaded extensions will be reloaded.
-        If '\*\*' is given as the name, all extensions, including unloaded ones, will be reloaded.
+        If '\*' is given as the name, all currently loaded plugins will be reloaded.
+        If '\*\*' is given as the name, all plugins, including unloaded ones, will be reloaded.
         """  # noqa: W605
         if not plugs:
             await ctx.send_help(ctx.command)
@@ -147,13 +147,13 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
 
         await ctx.send(msg)
 
-    @extensions_group.command(name="list", aliases=("all",))
+    @plugins_group.command(name="list", aliases=("all",))
     async def list_command(self, ctx: Context) -> None:
         """
-        Get a list of all extensions, including their loaded status.
+        Get a list of all plugins, including their loaded status.
 
-        Grey indicates that the extension is unloaded.
-        Green indicates that the extension is currently loaded.
+        Grey indicates that the plugins is unloaded.
+        Green indicates that the plugins is currently loaded.
         """
         embed = Embed(colour=Colour.blurple())
         embed.set_author(
@@ -161,7 +161,7 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
         )
 
         lines = []
-        categories = self.group_extension_statuses()
+        categories = self.group_plugin_statuses()
         for category, plugs in sorted(categories.items()):
             # Treat each category as a single line by concatenating everything.
             # This ensures the paginator will not cut off a page in the middle of a category.
@@ -178,8 +178,8 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
             output += line
         await ctx.send(output)
 
-    def group_extension_statuses(self) -> t.Mapping[str, str]:
-        """Return a mapping of extension names and statuses to their categories."""
+    def group_plugin_statuses(self) -> t.Mapping[str, str]:
+        """Return a mapping of plugin names and statuses to their categories."""
         categories = {}
         plugs = []
         for ext, _nul in PLUGINS:
@@ -202,9 +202,9 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
 
     def batch_manage(self, action: Action, *plugs: str) -> str:
         """
-        Apply an action to multiple extensions and return a message with the results.
+        Apply an action to multiple plugins and return a message with the results.
 
-        If only one extension is given, it is deferred to `manage()`.
+        If only one plugin is given, it is deferred to `manage()`.
         """
         if len(plugs) == 1:
             msg, _ = self.manage(action, plugs[0])

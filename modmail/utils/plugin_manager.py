@@ -4,7 +4,7 @@
 """
 Helper utililites for managing plugins.
 
-TODO: Expand file to download extensions from github and gitlab from a list that is passed.
+TODO: Expand file to download plugins from github and gitlab from a list that is passed.
 """
 
 
@@ -34,7 +34,7 @@ def unqualify(name: str) -> str:
 
 
 def walk_plugins() -> Iterator[str]:
-    """Yield extension names from the modmail.plugins subpackage."""
+    """Yield plugin names from the modmail.plugins subpackage."""
     for path in BASE_PATH.glob("*/*.py"):
         # calculate the module name, if it were to have a name from the path
         relative_path = path.relative_to(BASE_PATH)
@@ -47,7 +47,7 @@ def walk_plugins() -> Iterator[str]:
         spec.loader.exec_module(imported)
 
         if not inspect.isfunction(getattr(imported, "setup", None)):
-            # If it lacks a setup function, it's not an extension.
+            # If it lacks a setup function, it's not an plugin.
             continue
 
         if (ext_metadata := getattr(imported, "EXT_METADATA", None)) is not None:
