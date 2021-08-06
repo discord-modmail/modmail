@@ -169,9 +169,14 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
             plugs = "\n".join(sorted(plugs))
             lines.append(f"**{category}**\n{plugs}\n")
 
-        log.debug(f"{ctx.author} requested a list of all cogs. Returning a paginated list.")
+        log.debug(f"{ctx.author} requested a list of all cogs. Returning a list.")
         # await Paginator.paginate(lines, ctx, embed, scale_to_size=700, empty=False)
-        await ctx.send(lines)
+
+        # since we currently don't have a paginator.
+        output = ""
+        for line in lines:
+            output += line
+        await ctx.send(output)
 
     def group_extension_statuses(self) -> t.Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""
@@ -181,9 +186,9 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
             plugs.append(ext)
         for plug in plugs:
             if plug in self.bot.extensions:
-                status = ":thumbsup:"
+                status = ":green_circle:"
             else:
-                status = ":thumbsdown:"
+                status = ":red_circle:"
 
             path = ext.split(".")
             if len(path) > BASE_PATH_LEN + 1:
