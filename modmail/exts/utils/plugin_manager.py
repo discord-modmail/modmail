@@ -81,7 +81,7 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
     def __init__(self, bot: ModmailBot):
         self.bot = bot
 
-    @group(name="plugins", aliases=("plug", "plugs"), invoke_without_command=True)
+    @group(name="plugins", aliases=("plug", "plugs", "plugin"), invoke_without_command=True)
     async def plugins_group(self, ctx: Context) -> None:
         """Load, unload, reload, and list loaded plugins."""
         await ctx.send_help(ctx.command)

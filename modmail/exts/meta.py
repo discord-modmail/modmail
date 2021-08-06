@@ -5,8 +5,11 @@ from discord.ext.commands import Context
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
+from modmail.utils.cogs import BotModes
 
 log: ModmailLogger = logging.getLogger(__name__)
+
+print(BotModes.plugin_dev)
 
 
 class Meta(commands.Cog):

@@ -50,18 +50,15 @@ class Extension(commands.Converter):
             return argument
 
         argument = argument.lower()
-        extensions = []
-        for ext, _ in EXTENSIONS:
-            extensions.append(ext)
 
-        if argument in extensions:
+        if argument in EXTENSIONS.keys():
             return argument
 
-        if (qualified_arg := f"{exts.__name__}.{argument}") in EXTENSIONS:
+        if (qualified_arg := f"{exts.__name__}.{argument}") in EXTENSIONS.keys():
             return qualified_arg
 
         matches = []
-        for ext in extensions:
+        for ext in EXTENSIONS:
             if argument == unqualify(ext):
                 matches.append(ext)
 
@@ -77,7 +74,7 @@ class Extension(commands.Converter):
             return matches[0]
 
 
-class Extensions(commands.Cog):
+class ExtensionManager(commands.Cog):
     """Extension management commands."""
 
     def __init__(self, bot: ModmailBot):
@@ -100,7 +97,7 @@ class Extensions(commands.Cog):
             return
 
         if "*" in extensions or "**" in extensions:
-            extensions = set(EXTENSIONS) - set(self.bot.extensions.keys())
+            extensions = EXTENSIONS.keys() - set(self.bot.extensions.keys())
 
         msg = self.batch_manage(Action.LOAD, *extensions)
         await ctx.send(msg)
@@ -143,9 +140,7 @@ class Extensions(commands.Cog):
             return
 
         if "**" in extensions:
-            extensions = []
-            for ext, _nul in EXTENSIONS:
-                extensions.append(ext)
+            extensions = EXTENSIONS.keys()
         elif "*" in extensions:
             extensions = set(self.bot.extensions.keys()) | set(extensions)
             extensions.remove("*")
@@ -184,10 +179,8 @@ class Extensions(commands.Cog):
     def group_extension_statuses(self) -> t.Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""
         categories = {}
-        extensions = []
-        for ext, _nul in EXTENSIONS:
-            extensions.append(ext)
-        for ext in extensions:
+
+        for ext in EXTENSIONS.keys():
             if ext in self.bot.extensions:
                 status = ":green_circle:"
             else:
@@ -216,7 +209,7 @@ class Extensions(commands.Cog):
         verb = action.name.lower()
         failures = {}
 
-        for extension in extensions:
+        for extension in sorted(extensions):
             _, error = self.manage(action, extension)
             if error:
                 failures[extension] = error
@@ -276,4 +269,4 @@ class Extensions(commands.Cog):
 
 def setup(bot: ModmailBot) -> None:
     """Load the Extensions cog."""
-    bot.add_cog(Extensions(bot))
+    bot.add_cog(ExtensionManager(bot))

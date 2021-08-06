@@ -56,7 +56,8 @@ def walk_extensions() -> Iterator[str]:
 
         log.notice(f"Cog {module.name!r} is missing an EXT_METADATA variable. Assuming its a normal cog.")
 
+        # Presume Production Mode
         yield (module.name, True)
 
 
-EXTENSIONS = frozenset(walk_extensions())
+EXTENSIONS = dict(walk_extensions())

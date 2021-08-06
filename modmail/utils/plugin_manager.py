@@ -52,7 +52,7 @@ def walk_plugins() -> Iterator[str]:
 
         if (ext_metadata := getattr(imported, "EXT_METADATA", None)) is not None:
             # check if this plugin is dev only or plugin dev only
-            load_cog = bool(calc_mode(ext_metadata) & BOT_MODE)
+            load_cog = calc_mode(ext_metadata & BOT_MODE)
             log.trace(f"Load plugin {imported.__name__!r}?: {load_cog}")
             yield imported.__name__, load_cog
             continue
@@ -64,4 +64,4 @@ def walk_plugins() -> Iterator[str]:
         yield (imported.__name__, True)
 
 
-PLUGINS = frozenset(walk_plugins())
+PLUGINS = dict(walk_plugins())

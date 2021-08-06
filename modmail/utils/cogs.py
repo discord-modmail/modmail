@@ -1,19 +1,26 @@
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import IntEnum, auto
 
 from discord.ext import commands
 
 
-class BotModes(IntEnum):
+class BitwiseAutoEnum(IntEnum):
+    """Enum class which generates binary value for each item."""
+
+    def _generate_next_value_(name, start, count, last_values) -> int:  # noqa: ANN001
+        return 1 << count
+
+
+class BotModes(BitwiseAutoEnum):
     """
     Valid modes for the bot.
 
-    These values affect logging levels, which logs are loaded, and so forth.
+    These values affect logging levels, which extensions are loaded, and so forth.
     """
 
-    production = int("1", 2)
-    develop = int("10", 2)
-    plugin_dev = int("100", 2)
+    production = auto()
+    develop = auto()
+    plugin_dev = auto()
 
 
 BOT_MODES = BotModes

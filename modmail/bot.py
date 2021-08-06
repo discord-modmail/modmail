@@ -54,9 +54,7 @@ class ModmailBot(commands.Bot):
         # Must be done here to avoid a circular import.
         from modmail.utils.extensions import EXTENSIONS
 
-        extensions = set(EXTENSIONS)  # Create a mutable copy.
-
-        for extension, should_load in extensions:
+        for extension, should_load in EXTENSIONS.items():
             if should_load:
                 self.load_extension(extension)
 
