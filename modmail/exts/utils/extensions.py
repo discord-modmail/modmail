@@ -22,7 +22,7 @@ log: ModmailLogger = logging.getLogger(__name__)
 UNLOAD_BLACKLIST = {
     __name__,
 }
-BASE_PATH_LEN = len(exts.__name__.split("."))
+BASE_PATH_LEN = exts.__name__.count(".") + 1
 
 EXT_METADATA = ExtMetadata(develop=True)
 
@@ -51,12 +51,13 @@ class Extension(commands.Converter):
 
         argument = argument.lower()
         extensions = []
-        for ext, _nul in EXTENSIONS:
+        for ext, _ in EXTENSIONS:
             extensions.append(ext)
 
         if argument in extensions:
             return argument
-        elif (qualified_arg := f"{exts.__name__}.{argument}") in EXTENSIONS:
+
+        if (qualified_arg := f"{exts.__name__}.{argument}") in EXTENSIONS:
             return qualified_arg
 
         matches = []
@@ -64,17 +65,16 @@ class Extension(commands.Converter):
             if argument == unqualify(ext):
                 matches.append(ext)
 
-        if len(matches) > 1:
-            matches.sort()
-            names = "\n".join(matches)
+        if not matches:
+            raise commands.BadArgument(f":x: Could not find the extension `{argument}`.")
+        elif len(matches) > 1:
+            names = "\n".join(sorted(matches))
             raise commands.BadArgument(
                 f":x: `{argument}` is an ambiguous extension name. "
                 f"Please use one of the following fully-qualified names.```\n{names}```"
             )
-        elif matches:
-            return matches[0]
         else:
-            raise commands.BadArgument(f":x: Could not find the extension `{argument}`.")
+            return matches[0]
 
 
 class Extensions(commands.Cog):
@@ -179,10 +179,7 @@ class Extensions(commands.Cog):
         log.debug(f"{ctx.author} requested a list of all cogs. Returning a paginated list.")
 
         # since we currently don't have a paginator.
-        output = ""
-        for line in lines:
-            output += line
-        await ctx.send(output)
+        await ctx.send("".join(lines))
 
     def group_extension_statuses(self) -> t.Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""
