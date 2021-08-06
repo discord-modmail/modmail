@@ -1,5 +1,11 @@
+# start by ignoring all files
 *
-local/*
+
+# don't ignore this file
 !.gitignore
-!local
+
+# ignore the local folder, but not the readme
 !local/readme.md
+
+# ensure this file is uploaded so `plugins` is considered a module
+!__init__.py
