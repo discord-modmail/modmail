@@ -8,23 +8,20 @@ from enum import Enum
 
 from discord import Colour, Embed
 from discord.ext import commands
-from discord.ext.commands import Context, group
+from discord.ext.commands import Context, Group, command
 
 from modmail import exts
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata
 from modmail.utils.extensions import EXTENSIONS, unqualify
+from modmail.utils.plugin_manager import PLUGINS
 
 log: ModmailLogger = logging.getLogger(__name__)
 
-
-UNLOAD_BLACKLIST = {
-    __name__,
-}
 BASE_PATH_LEN = exts.__name__.count(".") + 1
 
-EXT_METADATA = ExtMetadata(develop=True)
+EXT_METADATA = ExtMetadata(production=True, develop=True, plugin_dev=True)
 
 
 class Action(Enum):
@@ -45,20 +42,25 @@ class Extension(commands.Converter):
 
     async def convert(self, ctx: Context, argument: str) -> str:
         """Fully qualify the name of an extension and ensure it exists."""
+        if (ctx.command.name).lower() == "cog":
+            extensions_all = EXTENSIONS
+        elif (ctx.command.name).lower() == "plugin":
+            extensions_all = PLUGINS
+
         # Special values to reload all extensions
         if argument == "*" or argument == "**":
             return argument
 
         argument = argument.lower()
 
-        if argument in EXTENSIONS.keys():
+        if argument in extensions_all.keys():
             return argument
 
-        if (qualified_arg := f"{exts.__name__}.{argument}") in EXTENSIONS.keys():
+        if (qualified_arg := f"{exts.__name__}.{argument}") in extensions_all.keys():
             return qualified_arg
 
         matches = []
-        for ext in EXTENSIONS:
+        for ext in extensions_all:
             if argument == unqualify(ext):
                 matches.append(ext)
 
@@ -74,52 +76,91 @@ class Extension(commands.Converter):
             return matches[0]
 
 
+def custom_group() -> t.Callable:
+    """
+    Custom command `group` decorator.
+
+    Reads the `name` and `alias` attributes from the decorator and passes it on to the group.
+    """
+
+    def decorator(function: t.Callable):
+        @functools.wraps(function)
+        def wrapper(self: t.Any, *args):
+            args.setdefault("cls", Group)
+            return command(
+                name=self.extension_type,
+                aliases=self.aliases,
+                help=f"Load, unload, reload, and list loaded {self.extension_type}.",
+                **args,
+            )
+
+        return wrapper
+
+    return decorator
+
+
 class ExtensionManager(commands.Cog):
-    """Extension management commands."""
+    """Extension management base class."""
 
-    def __init__(self, bot: ModmailBot):
+    def __init__(self, bot: ModmailBot, extension_type: str, aliases: t.Optional[t.Tuple[str]] = None):
         self.bot = bot
+        self.extension_type = extension_type.lower()
+        self.aliases = aliases or ()
 
-    @group(name="extensions", aliases=("ext", "exts", "c", "cogs"), invoke_without_command=True)
+        _all_mapping = {"cog": EXTENSIONS.copy(), "plugin": PLUGINS.copy()}
+        self.all_extensions = _all_mapping.get(extension_type)
+
+        if not self.all_extensions:
+            raise ValueError(
+                f"Looks like you have given an incorrect {extension_type}, "
+                "valid options are: {', '.join(_all_mapping.keys())}"
+            )
+
+    async def get_black_listed_extensions() -> list:
+        """Returns a list of all blacklisted extensions."""
+        raise NotImplementedError()
+
+    @custom_group(invoke_without_command=True)
     async def extensions_group(self, ctx: Context) -> None:
         """Load, unload, reload, and list loaded extensions."""
         await ctx.send_help(ctx.command)
 
     @extensions_group.command(name="load", aliases=("l",))
     async def load_command(self, ctx: Context, *extensions: Extension) -> None:
-        r"""
+        """
         Load extensions given their fully qualified or unqualified names.
 
         If '\*' or '\*\*' is given as the name, all unloaded extensions will be loaded.
-        """  # noqa: W605
+        """
         if not extensions:
             await ctx.send_help(ctx.command)
             return
 
         if "*" in extensions or "**" in extensions:
-            extensions = [ext for ext in EXTENSIONS if ext not in self.bot.extensions.keys()]
+            extensions = [ext for ext in self.all_extensions if ext not in self.bot.extensions.keys()]
 
         msg = self.batch_manage(Action.LOAD, *extensions)
         await ctx.send(msg)
 
     @extensions_group.command(name="unload", aliases=("ul",))
     async def unload_command(self, ctx: Context, *extensions: Extension) -> None:
-        r"""
+        """
         Unload currently loaded extensions given their fully qualified or unqualified names.
 
         If '\*' or '\*\*' is given as the name, all loaded extensions will be unloaded.
-        """  # noqa: W605
+        """
         if not extensions:
             await ctx.send_help(ctx.command)
             return
 
-        blacklisted = "\n".join([ext for ext in UNLOAD_BLACKLIST if ext in extensions])
+        unload_blacklist = await self.get_black_listed_extensions()
+        blacklisted = "\n".join([ext for ext in unload_blacklist if ext in extensions])
 
         if blacklisted:
             msg = f":x: The following extension(s) may not be unloaded:```\n{blacklisted}```"
         else:
             if "*" in extensions or "**" in extensions:
-                extensions = [ext for ext in self.bot.extensions.keys() if ext not in UNLOAD_BLACKLIST]
+                extensions = [ext for ext in self.bot.extensions.keys() if ext not in unload_blacklist]
 
             msg = self.batch_manage(Action.UNLOAD, *extensions)
 
@@ -127,20 +168,20 @@ class ExtensionManager(commands.Cog):
 
     @extensions_group.command(name="reload", aliases=("r",))
     async def reload_command(self, ctx: Context, *extensions: Extension) -> None:
-        r"""
+        """
         Reload extensions given their fully qualified or unqualified names.
 
         If an extension fails to be reloaded, it will be rolled-back to the prior working state.
 
         If '\*' is given as the name, all currently loaded extensions will be reloaded.
         If '\*\*' is given as the name, all extensions, including unloaded ones, will be reloaded.
-        """  # noqa: W605
+        """
         if not extensions:
             await ctx.send_help(ctx.command)
             return
 
         if "**" in extensions:
-            extensions = EXTENSIONS.keys()
+            extensions = self.all_extensions.keys()
         elif "*" in extensions:
             extensions = (self.bot.extensions.keys()).extend(extensions)
             extensions.remove("*")
@@ -171,7 +212,10 @@ class ExtensionManager(commands.Cog):
             extensions = "\n".join(sorted(extensions))
             lines.append(f"**{category}**\n{extensions}\n")
 
-        log.debug(f"{ctx.author} requested a list of all cogs. Returning a paginated list.")
+        log.debug(
+            f"{ctx.author} requested a list of all {self.extension_type.lower()}s. "
+            "Returning a paginated list."
+        )
 
         # since we currently don't have a paginator.
         await ctx.send("".join(lines))
@@ -180,7 +224,7 @@ class ExtensionManager(commands.Cog):
         """Return a mapping of extension names and statuses to their categories."""
         categories = {}
 
-        for ext in EXTENSIONS.keys():
+        for ext in self.all_extensions.keys():
             if ext in self.bot.extensions:
                 status = ":green_circle:"
             else:
@@ -265,8 +309,3 @@ class ExtensionManager(commands.Cog):
         if isinstance(error, commands.BadArgument):
             await ctx.send(str(error))
             error.handled = True
-
-
-def setup(bot: ModmailBot) -> None:
-    """Load the Extensions cog."""
-    bot.add_cog(ExtensionManager(bot))
