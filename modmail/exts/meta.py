@@ -26,7 +26,7 @@ class Meta(commands.Cog):
     @commands.command(name="uptime")
     async def uptime(self, ctx: commands.Context) -> None:
         """Get the current uptime of the bot."""
-        timestamp = self.bot.start_time.format("X").split(".")[0]
+        timestamp = round(float(self.bot.start_time.format("X")))
         await ctx.send(f"Start time: <t:{timestamp}:R>")
 
     @commands.command(name="prefix")

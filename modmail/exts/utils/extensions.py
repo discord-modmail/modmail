@@ -97,7 +97,7 @@ class ExtensionManager(commands.Cog):
             return
 
         if "*" in extensions or "**" in extensions:
-            extensions = EXTENSIONS.keys() - set(self.bot.extensions.keys())
+            extensions = [ext for ext in EXTENSIONS if ext not in self.bot.extensions.keys()]
 
         msg = self.batch_manage(Action.LOAD, *extensions)
         await ctx.send(msg)
@@ -113,13 +113,13 @@ class ExtensionManager(commands.Cog):
             await ctx.send_help(ctx.command)
             return
 
-        blacklisted = "\n".join(UNLOAD_BLACKLIST & set(extensions))
+        blacklisted = "\n".join([ext for ext in UNLOAD_BLACKLIST if ext in extensions])
 
         if blacklisted:
             msg = f":x: The following extension(s) may not be unloaded:```\n{blacklisted}```"
         else:
             if "*" in extensions or "**" in extensions:
-                extensions = set(self.bot.extensions.keys()) - UNLOAD_BLACKLIST
+                extensions = [ext for ext in self.bot.extensions.keys() if ext not in UNLOAD_BLACKLIST]
 
             msg = self.batch_manage(Action.UNLOAD, *extensions)
 
@@ -142,7 +142,7 @@ class ExtensionManager(commands.Cog):
         if "**" in extensions:
             extensions = EXTENSIONS.keys()
         elif "*" in extensions:
-            extensions = set(self.bot.extensions.keys()) | set(extensions)
+            extensions = (self.bot.extensions.keys()).extend(extensions)
             extensions.remove("*")
 
         msg = self.batch_manage(Action.RELOAD, *extensions)

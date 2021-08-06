@@ -24,7 +24,7 @@ DATEFMT = "%Y/%m/%d %H:%M:%S"
 logging.setLoggerClass(ModmailLogger)
 
 # Set up file logging
-log_file = Path("./logs/bot.log")
+log_file = Path("logs", "bot.log")
 log_file.parent.mkdir(parents=True, exist_ok=True)
 
 # file handler

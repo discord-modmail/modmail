@@ -20,7 +20,7 @@ from modmail.utils.plugin_manager import PLUGINS, unqualify
 log: ModmailLogger = logging.getLogger(__name__)
 
 BASE_PATH = Path(plugins.__file__).parent
-BASE_PATH_LEN = len(plugins.__name__.split("."))
+BASE_PATH_LEN = plugins.__name__.count(".") + 1
 
 EXT_METADATA = ExtMetadata(production=True, develop=True, plugin_dev=True)
 
@@ -98,7 +98,7 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
             return
 
         if "*" in plugs or "**" in plugs:
-            plugs = set(PLUGINS) - set(self.bot.extensions.keys())
+            plugs = [plug for plug in PLUGINS if plug not in self.bot.extensions.keys()]
 
         msg = self.batch_manage(Action.LOAD, *plugs)
         await ctx.send(msg)
@@ -115,7 +115,7 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
             return
 
         if "*" in plugs or "**" in plugs:
-            plugs = set(self.bot.extensions.keys())
+            plugs = self.bot.extensions.keys()
 
         msg = self.batch_manage(Action.UNLOAD, *plugs)
 
@@ -140,7 +140,7 @@ class PluginManager(commands.Cog, name="Plugin Manager"):
             for plug, _nul in PLUGINS:
                 plugs.append(plug)
         elif "*" in plugs:
-            plugs = set(self.bot.extensions.keys()) | set(plugs)
+            plugs = (self.bot.extensions.keys()).extend(plugs)
             plugs.remove("*")
 
         msg = self.batch_manage(Action.RELOAD, *plugs)
