@@ -15,9 +15,9 @@ logging.NOTICE = 25
 logging.addLevelName(logging.TRACE, "TRACE")
 logging.addLevelName(logging.NOTICE, "NOTICE")
 
-# this logging level is low because if it is not low,
-# child logger will not be able to be at a lower level for debugging
-ROOT_LOG_LEVEL = 5
+# this logging level is set to logging.TRACE because if it is not set to the lowest level,
+# the child level will be limited to the lowest level this is set to.
+ROOT_LOG_LEVEL = logging.TRACE
 FMT = "%(asctime)s %(levelname)10s %(name)15s - [%(lineno)5d]: %(message)s"
 DATEFMT = "%Y/%m/%d %H:%M:%S"
 
