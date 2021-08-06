@@ -16,10 +16,9 @@ log = logging.getLogger(__name__)
 def main() -> None:
     """Run the bot."""
     bot = ModmailBot()
-    log.notice("running bot")
-    bot.instance = ModmailBot()
-    bot.instance.load_extensions()
-    bot.instance.run(bot.config.bot.token)
+    bot.load_extensions()
+    log.notice("Running the bot.")
+    bot.run(bot.config.bot.token)
 
 
 if __name__ == "__main__":
