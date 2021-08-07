@@ -41,6 +41,7 @@ class ExtensionConverter(commands.Converter):
     """
 
     source_list = EXTENSIONS
+    type = "extension"
 
     async def convert(self, ctx: Context, argument: str) -> str:
         """Fully qualify the name of an extension and ensure it exists."""
@@ -63,20 +64,27 @@ class ExtensionConverter(commands.Converter):
                 matches.append(ext)
 
         if not matches:
-            raise commands.BadArgument(f":x: Could not find the extension `{argument}`.")
-        elif len(matches) > 1:
+            raise commands.BadArgument(f":x: Could not find the {self.type} `{argument}`.")
+
+        if len(matches) > 1:
             names = "\n".join(sorted(matches))
             raise commands.BadArgument(
-                f":x: `{argument}` is an ambiguous extension name. "
+                f":x: `{argument}` is an ambiguous {self.type} name. "
                 f"Please use one of the following fully-qualified names.```\n{names}```"
             )
-        else:
-            return matches[0]
+
+        return matches[0]
 
 
+class PluginConverter(ExtensionConverter):
+    """
+    Fully qualify the name of a plugin and ensure it exists.
 
+    The * and ** values bypass this when used with the reload command.
+    """
 
-
+    source_list = PLUGINS
+    type = "plugin"
 
 
 class ExtensionManager(commands.Cog):
@@ -180,7 +188,7 @@ class ExtensionManager(commands.Cog):
             lines.append(f"**{category}**\n{extensions}\n")
 
         log.debug(
-            f"{ctx.author} requested a list of all {self.extension_type.lower()}s. "
+            f"{ctx.author} requested a list of all extensions. "
             "Returning a paginated list."
         )
 
