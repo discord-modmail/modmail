@@ -290,13 +290,17 @@ class PluginsManager(ExtensionManager):
     """Plugin management commands."""
 
     def __init__(self, bot: ModmailBot) -> None:
-        self.bot = bot
+        super().__init__(bot)
 
-        _extension_type = "plugin"
-        _aliases = ("plug", "plugs", "plugins")
-        ExtensionManager.__init__(self, bot, _extension_type, _aliases)
+    @commands.group("plugins", aliases=("plug", "plugs", "plugins"))
+    async def plugins_group(self, ctx: Context) -> None:
+        """Install, uninstall, disable, update, and enable installed plugins."""
+        await ctx.send_help(ctx.command)
+
+    # Not implemented
 
 
 def setup(bot: ModmailBot) -> None:
     """Load the Plugins manager cog."""
+    bot.add_cog(ExtensionManager(bot))
     bot.add_cog(PluginsManager(bot))
