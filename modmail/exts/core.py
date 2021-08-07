@@ -19,7 +19,7 @@ from modmail.utils.plugin_manager import PLUGINS
 
 log: ModmailLogger = logging.getLogger(__name__)
 
-BASE_PATH_LEN = exts.__name__.count(".") + 1
+BASE_PATH = exts.__name__.count(".") + 1
 
 EXT_METADATA = ExtMetadata(production=True, develop=True, plugin_dev=True)
 
@@ -83,9 +83,9 @@ def custom_group() -> t.Callable:
     Reads the `name` and `alias` attributes from the decorator and passes it on to the group.
     """
 
-    def decorator(function: t.Callable):
+    def decorator(function: t.Callable) -> t.Callable:
         @functools.wraps(function)
-        def wrapper(self: t.Any, *args):
+        def wrapper(self: t.Any, *args) -> commands.Command:
             args.setdefault("cls", Group)
             return command(
                 name=self.extension_type,
@@ -230,13 +230,13 @@ class ExtensionManager(commands.Cog):
             else:
                 status = ":red_circle:"
 
-            path = ext.split(".")
-            if len(path) > BASE_PATH_LEN + 1:
-                category = " - ".join(path[BASE_PATH_LEN:-1])
+            root, name = ext.rsplit(".", 1)
+            if len(root) > len(BASE_PATH):
+                category = " - ".join(root[len(BASE_PATH) + 1 :].split("."))
             else:
-                category = "uncategorised"
+                category = "uncategorized"
 
-            categories.setdefault(category, []).append(f"{status}  {path[-1]}")
+            categories.setdefault(category, []).append(f"{status}  {name}")
 
         return categories
 
@@ -309,3 +309,19 @@ class ExtensionManager(commands.Cog):
         if isinstance(error, commands.BadArgument):
             await ctx.send(str(error))
             error.handled = True
+
+
+class PluginsManager(ExtensionManager):
+    """Plugin management commands."""
+
+    def __init__(self, bot: ModmailBot) -> None:
+        self.bot = bot
+
+        _extension_type = "plugin"
+        _aliases = ("plug", "plugs", "plugins")
+        ExtensionManager.__init__(self, bot, _extension_type, _aliases)
+
+
+def setup(bot: ModmailBot) -> None:
+    """Load the Plugins manager cog."""
+    bot.add_cog(PluginsManager(bot))
