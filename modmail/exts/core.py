@@ -33,7 +33,7 @@ class Action(Enum):
     RELOAD = functools.partial(ModmailBot.reload_extension)
 
 
-class Extension(commands.Converter):
+class ExtensionConverter(commands.Converter):
     """
     Fully qualify the name of an extension and ensure it exists.
 
@@ -102,31 +102,21 @@ def custom_group() -> t.Callable:
 class ExtensionManager(commands.Cog):
     """Extension management base class."""
 
-    def __init__(self, bot: ModmailBot, extension_type: str, aliases: t.Optional[t.Tuple[str]] = None):
+    def __init__(self, bot: ModmailBot):
         self.bot = bot
-        self.extension_type = extension_type.lower()
-        self.aliases = aliases or ()
-
-        _all_mapping = {"cog": EXTENSIONS.copy(), "plugin": PLUGINS.copy()}
-        self.all_extensions = _all_mapping.get(extension_type)
-
-        if not self.all_extensions:
-            raise ValueError(
-                f"Looks like you have given an incorrect {extension_type}, "
-                "valid options are: {', '.join(_all_mapping.keys())}"
-            )
+        self.all_extensions = EXTENSIONS
 
     async def get_black_listed_extensions() -> list:
         """Returns a list of all blacklisted extensions."""
         raise NotImplementedError()
 
-    @custom_group(invoke_without_command=True)
+    @commands.group("ext", aliases=("extensions",))
     async def extensions_group(self, ctx: Context) -> None:
         """Load, unload, reload, and list loaded extensions."""
         await ctx.send_help(ctx.command)
 
     @extensions_group.command(name="load", aliases=("l",))
-    async def load_command(self, ctx: Context, *extensions: Extension) -> None:
+    async def load_command(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         """
         Load extensions given their fully qualified or unqualified names.
 
@@ -143,7 +133,7 @@ class ExtensionManager(commands.Cog):
         await ctx.send(msg)
 
     @extensions_group.command(name="unload", aliases=("ul",))
-    async def unload_command(self, ctx: Context, *extensions: Extension) -> None:
+    async def unload_command(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         """
         Unload currently loaded extensions given their fully qualified or unqualified names.
 
@@ -166,7 +156,7 @@ class ExtensionManager(commands.Cog):
         await ctx.send(self.batch_manage(Action.UNLOAD, *extensions))
 
     @extensions_group.command(name="reload", aliases=("r",))
-    async def reload_command(self, ctx: Context, *extensions: Extension) -> None:
+    async def reload_command(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         """
         Reload extensions given their fully qualified or unqualified names.
 
