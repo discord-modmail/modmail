@@ -90,6 +90,8 @@ class PluginConverter(ExtensionConverter):
 class ExtensionManager(commands.Cog):
     """Extension management base class."""
 
+    type = "extension"
+
     def __init__(self, bot: ModmailBot):
         self.bot = bot
         self.all_extensions = EXTENSIONS
@@ -104,7 +106,7 @@ class ExtensionManager(commands.Cog):
         await ctx.send_help(ctx.command)
 
     @extensions_group.command(name="load", aliases=("l",))
-    async def load_command(self, ctx: Context, *extensions: ExtensionConverter) -> None:
+    async def load_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         """
         Load extensions given their fully qualified or unqualified names.
 
@@ -121,7 +123,7 @@ class ExtensionManager(commands.Cog):
         await ctx.send(msg)
 
     @extensions_group.command(name="unload", aliases=("ul",))
-    async def unload_command(self, ctx: Context, *extensions: ExtensionConverter) -> None:
+    async def unload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         """
         Unload currently loaded extensions given their fully qualified or unqualified names.
 
@@ -135,7 +137,7 @@ class ExtensionManager(commands.Cog):
 
         if blacklisted:
             bl_msg = "\n".join(blacklisted)
-            await ctx.send(f":x: The following extension(s) may not be unloaded:```\n{bl_msg}```")
+            await ctx.send(f":x: The following {self.type}(s) may not be unloaded:```\n{bl_msg}```")
             return
 
         if "*" in extensions or "**" in extensions:
@@ -144,7 +146,7 @@ class ExtensionManager(commands.Cog):
         await ctx.send(self.batch_manage(Action.UNLOAD, *extensions))
 
     @extensions_group.command(name="reload", aliases=("r",))
-    async def reload_command(self, ctx: Context, *extensions: ExtensionConverter) -> None:
+    async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         """
         Reload extensions given their fully qualified or unqualified names.
 
@@ -166,7 +168,7 @@ class ExtensionManager(commands.Cog):
         await ctx.send(self.batch_manage(Action.RELOAD, *extensions))
 
     @extensions_group.command(name="list", aliases=("all",))
-    async def list_command(self, ctx: Context) -> None:
+    async def list_extensions(self, ctx: Context) -> None:
         """
         Get a list of all extensions, including their loaded status.
 
@@ -175,7 +177,7 @@ class ExtensionManager(commands.Cog):
         """
         embed = Embed(colour=Colour.blurple())
         embed.set_author(
-            name="Extensions List",
+            name=f"{self.type.capitalize()} List",
         )
 
         lines = []
@@ -187,7 +189,7 @@ class ExtensionManager(commands.Cog):
             extensions = "\n".join(sorted(extensions))
             lines.append(f"**{category}**\n{extensions}\n")
 
-        log.debug(f"{ctx.author} requested a list of all extensions. " "Returning a paginated list.")
+        log.debug(f"{ctx.author} requested a list of all {self.type}s. " "Returning a paginated list.")
 
         # since we currently don't have a paginator.
         await ctx.send("".join(lines))
@@ -231,13 +233,13 @@ class ExtensionManager(commands.Cog):
                 failures[extension] = error
 
         emoji = ":x:" if failures else ":ok_hand:"
-        msg = f"{emoji} {len(extensions) - len(failures)} / {len(extensions)} extensions {verb}ed."
+        msg = f"{emoji} {len(extensions) - len(failures)} / {len(extensions)} {self.type}s {verb}ed."
 
         if failures:
             failures = "\n".join(f"{ext}\n    {err}" for ext, err in failures.items())
             msg += f"\nFailures:```\n{failures}```"
 
-        log.debug(f"Batch {verb}ed extensions.")
+        log.debug(f"Batch {verb}ed {self.type}s.")
 
         return msg
 
@@ -254,18 +256,18 @@ class ExtensionManager(commands.Cog):
                 log.debug("Treating {ext!r} as if it was not loaded.")
                 return self.manage(Action.LOAD, ext)
 
-            msg = f":x: Extension `{ext}` is already {verb}ed."
+            msg = f":x: {self.type.capitalize()} `{ext}` is already {verb}ed."
             log.debug(msg[4:])
         except Exception as e:
             if hasattr(e, "original"):
                 e = e.original
 
-            log.exception(f"Extension '{ext}' failed to {verb}.")
+            log.exception(f"{self.type.capitalize()} '{ext}' failed to {verb}.")
 
             error_msg = f"{e.__class__.__name__}: {e}"
-            msg = f":x: Failed to {verb} extension `{ext}`:\n```\n{error_msg}```"
+            msg = f":x: Failed to {verb} {self.type} `{ext}`:\n```\n{error_msg}```"
         else:
-            msg = f":ok_hand: Extension successfully {verb}ed: `{ext}`."
+            msg = f":ok_hand: {self.type.capitalize()} successfully {verb}ed: `{ext}`."
             log.debug(msg[10:])
 
         return msg, error_msg
