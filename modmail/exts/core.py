@@ -40,27 +40,25 @@ class ExtensionConverter(commands.Converter):
     The * and ** values bypass this when used with the reload command.
     """
 
+    source_list = EXTENSIONS
+
     async def convert(self, ctx: Context, argument: str) -> str:
         """Fully qualify the name of an extension and ensure it exists."""
-        if (ctx.command.name).lower() == "cog":
-            extensions_all = EXTENSIONS
-        elif (ctx.command.name).lower() == "plugin":
-            extensions_all = PLUGINS
-
         # Special values to reload all extensions
         if argument == "*" or argument == "**":
             return argument
 
         argument = argument.lower()
 
-        if argument in extensions_all.keys():
+        if argument in self.source_list:
             return argument
 
-        if (qualified_arg := f"{exts.__name__}.{argument}") in extensions_all.keys():
+        qualified_arg = f"{exts.__name__}.{argument}"
+        if qualified_arg in self.source_list:
             return qualified_arg
 
         matches = []
-        for ext in extensions_all:
+        for ext in self.source_list:
             if argument == unqualify(ext):
                 matches.append(ext)
 
