@@ -40,4 +40,4 @@ comment:
   require_changes: no
 
 github_checks:
-  annotations: true
+  annotations: false
