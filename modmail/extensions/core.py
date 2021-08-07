@@ -168,7 +168,7 @@ class ExtensionManager(commands.Cog):
 
         await ctx.send(self.batch_manage(Action.RELOAD, *extensions))
 
-    @extensions_group.command(name="list", aliases=("all",))
+    @extensions_group.command(name="list", aliases=("all", "ls"))
     async def list_extensions(self, ctx: Context) -> None:
         """
         Get a list of all extensions, including their loaded status.
@@ -329,7 +329,7 @@ class PluginManager(ExtensionManager):
         """
         await self.reload_extensions.callback(self, ctx, *plugins)
 
-    @plugins_group.command(name="list", aliases=("all",))
+    @plugins_group.command(name="list", aliases=("all", "ls"))
     async def list_plugins(self, ctx: Context) -> None:
         """
         Get a list of all extensions, including their loaded status.
