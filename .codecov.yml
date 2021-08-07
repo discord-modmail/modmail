@@ -35,7 +35,8 @@ coverage:
         # advanced
         branches:
           - main
-        if_ci_failed: error #success, failure, error, ignore
+        if_ci_failed: ignore #success, failure, error, ignore
+        informational: true
         only_pulls: true
 
 
