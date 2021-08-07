@@ -101,7 +101,7 @@ class ExtensionManager(commands.Cog):
         """Returns a list of all blacklisted extensions."""
         raise NotImplementedError()
 
-    @commands.group("ext", aliases=("extensions",))
+    @commands.group("ext", aliases=("extensions",), invoke_without_command=True)
     async def extensions_group(self, ctx: Context) -> None:
         """Load, unload, reload, and list loaded extensions."""
         await ctx.send_help(ctx.command)
@@ -294,7 +294,7 @@ class PluginManager(commands.Cog):
         ExtensionManager.__init__(self, bot)
         self.all_extensions = PLUGINS
 
-    @commands.group("plugins", aliases=("plug", "plugs"))
+    @commands.group("plugins", aliases=("plug", "plugs"), invoke_without_command=True)
     async def plugins_group(self, ctx: Context) -> None:
         """Install, uninstall, disable, update, and enable installed plugins."""
         await ctx.send_help(ctx.command)
