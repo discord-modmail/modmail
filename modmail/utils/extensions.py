@@ -10,9 +10,9 @@ from typing import Iterator, NoReturn
 from modmail import extensions
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BOT_MODES, calc_mode
+from modmail.utils.cogs import BOT_MODES, ExtMetadata
 
-BOT_MODE = calc_mode(CONFIG.dev)
+BOT_MODE = int(ExtMetadata.from_any(CONFIG.dev))
 log: ModmailLogger = logging.getLogger(__name__)
 log.trace(f"BOT_MODE value: {BOT_MODE}")
 log.debug(f"Dev mode status: {bool(BOT_MODE & BOT_MODES.develop)}")
@@ -50,7 +50,7 @@ def walk_extensions() -> Iterator[str]:
         ext_metadata = getattr(imported, "EXT_METADATA", None)
         if ext_metadata is not None:
             # check if this cog is dev only or plugin dev only
-            load_cog = bool(calc_mode(ext_metadata) & BOT_MODE)
+            load_cog = bool(int(ext_metadata) & BOT_MODE)
             log.trace(f"Load cog {module.name!r}?: {load_cog}")
             yield module.name, load_cog
             continue

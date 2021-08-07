@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, auto
+from typing import Any, Set
 
 from discord.ext import commands
 
@@ -9,21 +10,6 @@ class BitwiseAutoEnum(IntEnum):
 
     def _generate_next_value_(name, start, count, last_values) -> int:  # noqa: ANN001 N805
         return 1 << count
-
-
-class BotModes(BitwiseAutoEnum):
-    """
-    Valid modes for the bot.
-
-    These values affect logging levels, which extensions are loaded, and so forth.
-    """
-
-    production = auto()
-    develop = auto()
-    plugin_dev = auto()
-
-
-BOT_MODES = BotModes
 
 
 @dataclass()
@@ -40,13 +26,32 @@ class ExtMetadata:
     # used for loading bot plugins that help with plugin debugging
     plugin_dev: bool = False
 
+    def __int__(self) -> int:
+        """Calculate the combination of different variables and return the binary combination."""
+        return sum(getattr(self, attribute.name, False) * attribute.value for attribute in BotModes)
 
-def calc_mode(metadata: ExtMetadata) -> int:
-    """Calculate the combination of different variables and return the binary combination."""
-    mode = getattr(metadata, "production", False)
-    mode += getattr(metadata, "develop", False) << 1
-    mode += getattr(metadata, "plugin_dev", False) << 2
-    return mode
+    def strings(self) -> Set[str]:
+        """Gets the enabled modes in text form from a given metadata"""
+        return {attr.name for attr in BotModes if getattr(self, attr.name, False)}
+
+    @classmethod
+    def from_any(cls, other: Any) -> "ExtMetadata":
+        return cls(**{attr.name: getattr(other, attr.name, False) for attr in BotModes})
+
+
+class BotModes(BitwiseAutoEnum):
+    """
+    Valid modes for the bot.
+
+    These values affect logging levels, which extensions are loaded, and so forth.
+    """
+
+    production = auto()
+    develop = auto()
+    plugin_dev = auto()
+
+
+BOT_MODES = BotModes
 
 
 class ModmailCog(commands.Cog):
