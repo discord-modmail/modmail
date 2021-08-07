@@ -7,8 +7,6 @@ from discord.ext import commands
 
 from modmail.config import CONFIG, INTERNAL
 
-log = logging.getLogger(__name__)
-
 
 class ModmailBot(commands.Bot):
     """
@@ -18,6 +16,7 @@ class ModmailBot(commands.Bot):
     """
 
     main_task: asyncio.Task
+    logger = logging.getLogger(__name__)
 
     def __init__(self, **kwargs):
         self.config = CONFIG
@@ -36,13 +35,13 @@ class ModmailBot(commands.Bot):
             try:
                 self.unload_extension(ext)
             except Exception:
-                log.error(f"Exception occured while unloading {ext.name}", exc_info=1)
+                self.logger.error(f"Exception occured while unloading {ext.name}", exc_info=1)
 
         for cog in list(self.cogs):
             try:
                 self.remove_cog(cog)
             except Exception:
-                log.error(f"Exception occured while removing cog {cog.name}", exc_info=1)
+                self.logger.error(f"Exception occured while removing cog {cog.name}", exc_info=1)
 
         if self.http_session:
             await self.http_session.close()
@@ -75,7 +74,7 @@ class ModmailBot(commands.Bot):
         This only serves to make the info log, so that extensions don't have to.
         """
         super().add_cog(cog)
-        log.info(f"Cog loaded: {cog.qualified_name}")
+        self.logger.info(f"Cog loaded: {cog.qualified_name}")
 
     def remove_cog(self, cog: commands.Cog) -> None:
         """
@@ -84,8 +83,8 @@ class ModmailBot(commands.Bot):
         This only serves to make the debug log, so that extensions don't have to.
         """
         super().remove_cog(cog)
-        log.trace(f"Cog unloaded: {cog}")
+        self.logger.trace(f"Cog unloaded: {cog}")
 
     async def on_ready(self) -> None:
         """Send basic login success message."""
-        log.info("Logged in as %s", self.user)
+        self.logger.info("Logged in as %s", self.user)
