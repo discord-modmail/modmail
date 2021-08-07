@@ -1,7 +1,6 @@
 import logging
 
 from discord.ext import commands
-from discord.ext.commands import Context
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
@@ -21,7 +20,7 @@ class Meta(commands.Cog):
         self.bot = bot
 
     @commands.command(name="ping", aliases=("pong",))
-    async def ping(self, ctx: Context) -> None:
+    async def ping(self, ctx: commands.Context) -> None:
         """Ping the bot to see its latency and state."""
         await ctx.send(f"{round(self.bot.latency * 1000)}ms")
 
