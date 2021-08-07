@@ -69,13 +69,21 @@ class ModmailBot(commands.Bot):
                 self.logger.debug(f"Loading plugin {plugin}")
                 self.load_extension(plugin)
 
-    def add_cog(self, cog: commands.Cog) -> None:
+    def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         """
-        Delegate to super to register `cog`.
+        Load a given cog.
 
-        This only serves to make the info log, so that extensions don't have to.
+        Utilizes the default discord.py loader beneath, but also checks so we can warn when we're
+        loading a non-ModmailCog cog.
         """
-        super().add_cog(cog)
+        from modmail.utils.cogs import ModmailCog
+
+        if not isinstance(cog, ModmailCog):
+            self.logger.warning(
+                f"Cog {cog.name} is not a ModmailCog. All loaded cogs should always be"
+                f" instances of ModmailCog."
+            )
+        super().add_cog(cog, override=override)
         self.logger.info(f"Cog loaded: {cog.qualified_name}")
 
     def remove_cog(self, cog: str) -> None:
