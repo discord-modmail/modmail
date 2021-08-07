@@ -56,7 +56,7 @@ class ModmailBot(commands.Bot):
         EXTENSIONS.update(walk_extensions())
         for extension, should_load in EXTENSIONS.items():
             if should_load:
-                self.logger.debug(f"Loading extension {extension.name}")
+                self.logger.debug(f"Loading extension {extension}")
                 self.load_extension(extension)
 
     def load_plugins(self) -> None:
@@ -66,7 +66,7 @@ class ModmailBot(commands.Bot):
         PLUGINS.update(walk_plugins())
         for plugin, should_load in PLUGINS.items():
             if should_load:
-                self.logger.debug(f"Loading plugin {plugin.name}")
+                self.logger.debug(f"Loading plugin {plugin}")
                 self.load_extension(plugin)
 
     def add_cog(self, cog: commands.Cog) -> None:
