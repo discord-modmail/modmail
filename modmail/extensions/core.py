@@ -193,7 +193,7 @@ class ExtensionManager(commands.Cog):
         log.debug(f"{ctx.author} requested a list of all {self.type}s. " "Returning a paginated list.")
 
         # since we currently don't have a paginator.
-        await ctx.send("".join(lines))
+        await ctx.send("".join(lines) or f"( There are no {self.type}s installed. )")
 
     def group_extension_statuses(self) -> t.Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""
