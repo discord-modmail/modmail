@@ -7,7 +7,7 @@ import logging
 import pkgutil
 from typing import Iterator, NoReturn
 
-from modmail import exts
+from modmail import extensions
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import BOT_MODES, calc_mode
@@ -30,7 +30,7 @@ def walk_extensions() -> Iterator[str]:
     def on_error(name: str) -> NoReturn:
         raise ImportError(name=name)  # pragma: no cover
 
-    for module in pkgutil.walk_packages(exts.__path__, f"{exts.__name__}.", onerror=on_error):
+    for module in pkgutil.walk_packages(extensions.__path__, f"{extensions.__name__}.", onerror=on_error):
         if unqualify(module.name).startswith("_"):
             # Ignore module/package names starting with an underscore.
             continue
