@@ -185,9 +185,7 @@ class ExtensionManager(commands.Cog):
             extensions = [*extensions, *sorted(self.bot.extensions.keys())]
             extensions.remove("*")
 
-        msg = self.batch_manage(Action.RELOAD, *extensions)
-
-        await ctx.send(msg)
+        await ctx.send(self.batch_manage(Action.RELOAD, *extensions))
 
     @extensions_group.command(name="list", aliases=("all",))
     async def list_command(self, ctx: Context) -> None:
