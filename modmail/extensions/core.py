@@ -10,7 +10,6 @@ from discord import Colour, Embed
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from modmail import exts
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata
@@ -19,7 +18,8 @@ from modmail.utils.plugin_manager import PLUGINS
 
 log: ModmailLogger = logging.getLogger(__name__)
 
-BASE_PATH = exts.__name__.count(".") + 1
+
+BASE_PATH_LEN = __name__.count(".")
 
 EXT_METADATA = ExtMetadata(production=True, develop=True, plugin_dev=True)
 
@@ -54,7 +54,7 @@ class ExtensionConverter(commands.Converter):
         if argument in self.source_list:
             return argument
 
-        qualified_arg = f"{exts.__name__}.{argument}"
+        qualified_arg = f"modmail.{self.type}s.{argument}"
         if qualified_arg in self.source_list:
             return qualified_arg
 
@@ -205,8 +205,8 @@ class ExtensionManager(commands.Cog):
                 status = ":red_circle:"
 
             root, name = ext.rsplit(".", 1)
-            if len(root) > len(BASE_PATH):
-                category = " - ".join(root[len(BASE_PATH) + 1 :].split("."))
+            if len(root) > BASE_PATH_LEN:
+                category = " - ".join(root[BASE_PATH_LEN:].split("."))
             else:
                 category = "uncategorized"
 
