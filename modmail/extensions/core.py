@@ -292,7 +292,7 @@ class PluginManager(ExtensionManager):
         super().__init__(bot)
         self.all_extensions = PLUGINS
 
-    @commands.group("plugins", aliases=("plug", "plugs", "plugins"))
+    @commands.group("plugins", aliases=("plug", "plugs"))
     async def plugins_group(self, ctx: Context) -> None:
         """Install, uninstall, disable, update, and enable installed plugins."""
         await ctx.send_help(ctx.command)
