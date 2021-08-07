@@ -4,6 +4,7 @@
 import functools
 import logging
 import typing as t
+from collections import defaultdict
 from enum import Enum
 
 from discord import Colour, Embed
@@ -196,9 +197,9 @@ class ExtensionManager(commands.Cog):
 
     def group_extension_statuses(self) -> t.Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""
-        categories = {}
+        categories = defaultdict(list)
 
-        for ext in self.all_extensions.keys():
+        for ext in self.all_extensions:
             if ext in self.bot.extensions:
                 status = ":green_circle:"
             else:
@@ -211,8 +212,9 @@ class ExtensionManager(commands.Cog):
                 category = "uncategorized"
 
             categories.setdefault(category, []).append(f"{status}  {name}")
+            categories[category].append(f"{status}  {name}")
 
-        return categories
+        return dict(categories)
 
     def batch_manage(self, action: Action, *extensions: str) -> str:
         """
