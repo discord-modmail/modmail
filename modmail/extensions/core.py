@@ -231,7 +231,7 @@ class ExtensionManager(ModmailCog):
             if error:
                 failures[extension] = error
 
-        emoji = ":x:" if failures else ":ok_hand:"
+        emoji = ":x:" if failures else ":thumbsup:"
         msg = f"{emoji} {len(extensions) - len(failures)} / {len(extensions)} {self.type}s {verb}ed."
 
         if failures:
@@ -265,7 +265,7 @@ class ExtensionManager(ModmailCog):
             error_msg = f"{e.__class__.__name__}: {e}"
             msg = f":x: Failed to {verb} {self.type} `{ext}`:\n```\n{error_msg}```"
         else:
-            msg = f":ok_hand: {self.type.capitalize()} successfully {verb}ed: `{ext}`."
+            msg = f":thumbsup: {self.type.capitalize()} successfully {verb}ed: `{ext}`."
 
         log.debug(error_msg or msg)
         return msg, error_msg
