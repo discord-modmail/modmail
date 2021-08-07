@@ -101,7 +101,7 @@ class ExtensionManager(ModmailCog):
         """Returns a list of all blacklisted extensions."""
         raise NotImplementedError()
 
-    @commands.group("ext", aliases=("extensions",), invoke_without_command=True)
+    @commands.group("ext", aliases=("extensions", "exts"), invoke_without_command=True)
     async def extensions_group(self, ctx: Context) -> None:
         """Load, unload, reload, and list loaded extensions."""
         await ctx.send_help(ctx.command)
