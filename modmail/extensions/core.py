@@ -343,7 +343,7 @@ class PluginManager(ExtensionManager):
 
 
 # Delete the commands from ExtensionManager before
-# discord.py tries to screw up by reregistering them
+# discord.py tries to screw up by re-registering them
 for command in ExtensionManager.__cog_commands__:
     PluginManager.__cog_commands__.remove(command)
 
