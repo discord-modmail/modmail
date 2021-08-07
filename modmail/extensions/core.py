@@ -289,8 +289,6 @@ class PluginManager(ExtensionManager):
     type = "plugin"
 
     def __init__(self, bot: ModmailBot) -> None:
-        # We don't use super because discord.py uses superclasses for something
-        # and we just want regular inheritance
         super().__init__(bot)
         self.all_extensions = PLUGINS
 
