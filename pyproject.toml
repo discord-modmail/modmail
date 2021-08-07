@@ -87,6 +87,8 @@ help = "Export installed packages in requirements.txt format"
 [tool.taskipy.tasks]
 black = { cmd = "black --check .", help = "dry run of black" }
 codecov-validate = { cmd = "curl --data-binary @.codecov.yml https://codecov.io/validate", help = "Validate `.codecov.yml` with their api." }
+pre_cov-server = "coverage html"
+cov-server = { cmd = "python -m http.server 8012 --bind 127.0.0.1 --directory htmlcov", help = "Start an http.server for viewing coverage data."}
 flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
 lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
