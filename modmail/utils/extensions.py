@@ -47,7 +47,8 @@ def walk_extensions() -> Iterator[str]:
                 # If it lacks a setup function, it's not an extension.
                 continue
 
-        if (ext_metadata := getattr(imported, "EXT_METADATA", None)) is not None:
+        ext_metadata = getattr(imported, "EXT_METADATA", None)
+        if ext_metadata is not None:
             # check if this cog is dev only or plugin dev only
             load_cog = bool(calc_mode(ext_metadata) & BOT_MODE)
             log.trace(f"Load cog {module.name!r}?: {load_cog}")
