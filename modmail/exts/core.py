@@ -257,7 +257,6 @@ class ExtensionManager(commands.Cog):
                 return self.manage(Action.LOAD, ext)
 
             msg = f":x: {self.type.capitalize()} `{ext}` is already {verb}ed."
-            log.debug(msg[4:])
         except Exception as e:
             if hasattr(e, "original"):
                 e = e.original
@@ -268,8 +267,8 @@ class ExtensionManager(commands.Cog):
             msg = f":x: Failed to {verb} {self.type} `{ext}`:\n```\n{error_msg}```"
         else:
             msg = f":ok_hand: {self.type.capitalize()} successfully {verb}ed: `{ext}`."
-            log.debug(msg[10:])
 
+        log.debug(error_msg or msg)
         return msg, error_msg
 
     # This cannot be static (must have a __func__ attribute).
