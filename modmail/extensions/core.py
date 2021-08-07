@@ -306,7 +306,7 @@ class PluginManager(ExtensionManager):
 
         If '\*' or '\*\*' is given as the name, all unloaded plugins will be loaded.
         """  # noqa: W605
-        await self.load_extensions(ctx, *plugins)
+        await self.load_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="unload", aliases=("ul",))
     async def unload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
@@ -315,7 +315,7 @@ class PluginManager(ExtensionManager):
 
         If '\*' or '\*\*' is given as the name, all loaded plugins will be unloaded.
         """  # noqa: W605
-        await self.unload_extensions(ctx, *plugins)
+        await self.unload_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="reload", aliases=("r",))
     async def reload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
@@ -327,7 +327,7 @@ class PluginManager(ExtensionManager):
         If '*' is given as the name, all currently loaded extensions will be reloaded.
         If '**' is given as the name, all extensions, including unloaded ones, will be reloaded.
         """
-        await self.reload_extensions(ctx, *plugins)
+        await self.reload_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="list", aliases=("all",))
     async def list_plugins(self, ctx: Context) -> None:
@@ -337,7 +337,7 @@ class PluginManager(ExtensionManager):
         Grey indicates that the extension is unloaded.
         Green indicates that the extension is currently loaded.
         """
-        await self.list_extensions(ctx)
+        await self.list_extensions.callback(self, ctx)
 
     # TODO: Implement install/enable/disable/etc
 
