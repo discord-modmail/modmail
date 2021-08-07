@@ -4,7 +4,7 @@ from discord.ext import commands
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BotModes, ExtMetadata
+from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
 
 log: ModmailLogger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ print(BotModes.plugin_dev)
 EXT_METADATA = ExtMetadata(production=True, develop=True, plugin_dev=True)
 
 
-class Meta(commands.Cog):
+class Meta(ModmailCog):
     """Meta commands to get info about the bot itself."""
 
     def __init__(self, bot: ModmailBot):

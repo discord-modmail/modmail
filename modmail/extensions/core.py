@@ -13,7 +13,7 @@ from discord.ext.commands import Context
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import ExtMetadata
+from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.extensions import EXTENSIONS, unqualify
 from modmail.utils.plugin_manager import PLUGINS
 
@@ -88,7 +88,7 @@ class PluginConverter(ExtensionConverter):
     type = "plugin"
 
 
-class ExtensionManager(commands.Cog):
+class ExtensionManager(ModmailCog):
     """Extension management base class."""
 
     type = "extension"
