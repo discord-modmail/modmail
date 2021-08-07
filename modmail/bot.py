@@ -85,7 +85,7 @@ class ModmailBot(commands.Bot):
         This only serves to make the debug log, so that extensions don't have to.
         """
         super().remove_cog(cog)
-        self.logger.trace(f"Cog unloaded: {cog}")
+        self.logger.info(f"Cog unloaded: {cog}")
 
     async def on_ready(self) -> None:
         """Send basic login success message."""
