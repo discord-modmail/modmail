@@ -14,9 +14,12 @@ from modmail.utils.cogs import BOT_MODES, calc_mode
 
 BOT_MODE = calc_mode(CONFIG.dev)
 log: ModmailLogger = logging.getLogger(__name__)
+
 log.trace(f"BOT_MODE value: {BOT_MODE}")
 log.debug(f"Dev mode status: {bool(BOT_MODE & BOT_MODES.develop)}")
 log.debug(f"Plugin dev mode status: {bool(BOT_MODE & BOT_MODES.plugin_dev)}")
+
+EXTENSIONS = dict()
 
 
 def unqualify(name: str) -> str:
@@ -59,6 +62,3 @@ def walk_extensions() -> Iterator[str]:
 
         # Presume Production Mode
         yield module.name, True
-
-
-EXTENSIONS = dict()

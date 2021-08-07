@@ -19,18 +19,15 @@ from modmail import plugins
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import calc_mode
+from modmail.utils.extensions import unqualify
 
 BOT_MODE = calc_mode(CONFIG.dev)
 BASE_PATH = Path(plugins.__file__).parent
 
-
 log: ModmailLogger = logging.getLogger(__name__)
 log.trace(f"BOT_MODE value: {BOT_MODE}")
 
-
-def unqualify(name: str) -> str:
-    """Return an unqualified name given a qualified module/package `name`."""
-    return name.rsplit(".", maxsplit=1)[-1]
+PLUGINS = dict()
 
 
 def walk_plugins() -> Iterator[str]:
@@ -42,6 +39,13 @@ def walk_plugins() -> Iterator[str]:
         name = "modmail.plugins." + name
         log.trace("Relative path: {0}".format(name))
 
+        if unqualify(name.split(".")[-1]).startswith("_"):
+            # Ignore module/package names starting with an underscore.
+            continue
+
+        # load the plugins using importlib
+        # this needs to be done like this, due to the fact that
+        # its possible a plugin will not have an __init__.py file
         spec = importlib.util.spec_from_file_location(name, path)
         imported = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(imported)
@@ -58,11 +62,8 @@ def walk_plugins() -> Iterator[str]:
             yield imported.__name__, load_cog
             continue
 
-        log.notice(
+        log.info(
             f"Plugin {imported.__name__!r} is missing a EXT_METADATA variable. Assuming its a normal plugin."
         )
 
         yield imported.__name__, True
-
-
-PLUGINS = dict()
