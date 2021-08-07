@@ -206,12 +206,9 @@ class ExtensionManager(commands.Cog):
                 status = ":red_circle:"
 
             root, name = ext.rsplit(".", 1)
-            if len(root) > BASE_PATH_LEN:
-                category = " - ".join(root[BASE_PATH_LEN:].split("."))
-            else:
-                category = "uncategorized"
 
-            categories.setdefault(category, []).append(f"{status}  {name}")
+            category = " - ".join(root.split("."))
+
             categories[category].append(f"{status}  {name}")
 
         return dict(categories)
