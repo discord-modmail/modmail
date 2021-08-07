@@ -60,4 +60,4 @@ def walk_extensions() -> Iterator[str]:
         yield (module.name, True)
 
 
-EXTENSIONS = dict(walk_extensions())
+EXTENSIONS = dict()

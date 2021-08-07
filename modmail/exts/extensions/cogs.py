@@ -1,4 +1,4 @@
-from modmail import ModmailBot
+from modmail.bot import ModmailBot
 from modmail.exts.extensions._base_class import ExtensionManager
 
 
