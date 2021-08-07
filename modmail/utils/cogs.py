@@ -43,9 +43,9 @@ class ExtMetadata:
 
 def calc_mode(metadata: ExtMetadata) -> int:
     """Calculate the combination of different variables and return the binary combination."""
-    mode = int(getattr(metadata, "production", False))
-    mode += int(getattr(metadata, "develop", False) << 1) or 0
-    mode = mode + (int(getattr(metadata, "plugin_dev", False)) << 2)
+    mode = getattr(metadata, "production", False)
+    mode += getattr(metadata, "develop", False) << 1
+    mode += getattr(metadata, "plugin_dev", False) << 2
     return mode
 
 
