@@ -61,7 +61,7 @@ class ModmailBot(commands.Bot):
 
     def load_plugins(self) -> None:
         """Load all enabled plugins."""
-        from modmail.utils.plugin_manager import PLUGINS, walk_plugins
+        from modmail.utils.plugins import PLUGINS, walk_plugins
 
         PLUGINS.update(walk_plugins())
         for plugin, should_load in PLUGINS.items():

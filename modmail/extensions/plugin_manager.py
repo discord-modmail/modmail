@@ -4,7 +4,7 @@ from discord.ext.commands import Context
 from modmail.bot import ModmailBot
 from modmail.extensions.extension_manager import ExtensionConverter, ExtensionManager
 from modmail.utils.cogs import ModeMetadata
-from modmail.utils.plugin_manager import PLUGINS
+from modmail.utils.plugins import PLUGINS
 
 EXT_METADATA = ModeMetadata(production=True, develop=True, plugin_dev=True)
 
