@@ -153,18 +153,17 @@ class ExtensionManager(commands.Cog):
             await ctx.send_help(ctx.command)
             return
 
-        unload_blacklist = await self.get_black_listed_extensions()
-        blacklisted = "\n".join([ext for ext in unload_blacklist if ext in extensions])
+        blacklisted = [ext for ext in await self.get_black_listed_extensions() if ext in extensions]
 
         if blacklisted:
-            msg = f":x: The following extension(s) may not be unloaded:```\n{blacklisted}```"
-        else:
-            if "*" in extensions or "**" in extensions:
-                extensions = [ext for ext in self.bot.extensions.keys() if ext not in unload_blacklist]
+            bl_msg = "\n".join(blacklisted)
+            await ctx.send(f":x: The following extension(s) may not be unloaded:```\n{bl_msg}```")
+            return
 
-            msg = self.batch_manage(Action.UNLOAD, *extensions)
+        if "*" in extensions or "**" in extensions:
+            extensions = sorted(ext for ext in self.bot.extensions.keys() if ext not in blacklisted)
 
-        await ctx.send(msg)
+        await ctx.send(self.batch_manage(Action.UNLOAD, *extensions))
 
     @extensions_group.command(name="reload", aliases=("r",))
     async def reload_command(self, ctx: Context, *extensions: Extension) -> None:
