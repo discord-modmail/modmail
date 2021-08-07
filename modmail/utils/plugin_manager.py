@@ -47,7 +47,7 @@ def walk_plugins() -> Iterator[str]:
         spec.loader.exec_module(imported)
 
         if not inspect.isfunction(getattr(imported, "setup", None)):
-            # If it lacks a setup function, it's not an plugin.
+            # If it lacks a setup function, it's not a plugin. This is enforced by dpy.
             continue
 
         if (ext_metadata := getattr(imported, "EXT_METADATA", None)) is not None:
