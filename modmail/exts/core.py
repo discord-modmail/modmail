@@ -187,10 +187,7 @@ class ExtensionManager(commands.Cog):
             extensions = "\n".join(sorted(extensions))
             lines.append(f"**{category}**\n{extensions}\n")
 
-        log.debug(
-            f"{ctx.author} requested a list of all extensions. "
-            "Returning a paginated list."
-        )
+        log.debug(f"{ctx.author} requested a list of all extensions. " "Returning a paginated list.")
 
         # since we currently don't have a paginator.
         await ctx.send("".join(lines))
