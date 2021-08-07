@@ -285,21 +285,64 @@ class ExtensionManager(commands.Cog):
             error.handled = True
 
 
-class PluginsManager(ExtensionManager):
+class PluginManager(ExtensionManager):
     """Plugin management commands."""
+
+    type = "plugin"
 
     def __init__(self, bot: ModmailBot) -> None:
         super().__init__(bot)
+        self.all_extensions = PLUGINS
 
     @commands.group("plugins", aliases=("plug", "plugs", "plugins"))
     async def plugins_group(self, ctx: Context) -> None:
         """Install, uninstall, disable, update, and enable installed plugins."""
         await ctx.send_help(ctx.command)
 
-    # Not implemented
+    @plugins_group.command(name="load", aliases=("l",))
+    async def load_plugin(self, ctx: Context, *plugins: PluginConverter) -> None:
+        """
+        Load plugins given their fully qualified or unqualified names.
+
+        If '\*' or '\*\*' is given as the name, all unloaded plugins will be loaded.
+        """  # noqa: W605
+        await self.load_extensions(ctx, *plugins)
+
+    @plugins_group.command(name="unload", aliases=("ul",))
+    async def unload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
+        """
+        Unload currently loaded plugins given their fully qualified or unqualified names.
+
+        If '\*' or '\*\*' is given as the name, all loaded plugins will be unloaded.
+        """  # noqa: W605
+        await self.unload_extensions(ctx, *plugins)
+
+    @plugins_group.command(name="reload", aliases=("r",))
+    async def reload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
+        """
+        Reload extensions given their fully qualified or unqualified names.
+
+        If an extension fails to be reloaded, it will be rolled-back to the prior working state.
+
+        If '*' is given as the name, all currently loaded extensions will be reloaded.
+        If '**' is given as the name, all extensions, including unloaded ones, will be reloaded.
+        """
+        await self.reload_extensions(ctx, *plugins)
+
+    @plugins_group.command(name="list", aliases=("all",))
+    async def list_plugins(self, ctx: Context) -> None:
+        """
+        Get a list of all extensions, including their loaded status.
+
+        Grey indicates that the extension is unloaded.
+        Green indicates that the extension is currently loaded.
+        """
+        await self.list_extensions(ctx)
+
+    # TODO: Implement install/enable/disable/etc
 
 
 def setup(bot: ModmailBot) -> None:
     """Load the Plugins manager cog."""
-    bot.add_cog(ExtensionManager(bot))
-    bot.add_cog(PluginsManager(bot))
+    # PluginManager includes the ExtensionManager
+    bot.add_cog(PluginManager(bot))
