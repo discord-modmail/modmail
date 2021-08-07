@@ -62,7 +62,7 @@ def walk_plugins() -> Iterator[str]:
             f"Plugin {imported.__name__!r} is missing a EXT_METADATA variable. Assuming its a normal plugin."
         )
 
-        yield (imported.__name__, True)
+        yield imported.__name__, True
 
 
 PLUGINS = dict(walk_plugins())
