@@ -59,6 +59,15 @@ class ModmailBot(commands.Bot):
             if should_load:
                 self.load_extension(extension)
 
+    def load_plugins(self) -> None:
+        """Load all enabled plugins."""
+        from modmail.utils.plugin_manager import PLUGINS, walk_plugins
+
+        PLUGINS.update(walk_plugins())
+        for extension, should_load in PLUGINS.items():
+            if should_load:
+                self.load_extension(extension)
+
     def add_cog(self, cog: commands.Cog) -> None:
         """
         Delegate to super to register `cog`.
