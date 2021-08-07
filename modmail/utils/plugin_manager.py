@@ -50,7 +50,8 @@ def walk_plugins() -> Iterator[str]:
             # If it lacks a setup function, it's not a plugin. This is enforced by dpy.
             continue
 
-        if (ext_metadata := getattr(imported, "EXT_METADATA", None)) is not None:
+        ext_metadata = getattr(imported, "EXT_METADATA", None)
+        if ext_metadata is not None:
             # check if this plugin is dev only or plugin dev only
             load_cog = calc_mode(ext_metadata & BOT_MODE)
             log.trace(f"Load plugin {imported.__name__!r}?: {load_cog}")
