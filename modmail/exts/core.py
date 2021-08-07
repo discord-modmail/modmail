@@ -137,7 +137,7 @@ class ExtensionManager(commands.Cog):
             return
 
         if "*" in extensions or "**" in extensions:
-            extensions = [ext for ext in self.all_extensions if ext not in self.bot.extensions.keys()]
+            extensions = sorted(ext for ext in self.all_extensions if ext not in self.bot.extensions.keys())
 
         msg = self.batch_manage(Action.LOAD, *extensions)
         await ctx.send(msg)
