@@ -182,7 +182,7 @@ class ExtensionManager(commands.Cog):
         if "**" in extensions:
             extensions = self.all_extensions.keys()
         elif "*" in extensions:
-            extensions = (self.bot.extensions.keys()).extend(extensions)
+            extensions = [*extensions, *sorted(self.bot.extensions.keys())]
             extensions.remove("*")
 
         msg = self.batch_manage(Action.RELOAD, *extensions)
