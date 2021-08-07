@@ -8,7 +8,7 @@ from enum import Enum
 
 from discord import Colour, Embed
 from discord.ext import commands
-from discord.ext.commands import Context, Group, command
+from discord.ext.commands import Context
 
 from modmail import exts
 from modmail.bot import ModmailBot
@@ -74,27 +74,9 @@ class ExtensionConverter(commands.Converter):
             return matches[0]
 
 
-def custom_group() -> t.Callable:
-    """
-    Custom command `group` decorator.
 
-    Reads the `name` and `alias` attributes from the decorator and passes it on to the group.
-    """
 
-    def decorator(function: t.Callable) -> t.Callable:
-        @functools.wraps(function)
-        def wrapper(self: t.Any, *args) -> commands.Command:
-            args.setdefault("cls", Group)
-            return command(
-                name=self.extension_type,
-                aliases=self.aliases,
-                help=f"Load, unload, reload, and list loaded {self.extension_type}.",
-                **args,
-            )
 
-        return wrapper
-
-    return decorator
 
 
 class ExtensionManager(commands.Cog):
