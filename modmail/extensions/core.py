@@ -340,8 +340,8 @@ class PluginManager(ExtensionManager):
     # TODO: Implement install/enable/disable/etc
 
 
-# Delete the commands from ExtensionManager before
-# discord.py tries to screw up by re-registering them
+# Delete the commands from ExtensionManager that PluginManager has inherited
+# before discord.py tries to re-register them
 for command in ExtensionManager.__cog_commands__:
     PluginManager.__cog_commands__.remove(command)
 
