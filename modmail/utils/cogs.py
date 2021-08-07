@@ -31,11 +31,12 @@ class ModeMetadata:
         return sum(getattr(self, attribute.name, False) * attribute.value for attribute in BotModes)
 
     def strings(self) -> Set[str]:
-        """Gets the enabled modes in text form from a given metadata"""
+        """Gets the enabled modes in text form from a given metadata."""
         return {attr.name for attr in BotModes if getattr(self, attr.name, False)}
 
     @classmethod
     def from_any(cls, other: Any) -> "ModeMetadata":
+        """Generate modes from an arbitrary class (such as a configuration class)."""
         return cls(**{attr.name: getattr(other, attr.name, False) for attr in BotModes})
 
 
