@@ -78,7 +78,7 @@ class ModmailBot(commands.Bot):
         super().add_cog(cog)
         self.logger.info(f"Cog loaded: {cog.qualified_name}")
 
-    def remove_cog(self, cog: commands.Cog) -> None:
+    def remove_cog(self, cog: str) -> None:
         """
         Delegate to super to unregister `cog`.
 
