@@ -4,13 +4,13 @@ from discord.ext import commands
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
+from modmail.utils.cogs import BotModes, ModeMetadata, ModmailCog
 
 log: ModmailLogger = logging.getLogger(__name__)
 
 print(BotModes.plugin_dev)
 
-EXT_METADATA = ExtMetadata(production=True, develop=True, plugin_dev=True)
+EXT_METADATA = ModeMetadata(production=True, develop=True, plugin_dev=True)
 
 
 class Meta(ModmailCog):
