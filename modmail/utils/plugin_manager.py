@@ -65,4 +65,4 @@ def walk_plugins() -> Iterator[str]:
         yield imported.__name__, True
 
 
-PLUGINS = dict(walk_plugins())
+PLUGINS = dict()
