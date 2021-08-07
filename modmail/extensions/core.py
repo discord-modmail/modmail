@@ -13,7 +13,7 @@ from discord.ext.commands import Context
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import ExtMetadata, ModmailCog
+from modmail.utils.cogs import ModeMetadata, ModmailCog
 from modmail.utils.extensions import EXTENSIONS, unqualify
 from modmail.utils.plugin_manager import PLUGINS
 
@@ -22,7 +22,7 @@ log: ModmailLogger = logging.getLogger(__name__)
 
 BASE_PATH_LEN = __name__.count(".")
 
-EXT_METADATA = ExtMetadata(production=True, develop=True, plugin_dev=True)
+EXT_METADATA = ModeMetadata(production=True, develop=True, plugin_dev=True)
 
 
 class Action(Enum):

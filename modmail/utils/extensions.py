@@ -10,9 +10,9 @@ from typing import Iterator, NoReturn
 from modmail import extensions
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BOT_MODES, ExtMetadata
+from modmail.utils.cogs import BOT_MODES, ModeMetadata
 
-BOT_MODE = int(ExtMetadata.from_any(CONFIG.dev))
+BOT_MODE = int(ModeMetadata.from_any(CONFIG.dev))
 log: ModmailLogger = logging.getLogger(__name__)
 log.trace(f"BOT_MODE value: {BOT_MODE}")
 log.debug(f"Dev mode status: {bool(BOT_MODE & BOT_MODES.develop)}")

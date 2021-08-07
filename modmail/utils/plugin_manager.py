@@ -18,15 +18,15 @@ from typing import Iterator
 from modmail import plugins
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import ExtMetadata
+from modmail.utils.cogs import ModeMetadata
 
-BOT_MODE = int(ExtMetadata.from_any(CONFIG.dev))
+BOT_MODE = int(ModeMetadata.from_any(CONFIG.dev))
 BASE_PATH = Path(plugins.__file__).parent
 
 
 log: ModmailLogger = logging.getLogger(__name__)
 log.trace(f"BOT_MODE value: {BOT_MODE}")
-log.trace(f"BOT_MODE values: {ExtMetadata.from_any(CONFIG.dev).strings()}")
+log.trace(f"BOT_MODE values: {ModeMetadata.from_any(CONFIG.dev).strings()}")
 
 
 def unqualify(name: str) -> str:

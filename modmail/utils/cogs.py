@@ -13,7 +13,7 @@ class BitwiseAutoEnum(IntEnum):
 
 
 @dataclass()
-class ExtMetadata:
+class ModeMetadata:
     """Ext metadata class to determine if extension should load at runtime depending on bot configuration."""
 
     # prod mode
@@ -35,7 +35,7 @@ class ExtMetadata:
         return {attr.name for attr in BotModes if getattr(self, attr.name, False)}
 
     @classmethod
-    def from_any(cls, other: Any) -> "ExtMetadata":
+    def from_any(cls, other: Any) -> "ModeMetadata":
         return cls(**{attr.name: getattr(other, attr.name, False) for attr in BotModes})
 
 
