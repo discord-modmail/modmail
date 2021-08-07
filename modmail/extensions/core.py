@@ -283,13 +283,15 @@ class ExtensionManager(commands.Cog):
             error.handled = True
 
 
-class PluginManager(ExtensionManager):
+class PluginManager(commands.Cog):
     """Plugin management commands."""
 
     type = "plugin"
 
     def __init__(self, bot: ModmailBot) -> None:
-        super().__init__(bot)
+        # We don't use super because discord.py uses superclasses for something
+        # and we just want regular inheritance
+        ExtensionManager.__init__(self, bot)
         self.all_extensions = PLUGINS
 
     @commands.group("plugins", aliases=("plug", "plugs"))
@@ -304,7 +306,7 @@ class PluginManager(ExtensionManager):
 
         If '\*' or '\*\*' is given as the name, all unloaded plugins will be loaded.
         """  # noqa: W605
-        await self.load_extensions(ctx, *plugins)
+        await ExtensionManager.load_extensions(self, ctx, *plugins)
 
     @plugins_group.command(name="unload", aliases=("ul",))
     async def unload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
@@ -313,7 +315,7 @@ class PluginManager(ExtensionManager):
 
         If '\*' or '\*\*' is given as the name, all loaded plugins will be unloaded.
         """  # noqa: W605
-        await self.unload_extensions(ctx, *plugins)
+        await ExtensionManager.unload_extensions(self, ctx, *plugins)
 
     @plugins_group.command(name="reload", aliases=("r",))
     async def reload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
@@ -325,7 +327,7 @@ class PluginManager(ExtensionManager):
         If '*' is given as the name, all currently loaded extensions will be reloaded.
         If '**' is given as the name, all extensions, including unloaded ones, will be reloaded.
         """
-        await self.reload_extensions(ctx, *plugins)
+        await ExtensionManager.reload_extensions(self, ctx, *plugins)
 
     @plugins_group.command(name="list", aliases=("all",))
     async def list_plugins(self, ctx: Context) -> None:
@@ -335,7 +337,7 @@ class PluginManager(ExtensionManager):
         Grey indicates that the extension is unloaded.
         Green indicates that the extension is currently loaded.
         """
-        await self.list_extensions(ctx)
+        await ExtensionManager.list_extensions(self, ctx)
 
     # TODO: Implement install/enable/disable/etc
 
@@ -343,4 +345,5 @@ class PluginManager(ExtensionManager):
 def setup(bot: ModmailBot) -> None:
     """Load the Plugins manager cog."""
     # PluginManager includes the ExtensionManager
+    bot.add_cog(ExtensionManager(bot))
     bot.add_cog(PluginManager(bot))
