@@ -76,6 +76,11 @@ class PluginManager(ExtensionManager):
 
     # TODO: Implement install/enable/disable/etc
 
+    # This cannot be static (must have a __func__ attribute).
+    async def cog_check(self, ctx: Context) -> bool:
+        """Only allow server admins and bot owners to invoke the commands in this cog."""
+        return ctx.author.guild_permissions.administrator or await self.bot.is_owner(ctx.author)
+
 
 # Delete the commands from ExtensionManager that PluginManager has inherited
 # before discord.py tries to re-register them
