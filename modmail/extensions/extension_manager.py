@@ -76,7 +76,7 @@ class ExtensionConverter(commands.Converter):
         return matches[0]
 
 
-class ExtensionManager(ModmailCog):
+class ExtensionManager(ModmailCog, name="Extension Manager"):
     """Extension management base class."""
 
     type = "extension"

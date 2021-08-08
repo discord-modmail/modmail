@@ -20,7 +20,7 @@ class PluginConverter(ExtensionConverter):
     type = "plugin"
 
 
-class PluginManager(ExtensionManager):
+class PluginManager(ExtensionManager, name="Plugin Manager"):
     """Plugin management commands."""
 
     type = "plugin"
