@@ -13,8 +13,8 @@ class PluginConverter(ExtensionConverter):
     """
     Fully qualify the name of a plugin and ensure it exists.
 
-    The * and ** values bypass this when used with the reload command.
-    """
+    The \* and \*\* values bypass this when used with the reload command.
+    """  # noqa: W605
 
     source_list = PLUGINS
     type = "plugin"
@@ -59,9 +59,9 @@ class PluginManager(ExtensionManager):
 
         If an extension fails to be reloaded, it will be rolled-back to the prior working state.
 
-        If '*' is given as the name, all currently loaded extensions will be reloaded.
-        If '**' is given as the name, all extensions, including unloaded ones, will be reloaded.
-        """
+        If '\*' is given as the name, all currently loaded extensions will be reloaded.
+        If '\*\*' is given as the name, all extensions, including unloaded ones, will be reloaded.
+        """  # noqa: W605
         await self.reload_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="list", aliases=("all", "ls"))

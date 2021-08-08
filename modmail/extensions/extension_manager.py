@@ -141,9 +141,9 @@ class ExtensionManager(ModmailCog):
 
         If an extension fails to be reloaded, it will be rolled-back to the prior working state.
 
-        If '*' is given as the name, all currently loaded extensions will be reloaded.
-        If '**' is given as the name, all extensions, including unloaded ones, will be reloaded.
-        """
+        If '\*' is given as the name, all currently loaded extensions will be reloaded.
+        If '\*\*' is given as the name, all extensions, including unloaded ones, will be reloaded.
+        """  # noqa: W605
         if not extensions:
             await ctx.send_help(ctx.command)
             return
