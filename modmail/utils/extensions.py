@@ -10,16 +10,35 @@ from typing import Iterator, NoReturn
 from modmail import extensions
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BOT_MODES, ModeMetadata
+from modmail.utils.cogs import BOT_MODES, BotModes, ExtMetadata
 
-BOT_MODE = int(ModeMetadata.from_any(CONFIG.dev))
 log: ModmailLogger = logging.getLogger(__name__)
 
-log.trace(f"BOT_MODE value: {BOT_MODE}")
-log.debug(f"Dev mode status: {bool(BOT_MODE & BOT_MODES.develop)}")
-log.debug(f"Plugin dev mode status: {bool(BOT_MODE & BOT_MODES.plugin_dev)}")
+EXT_METADATA = ExtMetadata
+
 
 EXTENSIONS = dict()
+
+
+def determine_bot_mode() -> int:
+    """
+    Figure out the bot mode from the configuration system.
+
+    The configuration system uses true/false values, so we need to turn them into an integer for bitwise.
+    """
+    bot_mode = 0
+    for mode in BotModes:
+        if getattr(CONFIG.dev.mode, str(mode).split(".")[-1].lower(), True):
+            bot_mode += mode.value
+    return bot_mode
+
+
+BOT_MODE = determine_bot_mode()
+
+
+log.trace(f"BOT_MODE value: {BOT_MODE}")
+log.debug(f"Dev mode status: {bool(BOT_MODE & BOT_MODES.DEVELOP)}")
+log.debug(f"Plugin dev mode status: {bool(BOT_MODE & BOT_MODES.PLUGIN_DEV)}")
 
 
 def unqualify(name: str) -> str:
@@ -53,7 +72,7 @@ def walk_extensions() -> Iterator[str]:
         ext_metadata = getattr(imported, "EXT_METADATA", None)
         if ext_metadata is not None:
             # check if this cog is dev only or plugin dev only
-            load_cog = bool(int(ext_metadata) & BOT_MODE)
+            load_cog = bool(int(ext_metadata.load_if_mode) & BOT_MODE)
             log.trace(f"Load cog {module.name!r}?: {load_cog}")
             yield module.name, load_cog
             continue

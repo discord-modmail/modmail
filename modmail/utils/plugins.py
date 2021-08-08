@@ -16,17 +16,13 @@ from pathlib import Path
 from typing import Iterator
 
 from modmail import plugins
-from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import ModeMetadata
-from modmail.utils.extensions import unqualify
+from modmail.utils.cogs import ExtMetadata
+from modmail.utils.extensions import BOT_MODE, unqualify
 
-BOT_MODE = int(ModeMetadata.from_any(CONFIG.dev))
 BASE_PATH = Path(plugins.__file__).parent
 
 log: ModmailLogger = logging.getLogger(__name__)
-log.trace(f"BOT_MODE value: {BOT_MODE}")
-log.trace(f"BOT_MODE values: {ModeMetadata.from_any(CONFIG.dev).strings()}")
 
 PLUGINS = dict()
 
@@ -55,10 +51,10 @@ def walk_plugins() -> Iterator[str]:
             # If it lacks a setup function, it's not a plugin. This is enforced by dpy.
             continue
 
-        ext_metadata = getattr(imported, "EXT_METADATA", None)
+        ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)
         if ext_metadata is not None:
             # check if this plugin is dev only or plugin dev only
-            load_cog = (ext_metadata & BOT_MODE).to_strings()
+            load_cog = (ext_metadata.load_if_mode & BOT_MODE).to_strings()
             log.trace(f"Load plugin {imported.__name__!r}?: {load_cog}")
             yield imported.__name__, load_cog
             continue

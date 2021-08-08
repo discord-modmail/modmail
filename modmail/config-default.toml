@@ -27,6 +27,9 @@ update_channel_id = "0"
 [dev]
 log_level = 25  # "NOTICE"
 
+[dev.mode]
+production = true
+
 [emoji]
 # sent_emoji = "white_heavy_check_mark"
 # blocked_emoji = "\\N{NO ENTRY SIGN}"

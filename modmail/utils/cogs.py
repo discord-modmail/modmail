@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import IntEnum, auto
-from typing import Any, Set
 
 from discord.ext import commands
 
@@ -12,34 +11,6 @@ class BitwiseAutoEnum(IntEnum):
         return 1 << count
 
 
-@dataclass()
-class ModeMetadata:
-    """Ext metadata class to determine if extension should load at runtime depending on bot configuration."""
-
-    # prod mode
-    # set this to true if the cog should always load
-    production: bool = False
-    # load if bot is in development mode
-    # development mode is when the bot has its metacogs loaded, like the eval and extension cogs
-    develop: bool = False
-    # plugin development mode
-    # used for loading bot plugins that help with plugin debugging
-    plugin_dev: bool = False
-
-    def __int__(self) -> int:
-        """Calculate the combination of different variables and return the binary combination."""
-        return sum(getattr(self, attribute.name, False) * attribute.value for attribute in BotModes)
-
-    def strings(self) -> Set[str]:
-        """Gets the enabled modes in text form from a given metadata."""
-        return {attr.name for attr in BotModes if getattr(self, attr.name, False)}
-
-    @classmethod
-    def from_any(cls, other: Any) -> "ModeMetadata":
-        """Generate modes from an arbitrary class (such as a configuration class)."""
-        return cls(**{attr.name: getattr(other, attr.name, False) for attr in BotModes})
-
-
 class BotModes(BitwiseAutoEnum):
     """
     Valid modes for the bot.
@@ -47,12 +18,22 @@ class BotModes(BitwiseAutoEnum):
     These values affect logging levels, which extensions are loaded, and so forth.
     """
 
-    production = auto()
-    develop = auto()
-    plugin_dev = auto()
+    PRODUCTION = auto()
+    DEVELOP = auto()
+    PLUGIN_DEV = auto()
 
 
 BOT_MODES = BotModes
+
+
+@dataclass()
+class ExtMetadata:
+    """Ext metadata class to determine if extension should load at runtime depending on bot configuration."""
+
+    load_if_mode: int = BotModes.PRODUCTION
+
+    def __int__(self, load_if_mode: int = BotModes.PRODUCTION) -> int:
+        self.load_if_mode = load_if_mode
 
 
 class ModmailCog(commands.Cog):

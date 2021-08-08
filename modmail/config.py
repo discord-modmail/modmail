@@ -145,6 +145,18 @@ class ChannelConfig(BaseSettings):
     update_channel: str = None
 
 
+class BotMode(BaseSettings):
+    """
+    Bot mode.
+
+    Used to determine when the bot will run.
+    """
+
+    production: bool = True
+    plugin_dev: bool = False
+    develop: bool = False
+
+
 class DevConfig(BaseSettings):
     """
     Developer specific configuration.
@@ -152,9 +164,7 @@ class DevConfig(BaseSettings):
     """
 
     log_level: conint(ge=0, le=50) = getattr(logging, "NOTICE", 25)
-    production: bool = True
-    develop: bool = False
-    plugin_dev: bool = False
+    mode: BotMode
 
 
 class EmojiConfig(BaseSettings):
