@@ -31,9 +31,12 @@ class ExtMetadata:
     """Ext metadata class to determine if extension should load at runtime depending on bot configuration."""
 
     load_if_mode: int = BotModes.PRODUCTION
+    # this is to determine if the cog is allowed to be unloaded.
+    no_unload: bool = False
 
-    def __int__(self, load_if_mode: int = BotModes.PRODUCTION) -> int:
+    def __init__(self, load_if_mode: int = BotModes.PRODUCTION, no_unload: bool = False) -> "ExtMetadata":
         self.load_if_mode = load_if_mode
+        self.no_unload = no_unload
 
 
 class ModmailCog(commands.Cog):

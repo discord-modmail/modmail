@@ -5,7 +5,7 @@ import importlib
 import inspect
 import logging
 import pkgutil
-from typing import Iterator, NoReturn
+from typing import Iterator, NoReturn, Tuple
 
 from modmail import extensions
 from modmail.config import CONFIG
@@ -18,6 +18,7 @@ EXT_METADATA = ExtMetadata
 
 
 EXTENSIONS = dict()
+NO_UNLOAD = list()
 
 
 def determine_bot_mode() -> int:
@@ -46,7 +47,7 @@ def unqualify(name: str) -> str:
     return name.rsplit(".", maxsplit=1)[-1]
 
 
-def walk_extensions() -> Iterator[str]:
+def walk_extensions() -> Iterator[Tuple]:
     """Yield extension names from the modmail.exts subpackage."""
 
     def on_error(name: str) -> NoReturn:
@@ -63,15 +64,16 @@ def walk_extensions() -> Iterator[str]:
                 # If it lacks a setup function, it's not an extension.
                 continue
 
-        ext_metadata = getattr(imported, "EXT_METADATA", None)
+        ext_metadata: "ExtMetadata" = getattr(imported, "EXT_METADATA", None)
         if ext_metadata is not None:
             # check if this cog is dev only or plugin dev only
             load_cog = bool(int(ext_metadata.load_if_mode) & BOT_MODE)
             log.trace(f"Load cog {module.name!r}?: {load_cog}")
-            yield module.name, load_cog
+            no_unload = ext_metadata.no_unload
+            yield module.name, (load_cog, no_unload)
             continue
 
         log.notice(f"Cog {module.name!r} is missing an EXT_METADATA variable. Assuming its a normal cog.")
 
-        # Presume Production Mode
-        yield module.name, True
+        # Presume Production Mode/Metadata defaults if metadata var does not exist.
+        yield module.name, (ExtMetadata.load_if_mode, ExtMetadata.no_unload)

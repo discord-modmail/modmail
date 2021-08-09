@@ -6,6 +6,7 @@ from aiohttp import ClientSession
 from discord.ext import commands
 
 from modmail.config import CONFIG, INTERNAL
+from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions  # noqa: F401
 
 
 class ModmailBot(commands.Bot):
@@ -49,11 +50,14 @@ class ModmailBot(commands.Bot):
         await super().close()
 
     def load_extensions(self) -> None:
-        """Load all enabled extensions."""
-        # Must be done here to avoid a circular import.
-        from modmail.utils.extensions import EXTENSIONS, walk_extensions
-
+        """Load all enabled extensions."""  # noqa: F811
         EXTENSIONS.update(walk_extensions())
+
+        # set up no_unload global too
+        for ext, value in EXTENSIONS.items():
+            if value[1]:
+                NO_UNLOAD.append(ext)
+
         for extension, should_load in EXTENSIONS.items():
             if should_load:
                 self.logger.debug(f"Loading extension {extension}")

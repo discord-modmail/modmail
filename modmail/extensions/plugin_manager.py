@@ -18,6 +18,7 @@ class PluginConverter(ExtensionConverter):
 
     source_list = PLUGINS
     type = "plugin"
+    NO_UNLOAD = None
 
 
 class PluginManager(ExtensionManager, name="Plugin Manager"):
@@ -28,6 +29,15 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     def __init__(self, bot: ModmailBot) -> None:
         super().__init__(bot)
         self.all_extensions = PLUGINS
+
+    async def get_black_listed_extensions(self) -> list:
+        """
+        Returns a list of all unload blacklisted plugins.
+
+        This method exists to override the one in extensions manager,
+        due to the fact that blacklisting plugins is not supported.
+        """
+        return []
 
     @commands.group("plugins", aliases=("plug", "plugs"), invoke_without_command=True)
     async def plugins_group(self, ctx: Context) -> None:

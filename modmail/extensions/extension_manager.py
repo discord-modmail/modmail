@@ -14,14 +14,14 @@ from discord.ext.commands import Context
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
-from modmail.utils.extensions import EXTENSIONS, unqualify
+from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify
 
 log: ModmailLogger = logging.getLogger(__name__)
 
 
 BASE_PATH_LEN = __name__.count(".")
 
-EXT_METADATA = ExtMetadata(load_if_mode=BotModes.DEVELOP)
+EXT_METADATA = ExtMetadata(load_if_mode=BotModes.DEVELOP, no_unload=True)
 
 
 class Action(Enum):
@@ -85,9 +85,9 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         self.bot = bot
         self.all_extensions = EXTENSIONS
 
-    async def get_black_listed_extensions() -> list:
-        """Returns a list of all blacklisted extensions."""
-        raise NotImplementedError()
+    async def get_black_listed_extensions(self) -> list:
+        """Returns a list of all unload blacklisted extensions."""
+        return NO_UNLOAD
 
     @commands.group("ext", aliases=("extensions", "exts"), invoke_without_command=True)
     async def extensions_group(self, ctx: Context) -> None:
