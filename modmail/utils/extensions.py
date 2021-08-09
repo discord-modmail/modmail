@@ -57,12 +57,6 @@ def walk_extensions() -> Iterator[str]:
             # Ignore module/package names starting with an underscore.
             continue
 
-        if module.name.endswith("utils.extensions"):
-            # due to circular imports, the utils.extensions cog is not able to utilize the cog metadata class
-            # it is hardcoded here as a dev cog in order to prevent it from causing bugs
-            yield module.name, BOT_MODES.develop & BOT_MODE
-            continue
-
         imported = importlib.import_module(module.name)
         if module.ispkg:
             if not inspect.isfunction(getattr(imported, "setup", None)):
