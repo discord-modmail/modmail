@@ -63,4 +63,5 @@ def walk_plugins() -> Iterator[str]:
             f"Plugin {imported.__name__!r} is missing a EXT_METADATA variable. Assuming its a normal plugin."
         )
 
-        yield imported.__name__, True
+        # Presume Production Mode/Metadata defaults if metadata var does not exist.
+        yield imported.__name__, ExtMetadata.load_if_mode

@@ -68,8 +68,8 @@ class ModmailBot(commands.Bot):
             if value[1]:
                 NO_UNLOAD.append(ext)
 
-        for extension, should_load in EXTENSIONS.items():
-            if should_load:
+        for extension, value in EXTENSIONS.items():
+            if value[0]:
                 self.logger.debug(f"Loading extension {extension}")
                 self.load_extension(extension)
 
