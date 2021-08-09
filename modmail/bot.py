@@ -9,6 +9,7 @@ from discord.ext import commands
 from modmail.config import CONFIG, INTERNAL
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions  # noqa: F401
+from modmail.utils.plugins import PLUGINS, walk_plugins
 
 
 class ModmailBot(commands.Bot):
@@ -33,7 +34,14 @@ class ModmailBot(commands.Bot):
         self.http_session = ClientSession()
 
     async def close(self) -> None:
-        """Safely close HTTP session and extensions when bot is shutting down."""
+        """Safely close HTTP session and unload plugins and extensions when bot is shutting down."""
+        plugins = self.extensions & PLUGINS.keys()
+        for plug in list(plugins):
+            try:
+                self.unload_extension(plug)
+            except Exception:
+                self.logger.error(f"Exception occured while unloading plugin {plug.name}", exc_info=1)
+
         for ext in list(self.extensions):
             try:
                 self.unload_extension(ext)
@@ -67,9 +75,8 @@ class ModmailBot(commands.Bot):
 
     def load_plugins(self) -> None:
         """Load all enabled plugins."""
-        from modmail.utils.plugins import PLUGINS, walk_plugins
-
         PLUGINS.update(walk_plugins())
+
         for plugin, should_load in PLUGINS.items():
             if should_load:
                 self.logger.debug(f"Loading plugin {plugin}")
