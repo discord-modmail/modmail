@@ -288,8 +288,8 @@ python-versions = "*"
 name = "environs"
 version = "9.3.3"
 description = "simplified environment variable parsing"
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -525,8 +525,8 @@ plugins = ["setuptools"]
 name = "marshmallow"
 version = "3.13.0"
 description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
-category = "dev"
-optional = false
+category = "main"
+optional = true
 python-versions = ">=3.5"
 
 [package.extras]
@@ -1044,10 +1044,13 @@ python-versions = ">=3.6"
 idna = ">=2.0"
 multidict = ">=4.0"
 
+[extras]
+environs = ["environs"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "1a87eb98188b244523289104cb26d3fb50e4222f0dc946d199b8d5daef959e61"
+content-hash = "dcce698f7c219959ea613dd2d201ba902cd07ba41efe420bda0eb3140c3d91fe"
 
 [metadata.files]
 aiodns = [
