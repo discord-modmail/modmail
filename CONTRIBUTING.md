@@ -115,7 +115,7 @@ poetry run task precommit
 
 ###  After installing dependencies, you will have to setup environment variables:
 1. Create a text file named `.env` in your project root (that's the base folder of your repository):
-   - You can also copy the `.env.example` file to `.env`
+   - You can also copy the `.env.template` file to `.env`
 
 > Note: The entire file name is literally `.env`
 
@@ -130,7 +130,7 @@ poetry run task precommit
 |------------------|-------------------------------------------------------------------------|
 |TOKEN |Bot Token from the Discord developer portal |
 
-The rest of them can be viewed in our example file. [.env.example](./.env.example)
+The rest of them can be viewed in our example file. [.env.template](./.env.template)
 
 
 ###  Run The Project
