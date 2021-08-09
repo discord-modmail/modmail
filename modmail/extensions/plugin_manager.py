@@ -30,7 +30,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         super().__init__(bot)
         self.all_extensions = PLUGINS
 
-    async def get_black_listed_extensions(self) -> list:
+    def get_black_listed_extensions(self) -> list:
         """
         Returns a list of all unload blacklisted plugins.
 

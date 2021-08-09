@@ -85,7 +85,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         self.bot = bot
         self.all_extensions = EXTENSIONS
 
-    async def get_black_listed_extensions(self) -> list:
+    def get_black_listed_extensions(self) -> list:
         """Returns a list of all unload blacklisted extensions."""
         return NO_UNLOAD
 
@@ -122,7 +122,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             await ctx.send_help(ctx.command)
             return
 
-        blacklisted = [ext for ext in await self.get_black_listed_extensions() if ext in extensions]
+        blacklisted = [ext for ext in self.get_black_listed_extensions() if ext in extensions]
 
         if blacklisted:
             bl_msg = "\n".join(blacklisted)
@@ -130,7 +130,9 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             return
 
         if "*" in extensions or "**" in extensions:
-            extensions = sorted(ext for ext in self.bot.extensions.keys() if ext not in blacklisted)
+            extensions = sorted(
+                ext for ext in self.bot.extensions.keys() if ext not in self.get_black_listed_extensions()
+            )
 
         await ctx.send(self.batch_manage(Action.UNLOAD, *extensions))
 
