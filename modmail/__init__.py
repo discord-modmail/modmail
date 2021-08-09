@@ -1,14 +1,10 @@
 import logging
 import logging.handlers
-import typing
 from pathlib import Path
 
 import coloredlogs
 
 from modmail.log import ModmailLogger
-
-if typing.TYPE_CHECKING:
-    from modmail.bot import ModmailBot
 
 logging.TRACE = 5
 logging.NOTICE = 25
@@ -60,6 +56,3 @@ logging.getLogger("discord").setLevel(logging.WARNING)
 logging.getLogger("websockets").setLevel(logging.ERROR)
 # Set asyncio logging back to the default of INFO even if asyncio's debug mode is enabled.
 logging.getLogger("asyncio").setLevel(logging.INFO)
-
-
-instance: typing.Optional["ModmailBot"] = None  # Global ModmailBot instance.

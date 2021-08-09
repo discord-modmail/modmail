@@ -1,5 +1,8 @@
 import logging
 
+from modmail.bot import ModmailBot
+from modmail.log import ModmailLogger
+
 try:
     # noinspection PyUnresolvedReferences
     from colorama import init
@@ -8,9 +11,8 @@ try:
 except ImportError:
     pass
 
-from modmail.bot import ModmailBot
 
-log = logging.getLogger(__name__)
+log: ModmailLogger = logging.getLogger(__name__)
 
 
 def main() -> None:
