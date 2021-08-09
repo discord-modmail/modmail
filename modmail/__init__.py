@@ -6,6 +6,18 @@ import coloredlogs
 
 from modmail.log import ModmailLogger
 
+# this block allows coloredlogs coloring to be overidden by the enviroment variable.
+# coloredlogs contains support for it, but strangely does not default to the enviroment overriding.
+try:
+    # import the enviroment package
+    from environs import Env
+except ImportError:
+    COLOREDLOGS_LEVEL_STYLES = None
+else:
+    env = Env()
+    env.read_env("./env")
+    COLOREDLOGS_LEVEL_STYLES = env.str("COLOREDLOGS_LEVEL_STYLES", None)
+
 logging.TRACE = 5
 logging.NOTICE = 25
 logging.addLevelName(logging.TRACE, "TRACE")
@@ -40,9 +52,12 @@ file_handler.setFormatter(
 
 file_handler.setLevel(logging.TRACE)
 
-# configure trace color
-LEVEL_STYLES = dict(coloredlogs.DEFAULT_LEVEL_STYLES)
-LEVEL_STYLES["trace"] = LEVEL_STYLES["spam"]
+# configure trace color if the env var is not configured
+if COLOREDLOGS_LEVEL_STYLES is None:
+    LEVEL_STYLES = coloredlogs.DEFAULT_LEVEL_STYLES
+    LEVEL_STYLES["trace"] = LEVEL_STYLES["spam"]
+else:
+    LEVEL_STYLES = None
 
 coloredlogs.install(level=logging.TRACE, fmt=FMT, datefmt=DATEFMT, level_styles=LEVEL_STYLES)
 

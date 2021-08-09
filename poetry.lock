@@ -285,6 +285,24 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "environs"
+version = "9.3.3"
+description = "simplified environment variable parsing"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+marshmallow = ">=3.0.0"
+python-dotenv = "*"
+
+[package.extras]
+dev = ["pytest", "dj-database-url", "dj-email-url", "django-cache-url", "flake8 (==3.9.2)", "flake8-bugbear (==21.4.3)", "mypy (==0.910)", "pre-commit (>=2.4,<3.0)", "tox"]
+django = ["dj-database-url", "dj-email-url", "django-cache-url"]
+lint = ["flake8 (==3.9.2)", "flake8-bugbear (==21.4.3)", "mypy (==0.910)", "pre-commit (>=2.4,<3.0)"]
+tests = ["pytest", "dj-database-url", "dj-email-url", "django-cache-url"]
+
+[[package]]
 name = "execnet"
 version = "1.9.0"
 description = "execnet: rapid multi-Python deployment"
@@ -502,6 +520,20 @@ pipfile_deprecated_finder = ["pipreqs", "requirementslib"]
 requirements_deprecated_finder = ["pipreqs", "pip-api"]
 colors = ["colorama (>=0.4.3,<0.5.0)"]
 plugins = ["setuptools"]
+
+[[package]]
+name = "marshmallow"
+version = "3.13.0"
+description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
+category = "dev"
+optional = false
+python-versions = ">=3.5"
+
+[package.extras]
+dev = ["pytest", "pytz", "simplejson", "mypy (==0.910)", "flake8 (==3.9.2)", "flake8-bugbear (==21.4.3)", "pre-commit (>=2.4,<3.0)", "tox"]
+docs = ["sphinx (==4.1.1)", "sphinx-issues (==1.2.0)", "alabaster (==0.7.12)", "sphinx-version-warning (==1.1.2)", "autodocsumm (==0.2.6)"]
+lint = ["mypy (==0.910)", "flake8 (==3.9.2)", "flake8-bugbear (==21.4.3)", "pre-commit (>=2.4,<3.0)"]
+tests = ["pytest", "pytz", "simplejson"]
 
 [[package]]
 name = "mccabe"
@@ -1015,7 +1047,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "6735433ebc54f95f08d6b83877c0fee831ea13af835a5e4cfaf3310d41f83157"
+content-hash = "1a87eb98188b244523289104cb26d3fb50e4222f0dc946d199b8d5daef959e61"
 
 [metadata.files]
 aiodns = [
@@ -1302,6 +1334,10 @@ distlib = [
     {file = "distlib-0.3.2-py2.py3-none-any.whl", hash = "sha256:23e223426b28491b1ced97dc3bbe183027419dfc7982b4fa2f05d5f3ff10711c"},
     {file = "distlib-0.3.2.zip", hash = "sha256:106fef6dc37dd8c0e2c0a60d3fca3e77460a48907f335fa28420463a6f799736"},
 ]
+environs = [
+    {file = "environs-9.3.3-py2.py3-none-any.whl", hash = "sha256:ee5466156b50fe03aa9fec6e720feea577b5bf515d7f21b2c46608272557ba26"},
+    {file = "environs-9.3.3.tar.gz", hash = "sha256:72b867ff7b553076cdd90f3ee01ecc1cf854987639c9c459f0ed0d3d44ae490c"},
+]
 execnet = [
     {file = "execnet-1.9.0-py2.py3-none-any.whl", hash = "sha256:a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142"},
     {file = "execnet-1.9.0.tar.gz", hash = "sha256:8f694f3ba9cc92cab508b152dcfe322153975c29bda272e2fd7f3f00f36e47c5"},
@@ -1375,6 +1411,10 @@ iniconfig = [
 isort = [
     {file = "isort-5.9.3-py3-none-any.whl", hash = "sha256:e17d6e2b81095c9db0a03a8025a957f334d6ea30b26f9ec70805411e5c7c81f2"},
     {file = "isort-5.9.3.tar.gz", hash = "sha256:9c2ea1e62d871267b78307fe511c0838ba0da28698c5732d54e2790bf3ba9899"},
+]
+marshmallow = [
+    {file = "marshmallow-3.13.0-py2.py3-none-any.whl", hash = "sha256:dd4724335d3c2b870b641ffe4a2f8728a1380cd2e7e2312756715ffeaa82b842"},
+    {file = "marshmallow-3.13.0.tar.gz", hash = "sha256:c67929438fd73a2be92128caa0325b1b5ed8b626d91a094d2f7f2771bf1f1c0e"},
 ]
 mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},

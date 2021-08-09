@@ -26,6 +26,9 @@ pydantic = "^1.8.2"
 python-dotenv = "~=0.17.1"
 toml = "^0.10.2"
 
+[tool.poetry.group.dev.dependencies]
+environs = "^9.3.3"
+
 [tool.poetry.dev-dependencies]
 # always needed
 pre-commit = "~=2.1"
