@@ -81,7 +81,7 @@ lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI err
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
 pytest-docs = { cmd = "pytest --no-cov --docs tests/docs.md", help = "Create docs for tests using pytest-docs."}
 report = { cmd = "coverage report", help = "Show coverage report from previously run tests." }
-run = { cmd = "python -m modmail", help = "Run bot" }
+start = { cmd = "python -m modmail", help = "Run bot" }
 test = { cmd = "pytest -n auto --dist loadfile --cov-report= --cov= --docs tests/docs.md", help = "Runs tests and save results to a coverage report" }
 test-nocov = { cmd = "pytest --no-cov", help = "Runs tests without creating a coverage report" }
 
