@@ -3,7 +3,7 @@ Thank you so much for your interest in contributing!. All types of contributions
 
 Please make sure to read the relevant section before making your contribution! It will make it a lot easier for us maintainers to make the most of it and smooth out the experience for all involved. 💚
 
-> **NOTE**: that failing to comply with our guidelines may lead to a rejection of the contribution.
+> **NOTE**: failing to comply with our guidelines may lead to a rejection of the contribution.
 
 If you are confused by any of these rules, feel free to ask us in the `#support` channel in our  [Discord server.](https://discord.gg/ERteGkedDW)
 
@@ -82,21 +82,27 @@ Learn how to obtain the ID of a server, channel or role **[here](https://support
 You will need your own remote (online) copy of the project repository, known as a fork.
 You will do all your work in the fork rather than directly in the main repository.
 
+You can click [here to fork][fork]
+
 And you should be ready to go!
 
-####  Once You Have Your Fork, You Will Need To Clone The Repository To Your Computer.
+[fork]: https://github.com/discord-modmail/modmail/fork
+
+Once you have your fork you will need to clone the repo to your computer.
 ```shell
 $ git clone https://github.com/<your username>/modmail
 ...
 $ cd modmail
 ```
 
-**or using the github CLI**
+or using the [github cli](https://github.com/cli/cli):
 ```shell
 $ gh repo clone <your username>/modmail
 ...
 $ cd modmail
 ```
+
+> Tip: You can use the github cli to fork the repo as well, just use `gh repo fork discord-modmail/modmail` and it will allow you to clone it directly.
 
 ###  After cloning, proceed to install the project's dependencies.
 Make sure you are in the project directory.
@@ -105,17 +111,16 @@ Make sure you are in the project directory.
 poetry install
 # This will install the pre-commit hooks.
 poetry run task precommit
-# Optionally: run pre-commit hooks to initialize them.
-poetry run task lint
 ```
 
 ###  After installing dependencies, you will have to setup environment variables:
-1. Create a text file named .env in your project root (that's the base folder of your repository):
+1. Create a text file named `.env` in your project root (that's the base folder of your repository):
+   - You can also copy the `.env.example` file to `.env`
 
-> Note: The entire file name is literally .env
+> Note: The entire file name is literally `.env`
 
-2. Open the file with any text editor.
-3. Each environment variable is on its own line, with the variable and the value separated by a `=` sign.
+1. Open the file with any text editor.
+2. Each environment variable is on its own line, with the variable and the value separated by a `=` sign.
 
 
 
@@ -124,16 +129,15 @@ poetry run task lint
 |ENV VARIABLE NAME |WHAT IS IT? |
 |------------------|-------------------------------------------------------------------------|
 |TOKEN |Bot Token from the Discord developer portal |
-|GUILD_ID |ID of the discord server |
 
-Rest of them can be viewed here: https://github.com/discord-modmail/modmail/blob/main/modmail/config.py
+The rest of them can be viewed in our example file. [.env.example](./.env.example)
 
 
 ###  Run The Project
 To run the project, use the (below) in the project root.
 
 ```shell
-$ poetry run task run
+$ poetry run task start
 ```
 
 ## Contribute Code
@@ -152,7 +156,7 @@ To contribute code:
 * If PRing from your own fork, **ensure that "Allow edits from maintainers" is checked**. This gives permission for maintainers to commit changes directly to your fork, speeding up the review process.
 * If your PR is connected to an open issue, add a line in your PR's description that says `Closes #123`, where `#123` is the number of the issue you're fixing.
 
-> Pull requests (or PRs for short) are the primary mechanism we use to change Rust. GitHub itself has some [great documentation][about-pull-requests] on using the Pull Request feature. We use the "fork and pull" model [described here][development-models], where contributors push changes to their personal fork and create pull requests to bring those changes into the source repository.
+> Pull requests (or PRs for short) are the primary mechanism we use to change modmail. GitHub itself has some [great documentation][about-pull-requests] on using the Pull Request feature. We use the "fork and pull" model [described here][development-models], where contributors push changes to their personal fork and create pull requests to bring those changes into the source repository.
 
 [about-pull-requests]: https://help.github.com/articles/about-pull-requests/
 [development-models]: https://help.github.com/articles/about-collaborative-development-models/
@@ -168,7 +172,7 @@ Once you've filed the PR:
 
 ## Git Commit Messages
 
-Commit messages must start with a capitalized and short summary (max. 50 chars)
+Commit messages must start with a short summary (max. 50 chars)
 written in the imperative, followed by an optional, more detailed explanatory
 text which is separated from the summary by an empty line.
 
@@ -176,6 +180,8 @@ Commit messages should follow best practices, including explaining the context
 of the problem and how it was solved, including in caveats or follow up changes
 required. They should tell the story of the change and provide readers
 understanding of what led to it.
+
+Check out [Conventional commits](https://www.conventionalcommits.org/en/v1.0.0/#summary) for more information.
 
 If you're lost about what this even means, please see [How to Write a Git
 Commit Message](http://chris.beams.io/posts/git-commit/) for a start.
