@@ -29,7 +29,7 @@ PLUGINS = dict()
 
 def walk_plugins() -> Iterator[str]:
     """Yield plugin names from the modmail.plugins subpackage."""
-    for path in BASE_PATH.glob("*/*.py"):
+    for path in BASE_PATH.glob("**/*.py"):
         # calculate the module name, if it were to have a name from the path
         relative_path = path.relative_to(BASE_PATH)
         name = relative_path.__str__().rstrip(".py").replace("/", ".")
