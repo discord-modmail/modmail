@@ -7,7 +7,7 @@ import typing as t
 from collections import defaultdict
 from enum import Enum
 
-from discord import Colour, Embed
+from discord import AllowedMentions, Colour, Embed
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -267,7 +267,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
     async def cog_command_error(self, ctx: Context, error: Exception) -> None:
         """Handle BadArgument errors locally to prevent the help command from showing."""
         if isinstance(error, commands.BadArgument):
-            await ctx.send(str(error))
+            await ctx.send(str(error), allowed_mentions=AllowedMentions.none())
             error.handled = True
 
 
