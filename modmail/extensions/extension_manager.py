@@ -196,9 +196,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 status = ":red_circle:"
 
             root, name = ext.rsplit(".", 1)
-
             category = " - ".join(root.split("."))
-
             categories[category].append(f"{status}  {name}")
 
         return dict(categories)
