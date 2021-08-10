@@ -77,9 +77,11 @@ class ExtensionConverter(commands.Converter):
 
 
 class ExtensionManager(ModmailCog, name="Extension Manager"):
-    """Extension management.
+    """
+    Extension management.
 
-    Commands to load, reload, unload, and list extensions."""
+    Commands to load, reload, unload, and list extensions.
+    """
 
     type = "extension"
 
