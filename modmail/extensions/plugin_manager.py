@@ -62,7 +62,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """  # noqa: W605
         await self.unload_extensions.callback(self, ctx, *plugins)
 
-    @plugins_group.command(name="reload", aliases=("r",))
+    @plugins_group.command(name="reload", aliases=("r", "rl"))
     async def reload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
         """
         Reload extensions given their fully qualified or unqualified names.
