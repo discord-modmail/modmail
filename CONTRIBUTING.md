@@ -136,7 +136,7 @@ poetry run task precommit
 | False    | `DEVELOP`         | Boolean | Enables the developer bot extensions             |
 | False    | `PLUGIN_DEV`      | Boolean | Enables plugin-developer friendly bot extensions |
 
-The rest of them can be viewed in our example file. [.env.template](./.env.template)
+The rest of them can be viewed in our [.env.template](./.env.template)
 
 ### Run The Project
 
