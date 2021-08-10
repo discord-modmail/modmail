@@ -68,7 +68,7 @@ Once it's filed:
 
 ## Project Setup
 
-So you wanna contribute some code! That's great! This project uses GitHub Pull Requests to manage contributions, so [read up on how to fork a GitHub project and file a PR](https://guides.github.com/activities/forking) if you've never done it before.
+So you want to contribute some code! That's great! This project uses GitHub Pull Requests to manage contributions, so [read up on how to fork a GitHub project and file a PR](https://guides.github.com/activities/forking) if you've never done it before.
 
 ### Test Server and Bot Account
 
@@ -91,7 +91,7 @@ And you should be ready to go!
 
 Once you have your fork you will need to clone the repo to your computer.
 
-```shell
+```sh
 $ git clone https://github.com/<your username>/modmail
 ...
 $ cd modmail
@@ -99,7 +99,7 @@ $ cd modmail
 
 or using the [github cli](https://github.com/cli/cli):
 
-```shell
+```sh
 $ gh repo clone <your username>/modmail
 ...
 $ cd modmail
@@ -111,7 +111,7 @@ $ cd modmail
 
 Make sure you are in the project directory.
 
-```shell
+```sh
 # This will install the development and project dependencies.
 poetry install
 # This will install the pre-commit hooks.
