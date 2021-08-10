@@ -1,6 +1,8 @@
+from modmail.bot import ModmailBot
+from modmail.log import ModmailLogger
 from modmail.utils.cogs import ModmailCog
 
-__all__ = ["PluginCog"]
+__all__ = ["PluginCog", ModmailBot, ModmailLogger]
 
 
 class PluginCog(ModmailCog):
