@@ -149,18 +149,14 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         If an extension fails to be reloaded, it will be rolled-back to the prior working state.
 
-        If '\*' is given as the name, all currently loaded extensions will be reloaded.
-        If '\*\*' is given as the name, all extensions, including unloaded ones, will be reloaded.
+        If '\*' or '\*\*' is given as the name, all currently loaded extensions will be reloaded.
         """  # noqa: W605
         if not extensions:
             await ctx.send_help(ctx.command)
             return
 
-        if "**" in extensions:
-            extensions = self.all_extensions.keys()
-        elif "*" in extensions:
-            extensions = [*extensions, *sorted(self.bot.extensions.keys())]
-            extensions.remove("*")
+        if "*" in extensions or "**" in extensions:
+            extensions = self.bot.extensions.keys() & self.all_extensions.keys()
 
         await ctx.send(self.batch_manage(Action.RELOAD, *extensions))
 
@@ -169,7 +165,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         """
         Get a list of all extensions, including their loaded status.
 
-        Grey indicates that the extension is unloaded.
+        Red indicates that the extension is unloaded.
         Green indicates that the extension is currently loaded.
         """
         embed = Embed(colour=Colour.blurple())
@@ -244,11 +240,6 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         try:
             action.value(self.bot, ext)
         except (commands.ExtensionAlreadyLoaded, commands.ExtensionNotLoaded):
-            if action is Action.RELOAD:
-                # When reloading, just load the extension if it was not loaded.
-                log.debug("Treating {ext!r} as if it was not loaded.")
-                return self.manage(Action.LOAD, ext)
-
             msg = f":x: {self.type.capitalize()} `{ext}` is already {verb}ed."
         except Exception as e:
             if hasattr(e, "original"):
@@ -267,6 +258,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
     # This cannot be static (must have a __func__ attribute).
     async def cog_check(self, ctx: Context) -> bool:
         """Only allow bot owners to invoke the commands in this cog."""
+        # TODO: Change to allow other users to invoke this too.
         return await self.bot.is_owner(ctx.author)
 
     # This cannot be static (must have a __func__ attribute).

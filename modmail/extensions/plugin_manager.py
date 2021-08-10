@@ -69,8 +69,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         If an extension fails to be reloaded, it will be rolled-back to the prior working state.
 
-        If '\*' is given as the name, all currently loaded extensions will be reloaded.
-        If '\*\*' is given as the name, all extensions, including unloaded ones, will be reloaded.
+        If '\*' or '\*\*' is given as the name, all currently loaded extensions will be reloaded.
         """  # noqa: W605
         await self.reload_extensions.callback(self, ctx, *plugins)
 
