@@ -24,7 +24,6 @@ coloredlogs = "^15.0"
 "discord.py" = {git = "https://github.com/Rapptz/discord.py.git", rev = "master"}
 environs = {version = "~=9.3.3", optional = true}
 pydantic = "^1.8.2"
-python-dotenv = "~=0.17.1"
 toml = "^0.10.2"
 
 [tool.poetry.extras]
