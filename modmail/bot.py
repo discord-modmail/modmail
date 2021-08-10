@@ -8,7 +8,7 @@ from discord.ext import commands
 
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions  # noqa: F401
+from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
 
 
@@ -59,7 +59,7 @@ class ModmailBot(commands.Bot):
         await super().close()
 
     def load_extensions(self) -> None:
-        """Load all enabled extensions."""  # noqa: F811
+        """Load all enabled extensions."""
         EXTENSIONS.update(walk_extensions())
 
         # set up no_unload global too
