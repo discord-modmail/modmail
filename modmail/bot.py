@@ -107,7 +107,7 @@ class ModmailBot(commands.Bot):
         """
         Delegate to super to unregister `cog`.
 
-        This only serves to make the debug log, so that extensions don't have to.
+        This only serves to make the info log, so that extensions don't have to.
         """
         super().remove_cog(cog)
         self.logger.info(f"Cog unloaded: {cog}")
