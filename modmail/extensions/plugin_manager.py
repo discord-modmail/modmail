@@ -92,7 +92,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         return ctx.author.guild_permissions.administrator or await self.bot.is_owner(ctx.author)
 
 
-# Delete the commands from ExtensionManager that PluginManager has inherited
+# HACK: Delete the commands from ExtensionManager that PluginManager has inherited
 # before discord.py tries to re-register them
 for command in ExtensionManager.__cog_commands__:
     PluginManager.__cog_commands__.remove(command)
