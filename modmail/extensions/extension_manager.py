@@ -43,7 +43,7 @@ class ExtensionConverter(commands.Converter):
     source_list = EXTENSIONS
     type = "extension"
 
-    async def convert(self, ctx: Context, argument: str) -> str:
+    async def convert(self, _: Context, argument: str) -> str:
         """Fully qualify the name of an extension and ensure it exists."""
         # Special values to reload all extensions
         if argument == "*" or argument == "**":
@@ -77,7 +77,9 @@ class ExtensionConverter(commands.Converter):
 
 
 class ExtensionManager(ModmailCog, name="Extension Manager"):
-    """Extension management base class."""
+    """Extension management.
+
+    Commands to load, reload, unload, and list extensions."""
 
     type = "extension"
 
@@ -131,12 +133,14 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         if "*" in extensions or "**" in extensions:
             extensions = sorted(
-                ext for ext in self.bot.extensions.keys() if ext not in self.get_black_listed_extensions()
+                ext
+                for ext in self.bot.extensions.keys() & self.all_extensions
+                if ext not in (self.get_black_listed_extensions())
             )
 
         await ctx.send(self.batch_manage(Action.UNLOAD, *extensions))
 
-    @extensions_group.command(name="reload", aliases=("r",))
+    @extensions_group.command(name="reload", aliases=("r", "rl"))
     async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         """
         Reload extensions given their fully qualified or unqualified names.
