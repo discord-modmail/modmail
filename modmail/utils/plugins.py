@@ -40,15 +40,26 @@ def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
             # Ignore module/package names starting with an underscore.
             continue
 
-        # load the plugins using importlib
-        # this needs to be done like this, due to the fact that
-        # its possible a plugin will not have an __init__.py file
-        spec = importlib.util.spec_from_file_location(name, path)
-        imported = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(imported)
+        # due to the fact that plugins are user generated and may not have gone through
+        # the testing that the bot has, we want to ensure we try/except any plugins
+        # that fail to import.
+        try:
+            # load the plugins using importlib
+            # this needs to be done like this, due to the fact that
+            # its possible a plugin will not have an __init__.py file
+            spec = importlib.util.spec_from_file_location(name, path)
+            imported = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(imported)
+        except Exception:
+            log.error(
+                "Failed to import {0}. As a result, this plugin is not considered installed.".format(name),
+                exc_info=True,
+            )
+            continue
 
         if not inspect.isfunction(getattr(imported, "setup", None)):
             # If it lacks a setup function, it's not a plugin. This is enforced by dpy.
+            log.trace("{0} does not have a setup function. Skipping.".format(name))
             continue
 
         ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)

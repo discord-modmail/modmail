@@ -80,7 +80,12 @@ class ModmailBot(commands.Bot):
         for plugin, should_load in PLUGINS.items():
             if should_load:
                 self.logger.debug(f"Loading plugin {plugin}")
-                self.load_extension(plugin)
+                try:
+                    # since we're loading user generated content,
+                    # any errors here will take down the entire bot
+                    self.load_extension(plugin)
+                except Exception:
+                    self.logger.error("Failed to load plugin {0}".format(plugin))
 
     def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         """
