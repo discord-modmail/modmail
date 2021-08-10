@@ -6,7 +6,7 @@ import arrow
 from aiohttp import ClientSession
 from discord.ext import commands
 
-from modmail.config import CONFIG, INTERNAL
+from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions  # noqa: F401
 from modmail.utils.plugins import PLUGINS, walk_plugins
@@ -24,7 +24,6 @@ class ModmailBot(commands.Bot):
 
     def __init__(self, **kwargs):
         self.config = CONFIG
-        self.internal = INTERNAL
         self.http_session: t.Optional[ClientSession] = None
         self.start_time = arrow.utcnow()
         super().__init__(command_prefix=commands.when_mentioned_or(self.config.bot.prefix), **kwargs)

@@ -92,57 +92,13 @@ class BaseSettings(PydanticBaseSettings):
             )
 
 
-class ThreadBaseSettings(BaseSettings):
-    class Config:
-        env_prefix = "thread."
-
-        # @classmethod
-        # def alias_generator(cls, string: str) -> str:
-        #     return f"thread.{super.__name__}.{string}"
-
-
-class BotActivityConfig(BaseSettings):
-    twitch_url: str = "https://www.twitch.tv/discordmodmail/"
-
-
 class BotConfig(BaseSettings):
     prefix: str = "?"
-    activity: BotActivityConfig
     token: str = None
-    modmail_guild_id: str = None
-    guild_id: str = None
-    multi_bot: bool = False
-    log_url: str = None
-    log_url_prefix = "/"
-    github_token: SecretStr = None
-    database_type: str = "mongodb"  # TODO limit to specific strings
-    enable_plugins: bool = True
-    enable_eval: bool = True
-    data_collection = True
-    owners: str = 1
-    connection_uri: str = None
-    level_permissions: dict = None
 
     class Config:
         # env_prefix = "bot."
         allow_mutation = False
-
-
-class ColorsConfig(BaseSettings):
-    main_color: str = str(discord.Colour.blurple())
-    error_color: str = str(discord.Colour.red())
-    recipient_color: str = str(discord.Colour.green())
-    mod_color: str = str(discord.Colour.blue())
-
-
-class ChannelConfig(BaseSettings):
-    # all of the below should be validated to channels
-    # either by name or by int
-    main_category: str = None
-    fallback_category: str = None
-    log_channel: str = None
-    mention_channel: str = None
-    update_channel: str = None
 
 
 class BotMode(BaseSettings):
@@ -167,163 +123,9 @@ class DevConfig(BaseSettings):
     mode: BotMode
 
 
-class EmojiConfig(BaseSettings):
-    """
-    Standard emojis that the bot uses when a specific emoji is not defined for a specific use.
-    """
-
-    sent_emoji: str = "\\N{WHITE HEAVY CHECK MARK}"  # TODO type as a discord emoji
-    blocked_emoji: str = "\\N{NO ENTRY SIGN}"  # TODO type as a discord emoji
-
-
-class InternalConfig(BaseModel):
-    # do NOT set these yourself. The bot will handle these
-    activity_message: str = None
-    activity_type: None = None
-    status: None = None
-    dm_disabled: int = 0
-    # moderation
-    blocked: dict = dict()
-    blocked_roles: dict = dict()
-    blocked_whitelist: list = dict()
-    command_permissions: dict = dict()
-    level_permissions: dict = dict()
-    override_command_level: dict = dict()
-    # threads
-    snippets: dict = dict()
-    notifications: dict = dict()
-    subscriptions: dict = dict()
-    closures: dict = dict()
-    # misc
-    plugins: list = list()
-    aliases: dict = dict()
-    auto_triggers: dict = dict()
-    command_permissions: dict = dict()
-    level_permissions: dict = dict()
-
-    class Config:
-        arbitrary_types_allowed = True
-
-
-class MentionConfig(BaseSettings):
-    alert_on_mention: bool = False
-    silent_alert_on_mention: bool = False
-    mention_channel: int = None
-
-
-class SnippetConfig(BaseSettings):
-    anonmous_snippets: bool = False
-    use_regex_autotrigger: bool = False
-
-
-class ThreadAnonConfig(ThreadBaseSettings):
-    username: str = "Response"
-    footer: str = "Staff Team"
-
-
-class ThreadAutoCloseConfig(ThreadBaseSettings):
-    time: datetime.timedelta = 0
-    silently: bool = False
-    response: str = "This thread has been closed automatically due to inactivity after {timeout}."
-
-
-class ThreadCloseConfig(ThreadBaseSettings):
-    footer: str = "Replying will create a new thread"
-    title: str = "Thread Closed"
-    response: str = "{closer.mention} has closed this Modmail thread."
-    on_leave: bool = False
-    on_leave_reason: str = "The recipient has left the server."
-    self_close_response: str = "You have closed this Modmail thread."
-
-
-class ThreadConfirmCreationConfig(ThreadBaseSettings):
-    enabled: bool = False
-    title: str = "Confirm thread creation"
-    response: str = "React to confirm thread creation which will directly contact the moderators"
-    accept_emoji: str = "\N{WHITE HEAVY CHECK MARK}"  # TODO type as a discord emoji
-    deny_emoji: str = "\N{NO ENTRY SIGN}"  # TODO type as a discord emoji
-
-
-class ThreadCooldownConfig(ThreadBaseSettings):
-    time: datetime.timedelta = 0
-    embed_title: str = "Message not sent!"
-    response: str = "You must wait for {delta} before you can contact me again."
-
-
-class ThreadCreationConfig(ThreadBaseSettings):
-    response: str = "The staff team will get back to you as soon as possible."
-    footer: str = "Your message has been sent"
-    title: str = "Thread Created"
-
-
-class ThreadDisabledConfig(ThreadBaseSettings):
-    new_title: str = "Not Delivered"
-    new_response: str = "We are not accepting new threads."
-    new_footer: str = "Please try again later..."
-    current_title: str = "Not Delivered"
-    current_response: str = "We are not accepting any messages."
-    current_footer: str = "Please try again later..."
-
-
-class ThreadMoveConfig(ThreadBaseSettings):
-    title: str = "Thread Moved"
-    notify: bool = False
-    notify_mods: bool = False
-    response: str = "This thread has been moved."
-
-
-class ThreadSelfClosableConfig(ThreadBaseSettings):
-    enabled: bool = False
-    lock_emoji: str = "\N{LOCK}"
-    creation_footer: str = "Click the lock to close the thread"
-
-
-class ThreadConfig(BaseSettings):
-    anon_reply_without_command: bool = False
-    reply_without_command: bool = False
-    plain_reply_without_command: bool = False
-    mention: str = "@here"
-    user_typing: bool = False
-    mod_typing: bool = False
-    transfer_reactions: bool = True
-    contact_silently: bool = False
-    account_age: datetime.timedelta = 0
-    guild_age: datetime.timedelta = 0
-    mod_tag: str = ""
-    show_timestamp: bool = True
-
-    anon: ThreadAnonConfig
-    auto_close: ThreadAutoCloseConfig
-    close: ThreadCloseConfig
-    confirm_creation: ThreadConfirmCreationConfig
-    cooldown: ThreadCooldownConfig
-    creation: ThreadCreationConfig
-    disabled: ThreadDisabledConfig
-    move: ThreadMoveConfig
-    self_closable: ThreadSelfClosableConfig
-
-
-class UpdateConfig(BaseSettings):
-    disable_autoupdates: bool = False
-    update_notifications: bool = True
-
-    class Config:
-        allow_mutation = False
-        env_prefix = "updates."
-
-
 class ModmailConfig(BaseSettings):
     bot: BotConfig
-    colors: ColorsConfig
-    channels: ChannelConfig
     dev: DevConfig
-    emoji: EmojiConfig
-    mention: MentionConfig
-    snippets: SnippetConfig
-    thread: ThreadConfig
-    updates: UpdateConfig
-    shell: str = None
 
 
 CONFIG = ModmailConfig()
-INTERNAL = InternalConfig()
