@@ -33,7 +33,7 @@ class ModmailBot(commands.Bot):
         self.http_session = ClientSession()
 
     async def close(self) -> None:
-        """Safely close HTTP session and unload plugins and extensions when bot is shutting down."""
+        """Safely close HTTP session, unload plugins and extensions when the bot is shutting down."""
         plugins = self.extensions & PLUGINS.keys()
         for plug in list(plugins):
             try:
