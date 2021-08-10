@@ -12,8 +12,8 @@ import importlib
 import importlib.util
 import inspect
 import logging
+import typing as t
 from pathlib import Path
-from typing import Iterator
 
 from modmail import plugins
 from modmail.log import ModmailLogger
@@ -24,10 +24,10 @@ BASE_PATH = Path(plugins.__file__).parent
 
 log: ModmailLogger = logging.getLogger(__name__)
 
-PLUGINS = dict()
+PLUGINS: t.Dict[str, t.Tuple[bool, bool]] = dict()
 
 
-def walk_plugins() -> Iterator[str]:
+def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
     """Yield plugin names from the modmail.plugins subpackage."""
     for path in BASE_PATH.glob("**/*.py"):
         # calculate the module name, if it were to have a name from the path

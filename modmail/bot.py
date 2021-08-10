@@ -40,19 +40,19 @@ class ModmailBot(commands.Bot):
             try:
                 self.unload_extension(plug)
             except Exception:
-                self.logger.error(f"Exception occured while unloading plugin {plug.name}", exc_info=1)
+                self.logger.error(f"Exception occured while unloading plugin {plug.name}", exc_info=True)
 
         for ext in list(self.extensions):
             try:
                 self.unload_extension(ext)
             except Exception:
-                self.logger.error(f"Exception occured while unloading {ext.name}", exc_info=1)
+                self.logger.error(f"Exception occured while unloading {ext.name}", exc_info=True)
 
         for cog in list(self.cogs):
             try:
                 self.remove_cog(cog)
             except Exception:
-                self.logger.error(f"Exception occured while removing cog {cog.name}", exc_info=1)
+                self.logger.error(f"Exception occured while removing cog {cog.name}", exc_info=True)
 
         if self.http_session:
             await self.http_session.close()

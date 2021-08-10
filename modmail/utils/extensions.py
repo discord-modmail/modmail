@@ -5,7 +5,7 @@ import importlib
 import inspect
 import logging
 import pkgutil
-from typing import Iterator, NoReturn, Tuple
+import typing as t
 
 from modmail import extensions
 from modmail.config import CONFIG
@@ -17,8 +17,8 @@ log: ModmailLogger = logging.getLogger(__name__)
 EXT_METADATA = ExtMetadata
 
 
-EXTENSIONS = dict()
-NO_UNLOAD = list()
+EXTENSIONS: t.Dict[str, t.Tuple[bool, bool]] = dict()
+NO_UNLOAD: t.List[str] = list()
 
 
 def determine_bot_mode() -> int:
@@ -47,10 +47,10 @@ def unqualify(name: str) -> str:
     return name.rsplit(".", maxsplit=1)[-1]
 
 
-def walk_extensions() -> Iterator[Tuple]:
+def walk_extensions() -> t.Iterator[t.Tuple[str, t.Tuple[bool, bool]]]:
     """Yield extension names from the modmail.exts subpackage."""
 
-    def on_error(name: str) -> NoReturn:
+    def on_error(name: str) -> t.NoReturn:
         raise ImportError(name=name)  # pragma: no cover
 
     for module in pkgutil.walk_packages(extensions.__path__, f"{extensions.__name__}.", onerror=on_error):
