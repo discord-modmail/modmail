@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "https://github.com/discord-modmail/modmail"
 homepage = "https://github.com/discord-modmail/modmail"
 keywords = ["discord", "modmail"]
-include = ["CHANGELOG.md"]
+include = ["CHANGELOG.md", "env.template"]
 packages = [{ include = "modmail" }]
 
 [tool.poetry.dependencies]
@@ -18,9 +18,9 @@ aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 arrow = "^1.1.1"
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
-"discord.py" = {git = "https://github.com/Rapptz/discord.py.git", rev = "master"}
-environs = {version = "~=9.3.3", optional = true}
-pydantic = {version = "^1.8.2", extras = ["dotenv"]}
+"discord.py" = { git = "https://github.com/Rapptz/discord.py.git", rev = "master" }
+environs = { version = "~=9.3.3", optional = true }
+pydantic = { version = "^1.8.2", extras = ["dotenv"] }
 toml = "^0.10.2"
 
 [tool.poetry.extras]
@@ -86,11 +86,11 @@ help = "Export installed packages in requirements.txt format"
 
 [tool.taskipy.tasks]
 black = { cmd = "black --check .", help = "dry run of black" }
-codecov-validate = { cmd= "curl --data-binary @.codecov.yml https://codecov.io/validate", help = "Validate `.codecov.yml` with their api." }
+codecov-validate = { cmd = "curl --data-binary @.codecov.yml https://codecov.io/validate", help = "Validate `.codecov.yml` with their api." }
 flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
 lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
-pytest-docs = { cmd = "pytest --no-cov --docs tests/docs.md", help = "Create docs for tests using pytest-docs."}
+pytest-docs = { cmd = "pytest --no-cov --docs tests/docs.md", help = "Create docs for tests using pytest-docs." }
 report = { cmd = "coverage report", help = "Show coverage report from previously run tests." }
 start = { cmd = "python -m modmail", help = "Run bot" }
 test = { cmd = "pytest -n auto --dist loadfile --cov-report= --cov= --docs tests/docs.md", help = "Runs tests and save results to a coverage report" }
