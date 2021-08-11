@@ -14,7 +14,7 @@ from discord.ext.commands import Context
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
-from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify
+from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
 
 log: ModmailLogger = logging.getLogger(__name__)
 
@@ -88,6 +88,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
     def __init__(self, bot: ModmailBot):
         self.bot = bot
         self.all_extensions = EXTENSIONS
+        self.refresh_method = walk_extensions
 
     def get_black_listed_extensions(self) -> list:
         """Returns a list of all unload blacklisted extensions."""
@@ -186,6 +187,18 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         # TODO: since we currently don't have a paginator.
         await ctx.send("".join(lines) or f"There are no {self.type}s installed.")
+
+    @extensions_group.command(name="refresh", aliases=("rewalk",))
+    async def rewalk_extensions(self, ctx: Context) -> None:
+        """
+        Refreshes the list of extensions.
+
+        Typical use case is in the event that the existing extensions have changed while the bot is running.
+        """
+        log.debug(f"Refreshing list of {self.type}s.")
+        self.all_extensions.clear()
+        self.all_extensions.update(self.refresh_method())
+        await ctx.send(f":ok_hand: Refreshed list of {self.type}s.")
 
     def group_extension_statuses(self) -> t.Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""

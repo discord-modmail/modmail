@@ -4,7 +4,7 @@ from discord.ext.commands import Context
 from modmail.bot import ModmailBot
 from modmail.extensions.extension_manager import ExtensionConverter, ExtensionManager
 from modmail.utils.cogs import BotModes, ExtMetadata
-from modmail.utils.plugins import PLUGINS
+from modmail.utils.plugins import PLUGINS, walk_plugins
 
 EXT_METADATA = ExtMetadata(load_if_mode=BotModes.PRODUCTION)
 
@@ -29,6 +29,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     def __init__(self, bot: ModmailBot) -> None:
         super().__init__(bot)
         self.all_extensions = PLUGINS
+        self.refresh_method = walk_plugins
 
     def get_black_listed_extensions(self) -> list:
         """
@@ -65,23 +66,28 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     @plugins_group.command(name="reload", aliases=("r", "rl"))
     async def reload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
         """
-        Reload extensions given their fully qualified or unqualified names.
+        Reload plugins given their fully qualified or unqualified names.
 
-        If an extension fails to be reloaded, it will be rolled-back to the prior working state.
+        If an plugin fails to be reloaded, it will be rolled-back to the prior working state.
 
-        If '\*' or '\*\*' is given as the name, all currently loaded extensions will be reloaded.
+        If '\*' or '\*\*' is given as the name, all currently loaded plugins will be reloaded.
         """  # noqa: W605
         await self.reload_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="list", aliases=("all", "ls"))
     async def list_plugins(self, ctx: Context) -> None:
         """
-        Get a list of all extensions, including their loaded status.
+        Get a list of all plugins, including their loaded status.
 
-        Grey indicates that the extension is unloaded.
-        Green indicates that the extension is currently loaded.
+        Red indicates that the plugin is unloaded.
+        Green indicates that the plugin is currently loaded.
         """
         await self.list_extensions.callback(self, ctx)
+
+    @plugins_group.command(name="refresh", aliases=("rewalk",))
+    async def rewalk_plugins(self, ctx: Context) -> None:
+        """Refreshes the list of installed plugins."""
+        await self.rewalk_extensions.callback(self, ctx)
 
     # TODO: Implement install/enable/disable/etc
 
