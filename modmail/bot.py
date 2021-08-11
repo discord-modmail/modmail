@@ -32,6 +32,15 @@ class ModmailBot(commands.Bot):
         """Create an aiohttp client session."""
         self.http_session = ClientSession()
 
+    async def start(self, *args, **kwargs) -> None:
+        """
+        Start the bot.
+
+        This just serves to create the http session.
+        """
+        await self.create_session()
+        await super().start(*args, **kwargs)
+
     async def close(self) -> None:
         """Safely close HTTP session, unload plugins and extensions when the bot is shutting down."""
         plugins = self.extensions & PLUGINS.keys()
@@ -84,7 +93,7 @@ class ModmailBot(commands.Bot):
                     # any errors here will take down the entire bot
                     self.load_extension(plugin)
                 except Exception:
-                    self.logger.error("Failed to load plugin {0}".format(plugin))
+                    self.logger.error("Failed to load plugin {0}".format(plugin), exc_info=True)
 
     def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         """

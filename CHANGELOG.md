@@ -23,4 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - used to determine if a cog should load or not depending on the bot mode
 - Guide on how to contribute to modmail, see [CONTRIBUTING.md](./CONTRIBUTING.md)
 
+### Fixed
+
+- Make the bot http_session within an event loop.
+
 [unreleased]: https://github.com/discord-modmail/modmail/compare/main
