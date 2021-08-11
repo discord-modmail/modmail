@@ -8,7 +8,7 @@ Please make sure to read the relevant section before making your contribution! I
 > However, most features that are rejected can be written as a plugin, and used on your
 > modmail, without blocking you from getting updates.
 
-If you are confused by any of these rules, feel free to ask us in the `#support` channel in our  [Discord server.](https://discord.gg/ERteGkedDW)
+If you are confused by any of these rules, feel free to ask us in the `#support` channel in our  [Discord server.][modmail-discord]
 
 ## How do I...
 
@@ -22,12 +22,13 @@ If you are confused by any of these rules, feel free to ask us in the `#support`
 - Style Guides ✅🙆🏼💃👔
   - [Git Commit Messages](#git-commit-messages)
   - [Python Styleguide](#python-styleguide)
+  - [Changelog Requirement](#changelog-requirement)
 
 ## Request Support
 
-- You can either ask your question as issue by opening one at https://github.com/discord-modmail/modmail/issues.
+- You can either ask your question as issue by opening one at [discord-modmail/modmail/issues][modmail-issues].
 
-- [Join the Modmail Discord Server](https://discord.gg/ERteGkedDW)
+- [Join the Modmail Discord Server][modmail-discord]
 
   - Even though Discord is a chat service, sometimes it takes several hours for community members to respond — please be patient!
   - Use the `#support` channel for questions or discussion about writing or contributing to Discord Modmail bot.
@@ -39,7 +40,7 @@ If you run into an error or bug with the project:
 
 > **Note:** If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and include a link to the original issue in the body of your new one.
 
-- Open an Issue at [discord-modmail/modmail/issues](https://github.com/discord-modmail/modmail/issues)
+- Open an Issue at [discord-modmail/modmail/issues][modmail-issues].
 - Explain the problem and include additional details to help maintainers reproduce the problem:
   - **Use a clear and descriptive title** for the issue to identify the problem.
   - **Describe the exact steps which reproduce the problem** in as many details as possible. When listing steps, **don't just say what you did but explain how you did it**.
@@ -52,7 +53,7 @@ If you run into an error or bug with the project:
 
 If the project doesn't do something you need or want it to do:
 
-- Open an Issue at https://github.com/discord-modmail/modmail/issues
+- Open an Issue at [discord-modmail/modmail/issues][modmail-issues].
 - Provide as much context as you can about what you're running into.
   - **Use a clear and descriptive title** for the issue to identify the suggestion.
   - **Provide a step-by-step description of the suggested enhancement** in as many details as possible.
@@ -161,7 +162,7 @@ To contribute code:
 - Write clear, concise commit message(s).
   - A more in-depth guide to writing great commit messages can be found in Chris Beam's [*How to Write a Git Commit Message*](https://chris.beams.io/posts/git-commit/).
 - Run `flake8`, `black` and `pre-commit` against your code **before** you push. Your commit will be rejected by the build server if it fails to lint. You can run the lint by executing `poetry run task lint` in your command line.
-- Go to [discord-modmail/modmail/pulls](https://github.com/discord-modmail/modmail/pulls) and open a new pull request with your changes.
+- Go to [discord-modmail/modmail/pulls][modmail-pulls] and open a new pull request with your changes.
 - If PRing from your own fork, **ensure that "Allow edits from maintainers" is checked**. This permits maintainers to commit changes directly to your fork, speeding up the review process.
 - If your PR is connected to an open issue, add a line in your PR's description that says `Closes #123`, where `#123` is the number of the issue you're fixing.
 
@@ -211,6 +212,21 @@ your chapter weird.
 
 <!-- TODO: ... -->
 
+## Changelog Requirement
+
+Modmail has CI that will check for an entry corresponding to your PR in `CHANGES.md`.
+If you feel this PR does not require a changelog entry please state that in a comment
+and a maintainer can add a `skip changelog` label to make the CI pass. Otherwise,
+please ensure you have a line in the following format:
+
+```
+- `Modmail` is now more awesome (#X)
+```
+
+Note that X should be your PR number, not issue number! This is not perfect but
+saves a lot of release overhead as now the releaser does not need to go back and
+workout what to add to the `CHANGES.md` for each release.
+
 ## Attribution
 
 This contributing guide is inspired by the [Moby's](https://github.com/moby/moby) and [Atom Text Editor's](https://github.com/atom/atom) contributing guide.
@@ -218,3 +234,6 @@ This contributing guide is inspired by the [Moby's](https://github.com/moby/moby
 [about-pull-requests]: https://help.github.com/articles/about-pull-requests/
 [development-models]: https://help.github.com/articles/about-collaborative-development-models/
 [fork]: https://github.com/discord-modmail/modmail/fork
+[modmail-discord]: https://discord.gg/ERteGkedDW
+[modmail-issues]: https://github.com/discord-modmail/modmail/issues
+[modmail-pulls]: https://github.com/discord-modmail/modmail/pulls

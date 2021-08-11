@@ -1,4 +1,5 @@
 # Github Action Workflow enforcing our changelog style of enforcing PR number.
+# credit: https://github.com/psf/black/blob/main/.github/workflows/changelog.yml
 
 name: Changelog Entry Check
 
