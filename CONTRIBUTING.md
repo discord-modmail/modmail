@@ -207,7 +207,7 @@ your chapter weird.
 
 ## Python Styleguide
 
-WIP...
+<!-- TODO: ... -->
 
 ## Attribution
 
