@@ -5,8 +5,8 @@ Thank you so much for your interest in contributing!. All types of contributions
 Please make sure to read the relevant section before making your contribution! It will make it a lot easier for us maintainers to make the most of it and smooth out the experience for all involved. 💚
 
 > **NOTE**: failing to comply with our guidelines may lead to a rejection of the contribution.
-> However, most features that are rejected are able to be written as a plugin, and used on your
-> bot, without blocking you from getting updates.
+> However, most features that are rejected can be written as a plugin, and used on your
+> modmail, without blocking you from getting updates.
 
 If you are confused by any of these rules, feel free to ask us in the `#support` channel in our  [Discord server.](https://discord.gg/ERteGkedDW)
 
@@ -42,11 +42,11 @@ If you run into an error or bug with the project:
 - Open an Issue at [discord-modmail/modmail/issues](https://github.com/discord-modmail/modmail/issues)
 - Explain the problem and include additional details to help maintainers reproduce the problem:
   - **Use a clear and descriptive title** for the issue to identify the problem.
-  - **Describe the exact steps which reproduce the problem** in as many details as possible. When listing steps, **don't just say what you did, but explain how you did it**.
+  - **Describe the exact steps which reproduce the problem** in as many details as possible. When listing steps, **don't just say what you did but explain how you did it**.
   - **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, or copy/paste-able snippets, which you use in those examples. If you're providing snippets in the issue, use [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
   - **Describe the behaviour you observed after following the steps** and point out what exactly is the problem with that behaviour.
   - **Explain which behaviour you expected to see instead and why.**
-  - **Include screenshots and animated GIFs** which show you following the described steps and clearly demonstrate the problem. If you use the keyboard while following the steps, **record the GIF with the [Keybinding Resolver](https://github.com/atom/keybinding-resolver) shown**. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) on Linux (ofcourse there are plenty more).
+  - **Include screenshots and animated GIFs** which show you following the described steps and clearly demonstrate the problem. If you use the keyboard while following the steps, **record the GIF with the [Keybinding Resolver](https://github.com/atom/keybinding-resolver) shown**. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) on Linux (of course there are plenty more).
 
 ## Request a Feature
 
@@ -64,7 +64,7 @@ Once it's filed:
 
 - The Maintainers will [label the issue](#label-issues).
 - The Maintainers will evaluate the feature request, possibly asking you more questions to understand its purpose and any relevant requirements. If the issue is closed, the team will convey their reasoning and suggest an alternative path forward.
-- If the feature request is accepted, it will be marked for implementation with `status: approved`, which can then be done by either by a core team member or by anyone in the community who wants to contribute code.
+- If the feature request is accepted, it will be marked for implementation with `status: approved`, which can then be done either by a core team member or by anyone in the community who wants to contribute code.
 
 > **Note**: The team is unlikely to be able to accept every single feature request that is filed. Please understand if they need to say no.
 
