@@ -65,7 +65,7 @@ def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
         ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)
         if ext_metadata is not None:
             # check if this plugin is dev only or plugin dev only
-            load_cog = (ext_metadata.load_if_mode & BOT_MODE).to_strings()
+            load_cog = bool(int(ext_metadata.load_if_mode) & BOT_MODE)
             log.trace(f"Load plugin {imported.__name__!r}?: {load_cog}")
             yield imported.__name__, load_cog
             continue

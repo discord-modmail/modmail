@@ -64,7 +64,7 @@ def walk_extensions() -> t.Iterator[t.Tuple[str, t.Tuple[bool, bool]]]:
                 # If it lacks a setup function, it's not an extension.
                 continue
 
-        ext_metadata: "ExtMetadata" = getattr(imported, "EXT_METADATA", None)
+        ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)
         if ext_metadata is not None:
             # check if this cog is dev only or plugin dev only
             load_cog = bool(int(ext_metadata.load_if_mode) & BOT_MODE)
