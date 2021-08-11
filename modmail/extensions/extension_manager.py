@@ -253,7 +253,11 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         try:
             action.value(self.bot, ext)
         except (commands.ExtensionAlreadyLoaded, commands.ExtensionNotLoaded):
-            msg = f":x: {self.type.capitalize()} `{ext}` is already {verb}ed."
+            if action is Action.RELOAD:
+                # When reloading, have a special error.
+                msg = f":x: {self.type.capitalize()} `{ext}` is not loaded, so it was not {verb}ed."
+            else:
+                msg = f":x: {self.type.capitalize()} `{ext}` is already {verb}ed."
         except Exception as e:
             if hasattr(e, "original"):
                 e = e.original
