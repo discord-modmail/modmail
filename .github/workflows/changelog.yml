@@ -1,0 +1,21 @@
+# Github Action Workflow enforcing our changelog style of enforcing PR number.
+
+name: Changelog Entry Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled, reopened]
+
+jobs:
+  build:
+    name: Changelog Entry Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Grep CHANGES.md for PR number
+      - uses: actions/checkout@v2
+        if: contains(github.event.pull_request.labels.*.name, 'skip changelog') != true
+        run: |
+          grep -Pz "\((\n\s*)?#${{ github.event.pull_request.number }}(\n\s*)?\)" CHANGES.md || \
+          (echo "Please add '(#${{ github.event.pull_request.number }})' change line to CHANGES.md" && \
+          exit 1)
