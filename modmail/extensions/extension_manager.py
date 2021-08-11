@@ -196,7 +196,11 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         Typical use case is in the event that the existing extensions have changed while the bot is running.
         """
         log.debug(f"Refreshing list of {self.type}s.")
+
+        # make sure the new walk contains all currently loaded extensions, so they can be unloaded
+        loaded_extensions = self.bot.extensions & self.all_extensions.keys()
         self.all_extensions.clear()
+        self.all_extensions.update(loaded_extensions)
         self.all_extensions.update(self.refresh_method())
         await ctx.send(f":ok_hand: Refreshed list of {self.type}s.")
 
