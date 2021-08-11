@@ -5,6 +5,8 @@ Thank you so much for your interest in contributing!. All types of contributions
 Please make sure to read the relevant section before making your contribution! It will make it a lot easier for us maintainers to make the most of it and smooth out the experience for all involved. 💚
 
 > **NOTE**: failing to comply with our guidelines may lead to a rejection of the contribution.
+> However, most features that are rejected are able to be written as a plugin, and used on your
+> bot, without blocking you from getting updates.
 
 If you are confused by any of these rules, feel free to ask us in the `#support` channel in our  [Discord server.](https://discord.gg/ERteGkedDW)
 
