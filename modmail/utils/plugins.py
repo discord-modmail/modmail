@@ -8,6 +8,7 @@ TODO: Expand file to download plugins from github and gitlab from a list that is
 """
 
 
+import glob
 import importlib
 import importlib.util
 import inspect
@@ -20,21 +21,28 @@ from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata
 from modmail.utils.extensions import BOT_MODE, unqualify
 
-BASE_PATH = Path(plugins.__file__).parent
-
 log: ModmailLogger = logging.getLogger(__name__)
 
+
+BASE_PATH = Path(plugins.__file__).parent.resolve()
+PLUGIN_MODULE = "modmail.plugins"
 PLUGINS: t.Dict[str, t.Tuple[bool, bool]] = dict()
 
 
 def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
     """Yield plugin names from the modmail.plugins subpackage."""
-    for path in BASE_PATH.glob("**/*.py"):
-        # calculate the module name, if it were to have a name from the path
-        relative_path = path.relative_to(BASE_PATH)
+    # walk all files in the plugins folder
+    # this is to ensure folder symlinks are supported,
+    # which are important for ease of development.
+    for path in glob.iglob(f"{BASE_PATH}/**/*.py", recursive=True):
+
+        log.trace("Path: {0}".format(path))
+
+        # calculate the module name, dervived from the relative path
+        relative_path = Path(path).relative_to(BASE_PATH)
         name = relative_path.__str__().rstrip(".py").replace("/", ".")
-        name = "modmail.plugins." + name
-        log.trace("Relative path: {0}".format(name))
+        name = PLUGIN_MODULE + "." + name
+        log.trace("Module name: {0}".format(name))
 
         if unqualify(name.split(".")[-1]).startswith("_"):
             # Ignore module/package names starting with an underscore.
