@@ -19,7 +19,8 @@ repos:
     rev: 0.7.8
     hooks:
       - id: mdformat
-        exclude: "tests/docs.md"
+        files: '\.md$'
+        exclude: 'tests/docs.md'
         additional_dependencies:
           - mdformat-gfm
           - mdformat-black
