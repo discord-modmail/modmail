@@ -13,6 +13,7 @@ repository = "https://github.com/discord-modmail/modmail"
 homepage = "https://github.com/discord-modmail/modmail"
 keywords = ["discord", "modmail"]
 
+include = ["CHANGELOG.md"]
 packages = [{ include = "modmail" }]
 
 [tool.poetry.dependencies]

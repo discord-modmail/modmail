@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0]
+
 ### Added
 
 - Bot modes to determine behavior.
@@ -27,4 +29,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Make the bot http_session within an event loop.
 
-[unreleased]: https://github.com/discord-modmail/modmail/compare/main
+[0.1.0]: https://github.com/discord-modmail/modmail/releases/tag/v0.1.0
+[unreleased]: https://github.com/discord-modmail/modmail/compare/v0.1.0...main
