@@ -1,5 +1,12 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
 ## [0.1.0]
 
 ### Added
@@ -32,9 +39,12 @@
   - Prefix command for getting the set prefix. Most useful by mentioning the bot.
   - Uptime command which tells the end user how long the bot has been online.
   - Ping command to see the bot latency.
+- Guide on how to contribute to modmail, see [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Start a Changelog
 
 ### Fixed
 
 - Make the bot http_session within an event loop.
 
 [0.1.0]: https://github.com/discord-modmail/modmail/releases/tag/v0.1.0
+[unreleased]: https://github.com/discord-modmail/modmail/compare/v0.1.0...main
