@@ -94,7 +94,10 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     # This cannot be static (must have a __func__ attribute).
     async def cog_check(self, ctx: Context) -> bool:
         """Only allow server admins and bot owners to invoke the commands in this cog."""
-        return ctx.author.guild_permissions.administrator or await self.bot.is_owner(ctx.author)
+        if ctx.guild is None:
+            return await self.bot.is_owner(ctx.author)
+        else:
+            return ctx.author.guild_permissions.administrator or await self.bot.is_owner(ctx.author)
 
 
 # HACK: Delete the commands from ExtensionManager that PluginManager has inherited
