@@ -1,19 +1,12 @@
-import asyncio
-import datetime
-import json
 import logging
 import os
-import sys
 import typing
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 import discord
 import toml
-from discord.ext.commands import BadArgument
-from pydantic import BaseModel
 from pydantic import BaseSettings as PydanticBaseSettings
-from pydantic import Field, SecretStr
 from pydantic.env_settings import SettingsSourceCallable
 from pydantic.types import conint
 
@@ -95,6 +88,7 @@ class BaseSettings(PydanticBaseSettings):
 class BotConfig(BaseSettings):
     prefix: str = "?"
     token: str = None
+    guild_id: int
 
     class Config:
         # env_prefix = "bot."
@@ -123,9 +117,15 @@ class DevConfig(BaseSettings):
     mode: BotMode
 
 
+class ThreadConfig(BaseSettings):
+    thread_relay_webhook_id: int
+    thread_mention_role_id: int
+
+
 class ModmailConfig(BaseSettings):
     bot: BotConfig
     dev: DevConfig
+    thread: ThreadConfig
 
 
 CONFIG = ModmailConfig()

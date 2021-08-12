@@ -3,6 +3,7 @@ import logging
 import typing as t
 
 import arrow
+import discord
 from aiohttp import ClientSession
 from discord.ext import commands
 
@@ -25,6 +26,7 @@ class ModmailBot(commands.Bot):
     def __init__(self, **kwargs):
         self.config = CONFIG
         self.http_session: t.Optional[ClientSession] = None
+        self._guild_available = asyncio.Event()
         self.start_time = arrow.utcnow()
         super().__init__(command_prefix=commands.when_mentioned_or(self.config.bot.prefix), **kwargs)
 
@@ -120,6 +122,45 @@ class ModmailBot(commands.Bot):
         """
         super().remove_cog(cog)
         self.logger.info(f"Cog unloaded: {cog}")
+
+    async def on_guild_available(self, guild: discord.Guild) -> None:
+        """
+        Set the internal guild available event when constants.Guild.id becomes available.
+
+        If the cache appears to still be empty (no members, no channels, or no roles), the event
+        will not be set.
+        """
+        if guild.id != self.config.bot.guild_id:
+            return
+
+        if not guild.roles or not guild.members or not guild.channels:
+            msg = "Guild available event was dispatched but the cache appears to still be empty!"
+            self.logger.warning(msg)
+
+            try:
+                _ = await self.fetch_webhook(self.config.thread.thread_relay_webhook_id)
+            except discord.HTTPException as e:
+                self.logger.error(f"Failed to fetch webhook to send empty cache warning: status {e.status}")
+
+            return
+
+        self._guild_available.set()
+
+    async def on_guild_unavailable(self, guild: discord.Guild) -> None:
+        """Clear the internal guild available event when constants.Guild.id becomes unavailable."""
+        if guild.id != self.config.bot.guild_id:
+            return
+
+        self._guild_available.clear()
+
+    async def wait_until_guild_available(self) -> None:
+        """
+        Wait until the constants.Guild.id guild is available (and the cache is ready).
+
+        The on_ready event is inadequate because it only waits 2 seconds for a GUILD_CREATE
+        gateway event before giving up and thus not populating the cache for unavailable guilds.
+        """
+        await self._guild_available.wait()
 
     async def on_ready(self) -> None:
         """Send basic login success message."""
