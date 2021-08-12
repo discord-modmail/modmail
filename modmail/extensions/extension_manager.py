@@ -198,9 +198,15 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         log.debug(f"Refreshing list of {self.type}s.")
 
         # make sure the new walk contains all currently loaded extensions, so they can be unloaded
-        loaded_extensions = self.bot.extensions & self.all_extensions.keys()
+        loaded_extensions = dict()
+        for ext in self.all_extensions.items():
+            if ext in self.bot.extensions:
+                loaded_extensions.update(ext)
+        # now that we know what the list was, we can clear it
         self.all_extensions.clear()
+        # put the loaded extensions back in
         self.all_extensions.update(loaded_extensions)
+        # now we can re-walk the extensions
         self.all_extensions.update(self.refresh_method())
         await ctx.send(f":ok_hand: Refreshed list of {self.type}s.")
 
