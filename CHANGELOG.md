@@ -19,8 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - This is not used yet.
 - Extension loading system (#43)
   - scans for extensions in the `modmail/extensions` folder and loads them if they are of the right format.
+  - all extensions must be loadable as a module, which means they must have `__init__.py` files in their directories.
 - Plugin loading system (#43)
   - scans for plugins in the `modmail/plugins` folder and loads them.
+  - Unlike extensions, plugins and their respective folders do not need to have `__init__.py` files and are allowed to be symlinks.
 - Extension management commands (#43)
   - load, reload, unload, list, refresh commands for dealing with extensions
   - Run the `ext` command for more details when bot is in `DEVELOP` mode.
