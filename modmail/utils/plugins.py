@@ -34,6 +34,8 @@ def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
     # walk all files in the plugins folder
     # this is to ensure folder symlinks are supported,
     # which are important for ease of development.
+    # NOTE: We are not using Pathlib's glob utility as it doesn't
+    #   support following symlinks, see: https://bugs.python.org/issue33428
     for path in glob.iglob(f"{BASE_PATH}/**/*.py", recursive=True):
 
         log.trace("Path: {0}".format(path))
