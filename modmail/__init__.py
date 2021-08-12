@@ -26,7 +26,7 @@ log_file.parent.mkdir(parents=True, exist_ok=True)
 # file handler
 file_handler = logging.handlers.RotatingFileHandler(
     log_file,
-    maxBytes=5 * (2 ** 14),
+    maxBytes=5 * (2 ** 14),  # 81920 bytes, approximately 200 lines
     backupCount=7,
     encoding="utf-8",
 )

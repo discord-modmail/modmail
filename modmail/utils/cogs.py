@@ -8,6 +8,7 @@ class BitwiseAutoEnum(IntEnum):
     """Enum class which generates binary value for each item."""
 
     def _generate_next_value_(name, start, count, last_values) -> int:  # noqa: ANN001 N805
+        """Override default enum auto() counter to return increasing powers of 2, 4, 8..."""
         return 1 << count
 
 
