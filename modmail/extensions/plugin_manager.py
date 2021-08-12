@@ -13,7 +13,7 @@ class PluginConverter(ExtensionConverter):
     """
     Fully qualify the name of a plugin and ensure it exists.
 
-    The \* and \*\* values bypass this when used with the reload command.
+    The * value bypasses this when used with the a plugin manger command.
     """  # noqa: W605
 
     source_list = PLUGINS
@@ -50,7 +50,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         Load plugins given their fully qualified or unqualified names.
 
-        If '\*' or '\*\*' is given as the name, all unloaded plugins will be loaded.
+        If '\*' is given as the name, all unloaded plugins will be loaded.
         """  # noqa: W605
         await self.load_extensions.callback(self, ctx, *plugins)
 
@@ -59,7 +59,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         Unload currently loaded plugins given their fully qualified or unqualified names.
 
-        If '\*' or '\*\*' is given as the name, all loaded plugins will be unloaded.
+        If '\*' is given as the name, all loaded plugins will be unloaded.
         """  # noqa: W605
         await self.unload_extensions.callback(self, ctx, *plugins)
 
@@ -70,7 +70,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         If an plugin fails to be reloaded, it will be rolled-back to the prior working state.
 
-        If '\*' or '\*\*' is given as the name, all currently loaded plugins will be reloaded.
+        If '\*' is given as the name, all currently loaded plugins will be reloaded.
         """  # noqa: W605
         await self.reload_extensions.callback(self, ctx, *plugins)
 
@@ -86,7 +86,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
     @plugins_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def resync_plugins(self, ctx: Context) -> None:
-        """        Refreshes the list of plugins from disk, but do not unload any currently active."""
+        """Refreshes the list of plugins from disk, but do not unload any currently active."""
         await self.resync_extensions.callback(self, ctx)
 
     # TODO: Implement install/enable/disable/etc

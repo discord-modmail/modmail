@@ -37,7 +37,7 @@ class ExtensionConverter(commands.Converter):
     """
     Fully qualify the name of an extension and ensure it exists.
 
-    The * and ** values bypass this when used with the reload command.
+    The * value bypasses this when used with the an extension manger command.
     """
 
     source_list = EXTENSIONS
@@ -46,7 +46,7 @@ class ExtensionConverter(commands.Converter):
     async def convert(self, _: Context, argument: str) -> str:
         """Fully qualify the name of an extension and ensure it exists."""
         # Special values to reload all extensions
-        if argument == "*" or argument == "**":
+        if argument == "*":
             return argument
 
         argument = argument.lower()
@@ -104,13 +104,13 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         """
         Load extensions given their fully qualified or unqualified names.
 
-        If '\*' or '\*\*' is given as the name, all unloaded extensions will be loaded.
+        If '\*' is given as the name, all unloaded extensions will be loaded.
         """  # noqa: W605
         if not extensions:
             await ctx.send_help(ctx.command)
             return
 
-        if "*" in extensions or "**" in extensions:
+        if "*" in extensions:
             extensions = sorted(ext for ext in self.all_extensions if ext not in self.bot.extensions.keys())
 
         msg = self.batch_manage(Action.LOAD, *extensions)
@@ -121,7 +121,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         """
         Unload currently loaded extensions given their fully qualified or unqualified names.
 
-        If '\*' or '\*\*' is given as the name, all loaded extensions will be unloaded.
+        If '\*' is given as the name, all loaded extensions will be unloaded.
         """  # noqa: W605
         if not extensions:
             await ctx.send_help(ctx.command)
@@ -134,7 +134,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             await ctx.send(f":x: The following {self.type}(s) may not be unloaded:```\n{bl_msg}```")
             return
 
-        if "*" in extensions or "**" in extensions:
+        if "*" in extensions:
             extensions = sorted(
                 ext
                 for ext in self.bot.extensions.keys() & self.all_extensions
@@ -150,13 +150,13 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         If an extension fails to be reloaded, it will be rolled-back to the prior working state.
 
-        If '\*' or '\*\*' is given as the name, all currently loaded extensions will be reloaded.
+        If '\*' is given as the name, all currently loaded extensions will be reloaded.
         """  # noqa: W605
         if not extensions:
             await ctx.send_help(ctx.command)
             return
 
-        if "*" in extensions or "**" in extensions:
+        if "*" in extensions:
             extensions = self.bot.extensions.keys() & self.all_extensions.keys()
 
         await ctx.send(self.batch_manage(Action.RELOAD, *extensions))
