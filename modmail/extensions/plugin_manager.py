@@ -84,7 +84,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.list_extensions.callback(self, ctx)
 
-    @plugins_group.command(name="refresh", aliases=("rewalk",))
+    @plugins_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def rewalk_plugins(self, ctx: Context) -> None:
         """Refreshes the list of installed plugins."""
         await self.rewalk_extensions.callback(self, ctx)

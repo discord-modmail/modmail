@@ -188,7 +188,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         # TODO: since we currently don't have a paginator.
         await ctx.send("".join(lines) or f"There are no {self.type}s installed.")
 
-    @extensions_group.command(name="refresh", aliases=("rewalk",))
+    @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def rewalk_extensions(self, ctx: Context) -> None:
         """
         Refreshes the list of extensions.
@@ -198,10 +198,8 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         log.debug(f"Refreshing list of {self.type}s.")
 
         # make sure the new walk contains all currently loaded extensions, so they can be unloaded
-        loaded_extensions = dict()
-        for ext in self.all_extensions.items():
-            if ext in self.bot.extensions:
-                loaded_extensions.update(ext)
+        loaded_extensions = dict((en, sl) for en, sl in self.all_extensions.items() if en in self.bot.extensions)
+
         # now that we know what the list was, we can clear it
         self.all_extensions.clear()
         # put the loaded extensions back in
