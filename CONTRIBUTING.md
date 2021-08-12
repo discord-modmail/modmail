@@ -67,7 +67,7 @@ Once it's filed:
 - The Maintainers will evaluate the feature request, possibly asking you more questions to understand its purpose and any relevant requirements. If the issue is closed, the team will convey their reasoning and suggest an alternative path forward.
 - If the feature request is accepted, it will be marked for implementation with `status: approved`, which can then be done either by a core team member or by anyone in the community who wants to contribute code.
 
-> **Note**: The team is unlikely to be able to accept every single feature request that is filed. Please understand if they need to say no.
+> **Note**: The team is unlikely to be able to accept every single feature request that is filed. Please understand if they need to say no. However for most features requested, you can always write a plugin for your modmail bot.
 
 ## Project Setup
 
@@ -80,7 +80,11 @@ You will need your own test server and bot account on Discord to test your chang
 1. Create a test server.
 1. Create a bot account and invite it to the server you just created.
 
-Note down the IDs for your server, as well as any channels and roles created.
+<!---
+TODO: Add required channel and role IDS when needed.
+-->
+
+Note down the IDs for your server.
 Learn how to obtain the ID of a server, channel or role **[here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-).**
 
 ### Fork the Project
@@ -164,7 +168,7 @@ To contribute code:
 - Run `flake8`, `black` and `pre-commit` against your code **before** you push. Your commit will be rejected by the build server if it fails to lint. You can run the lint by executing `poetry run task lint` in your command line.
 - Go to [discord-modmail/modmail/pulls][modmail-pulls] and open a new pull request with your changes.
 - If PRing from your own fork, **ensure that "Allow edits from maintainers" is checked**. This permits maintainers to commit changes directly to your fork, speeding up the review process.
-- If your PR is connected to an open issue, add a line in your PR's description that says `Closes #123`, where `#123` is the number of the issue you're fixing.
+- If your PR is connected to an open issue, add a line in your PR's description that says `Closes #123`, where `#123` is the number of the issue you're fixing. This will make github link your issue, and make it easier for us (and other contributers) to find and understand the context behind your PR.
 
 > Pull requests (or PRs for short) are the primary mechanism we use to change modmail. GitHub itself has some [great documentation][about-pull-requests] on using the Pull Request feature. We use the "fork and pull" model [described here][development-models], where contributors push changes to their personal fork and create pull requests to bring those changes into the source repository.
 
