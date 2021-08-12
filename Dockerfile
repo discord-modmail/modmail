@@ -14,14 +14,16 @@ RUN apt-get update && apt-get install -y \
 # Install poetry
 RUN pip install -U poetry
 
+# See https://github.com/python-poetry/poetry/issues/3336
+RUN poetry config experimental.new-installer false
+
 # Create the working directory
 WORKDIR /modmail
 
-# Install project dependencies
-COPY pyproject.toml poetry.lock ./
-RUN poetry install --no-dev
-
 # Copy the source code in last to optimize rebuilding the image
 COPY . .
+
+# Install project dependencies
+RUN poetry install --no-dev
 
 CMD ["python", "-m", "modmail"]
