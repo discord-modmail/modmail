@@ -191,7 +191,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
     @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def resync_extensions(self, ctx: Context) -> None:
         """
-        Refreshes the list of extensions.
+        Refreshes the list of extensions from disk, but do not unload any currently active.
 
         Typical use case is in the event that the existing extensions have changed while the bot is running.
         """

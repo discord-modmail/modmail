@@ -86,7 +86,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
     @plugins_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def resync_plugins(self, ctx: Context) -> None:
-        """Refreshes the list of installed plugins."""
+        """        Refreshes the list of plugins from disk, but do not unload any currently active."""
         await self.resync_extensions.callback(self, ctx)
 
     # TODO: Implement install/enable/disable/etc
