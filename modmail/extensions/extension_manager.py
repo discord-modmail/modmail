@@ -198,9 +198,10 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         log.debug(f"Refreshing list of {self.type}s.")
 
         # make sure the new walk contains all currently loaded extensions, so they can be unloaded
-        loaded_extensions = dict(
-            (en, sl) for en, sl in self.all_extensions.items() if en in self.bot.extensions
-        )
+        loaded_extensions = {}
+        for name, should_load in self.all_extensions.items():
+            if name in self.bot.extensions:
+                loaded_extensions[name] = should_load
 
         # now that we know what the list was, we can clear it
         self.all_extensions.clear()
