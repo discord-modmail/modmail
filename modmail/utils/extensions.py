@@ -21,6 +21,11 @@ EXTENSIONS: t.Dict[str, t.Tuple[bool, bool]] = dict()
 NO_UNLOAD: t.List[str] = list()
 
 
+def unqualify(name: str) -> str:
+    """Return an unqualified name given a qualified module/package `name`."""
+    return name.rsplit(".", maxsplit=1)[-1]
+
+
 def determine_bot_mode() -> int:
     """
     Figure out the bot mode from the configuration system.
@@ -29,7 +34,7 @@ def determine_bot_mode() -> int:
     """
     bot_mode = 0
     for mode in BotModes:
-        if getattr(CONFIG.dev.mode, str(mode).split(".")[-1].lower(), True):
+        if getattr(CONFIG.dev.mode, unqualify(str(mode)).lower(), True):
             bot_mode += mode.value
     return bot_mode
 
@@ -40,11 +45,6 @@ BOT_MODE = determine_bot_mode()
 log.trace(f"BOT_MODE value: {BOT_MODE}")
 log.debug(f"Dev mode status: {bool(BOT_MODE & BOT_MODES.DEVELOP)}")
 log.debug(f"Plugin dev mode status: {bool(BOT_MODE & BOT_MODES.PLUGIN_DEV)}")
-
-
-def unqualify(name: str) -> str:
-    """Return an unqualified name given a qualified module/package `name`."""
-    return name.rsplit(".", maxsplit=1)[-1]
 
 
 def walk_extensions() -> t.Iterator[t.Tuple[str, t.Tuple[bool, bool]]]:
