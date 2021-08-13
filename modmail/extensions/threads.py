@@ -26,7 +26,7 @@ class DmRelay(ModmailCog):
         self.bot = bot
         self.config = CONFIG
 
-        self.relay_channel: t.Optional[discord.abc.GuildChannel] = None
+        self.relay_channel: t.Optional[discord.TextChannel] = None
         self.webhook_id: int = self.config.thread.thread_relay_webhook_id
         self.webhook: t.Optional[discord.Webhook] = None
 
@@ -52,10 +52,10 @@ class DmRelay(ModmailCog):
                 content=message.content,
                 username=sub_clyde(message.author.name),
                 avatar_url=message.author.avatar,
-                thread=thread.id,
+                thread=thread,
             )
         except discord.HTTPException:
-            logger.exception("Failed to send a message to the webhook!")
+            logger.exception("Failed to send a message to the webhook!", exc_info=True)
 
     @staticmethod
     def format_message_embed(message: discord.Message, **kwargs) -> discord.Embed:
@@ -78,7 +78,10 @@ class DmRelay(ModmailCog):
             embed=self.format_message_embed(message),
             allowed_mentions=allowed_mentions,
         )
-        thread_channel = await relayed_msg.start_thread(name=str(message.author.id), auto_archive_duration=5)
+        thread_channel = await relayed_msg.create_thread(
+            name=str(message.author.id),
+            auto_archive_duration=relayed_msg.channel.default_auto_archive_duration,
+        )
 
         return thread_channel
 
@@ -111,13 +114,13 @@ class DmRelay(ModmailCog):
     async def close(self, ctx: Context, *, _: Duration = None) -> None:
         """Close the current thread after `after` time from now."""
         # TODO: Implement after duration
-        await ctx.channel.edit(archived=True, locked=True)
         thread_close_embed = discord.Embed(
             title="Thread Closed",
             description=f"{ctx.author.mention} has closed this Modmail thread.",
             timestamp=datetime.datetime.now(),
         )
         await ctx.send(embed=thread_close_embed)
+        await ctx.channel.edit(archived=True, locked=False)
 
 
 def setup(bot: ModmailBot) -> None:
