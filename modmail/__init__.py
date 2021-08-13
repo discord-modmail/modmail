@@ -11,6 +11,9 @@ logging.NOTICE = 25
 logging.addLevelName(logging.TRACE, "TRACE")
 logging.addLevelName(logging.NOTICE, "NOTICE")
 
+
+LOG_FILE_SIZE = 8 * (2 ** 10) ** 2  # 8MB, discord upload limit
+
 # this logging level is set to logging.TRACE because if it is not set to the lowest level,
 # the child level will be limited to the lowest level this is set to.
 ROOT_LOG_LEVEL = logging.TRACE
@@ -26,7 +29,7 @@ log_file.parent.mkdir(parents=True, exist_ok=True)
 # file handler
 file_handler = logging.handlers.RotatingFileHandler(
     log_file,
-    maxBytes=5 * (2 ** 14),  # 81920 bytes, approximately 200 lines
+    maxBytes=LOG_FILE_SIZE,
     backupCount=7,
     encoding="utf-8",
 )
