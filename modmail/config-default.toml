@@ -6,3 +6,5 @@ log_level = 25  # "NOTICE"
 
 [dev.mode]
 production = true
+
+[thread]
