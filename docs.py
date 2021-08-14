@@ -27,7 +27,11 @@ import yaml
 app = typer.Typer()
 
 mkdocs_config = "mkdocs.yml"
-missing_translation_snippet = "\n{!../../../docs/missing-translation.md!}"
+missing_translation_snippet = """
+!!! warning
+        The current page still doesn't have a translation for this language.
+        But you can help to translate it: [Contributing](https://abcabc.com/).
+"""
 url_base = "http://127.0.0.1:8000/discord-modmail/modmail/"
 docs_path = Path("docs")
 en_docs_path = Path("docs/en")
@@ -136,7 +140,7 @@ def build_lang(
         return
 
     typer.echo(f"Building docs_for: {lang}", color=typer.colors.BLUE)
-    build_dir_path = Path("docs_build")
+    build_dir_path = Path("site")
     build_dir_path.mkdir(exist_ok=True)
     build_lang_path = build_dir_path / lang
 
@@ -317,8 +321,8 @@ def live(
     """
     lang_path: Path = docs_path / lang
     os.chdir(lang_path)
+    typer.echo("Serving at: http://127.0.0.1:8008/discord-modmail/modmail/", color=typer.colors.GREEN)
     mkdocs.commands.serve.serve(dev_addr="127.0.0.1:8008")
-    typer.echo("Serving at: http://127.0.0.1:8008", color=typer.colors.GREEN)
 
 
 def update_config(lang: str) -> None:
