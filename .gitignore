@@ -135,3 +135,5 @@ logs
 
 # Configuration
 *config.toml
+
+docs_build

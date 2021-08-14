@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prefix command for getting the set prefix. Most useful by mentioning the bot.
   - Uptime command which tells the end user how long the bot has been online.
   - Ping command to see the bot latency.
-- Guide on how to contribute to modmail, see [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Guide on how to contribute to modmail, see \[CONTRIBUTING.md\] <!-- #TODO: Make this a link -->
 - Start a Changelog
 
 ### Fixed
