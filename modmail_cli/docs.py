@@ -140,7 +140,7 @@ def build_lang(
         return
 
     typer.echo(f"Building docs_for: {lang}", color=typer.colors.BLUE)
-    build_dir_path = Path("site")
+    build_dir_path = Path("docs_dir")
     build_dir_path.mkdir(exist_ok=True)
     build_lang_path = build_dir_path / lang
 
@@ -365,6 +365,7 @@ def update_config(lang: str) -> None:
 
 
 def get_key_section(*, key_to_section: Dict[Tuple[str, ...], list], key: Tuple[str, ...]) -> list:
+    """Get section from keys."""
     if key in key_to_section:
         return key_to_section[key]
     super_key = key[:-1]
@@ -377,12 +378,14 @@ def get_key_section(*, key_to_section: Dict[Tuple[str, ...], list], key: Tuple[s
 
 
 def get_text_with_translate_missing(text: str) -> str:
+    """Get missing translation text for sections whose translations haven't been done yet."""
     lines = text.splitlines()
     lines.insert(1, missing_translation_snippet)
     return "\n".join(lines)
 
 
 def get_file_to_nav_map(nav: list) -> Dict[str, Tuple[str, ...]]:
+    """Generate navbar through file."""
     file_to_nav = {}
     for item in nav:
         if type(item) is str:
@@ -393,11 +396,11 @@ def get_file_to_nav_map(nav: list) -> Dict[str, Tuple[str, ...]]:
             sub_file_to_nav = get_file_to_nav_map(sub_nav)
             for k, v in sub_file_to_nav.items():
                 file_to_nav[k] = (item_key,) + v
-    print(file_to_nav)
     return file_to_nav
 
 
 def get_sections(nav: list) -> Dict[Tuple[str, ...], str]:
+    """Get all page sections to form index through `nav`."""
     sections = {}
     for item in nav:
         if type(item) is str:
@@ -409,9 +412,4 @@ def get_sections(nav: list) -> Dict[Tuple[str, ...], str]:
             sub_sections = get_sections(sub_nav)
             for k, v in sub_sections.items():
                 sections[(item_key,) + k] = v
-    print(sections)
     return sections
-
-
-if __name__ == "__main__":
-    app()
