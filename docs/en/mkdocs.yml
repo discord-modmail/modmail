@@ -1,6 +1,7 @@
 site_name: Discord Modmail
 site_description: A Modmail bot for Discord. Allowing safe moderator conversations with server members one server at a time.
 site_url: https://github.com/discord-modmail/modmail
+
 theme:
   name: material
   custom_dir: overrides
@@ -22,22 +23,26 @@ theme:
   - search.highlight
   icon:
     repo: fontawesome/brands/github-alt
-  logo: img/icon-white.svg
+  logo: img/modmail_no_bg.png
   favicon: img/favicon.png
   language: en
+
 repo_name: discord-modmail/modmail
 repo_url: https://github.com/discord-modmail/modmail
 edit_uri: ''
+
 plugins:
 - search
 - markdownextradata:
     data: data
+
 nav:
 - DiscordModmail: index.md
 - Languages:
   - en: /
 - contributing.md
 - release-notes.md
+
 markdown_extensions:
 - toc:
     permalink: true
@@ -52,6 +57,7 @@ markdown_extensions:
       class: mermaid
       format: !!python/name:pymdownx.superfences.fence_div_format ''
 - pymdownx.tabbed
+
 extra:
   social:
   - icon: fontawesome/brands/github-alt
@@ -63,9 +69,11 @@ extra:
   alternate:
   - link: /
     name: en - English
+
 extra_css:
 - css/termynal.css
 - css/custom.css
+
 extra_javascript:
 - https://unpkg.com/mermaid@8.4.6/dist/mermaid.min.js
 - js/termynal.js
