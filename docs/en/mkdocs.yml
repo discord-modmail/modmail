@@ -1,23 +1,40 @@
+# Project Information
 site_name: Discord Modmail
 site_description: A Modmail bot for Discord. Allowing safe moderator conversations with server members one server at a time.
 site_url: https://github.com/discord-modmail/modmail
+
+# Repository
+repo_name: discord-modmail/modmail
+repo_url: https://github.com/discord-modmail/modmail
+edit_uri: ''
+
+# Copyright
+copyright: Copyright &copy; 2021 Discord Modmail
+
+# Configuration
 theme:
   name: material
   custom_dir: overrides
+
+  # Colorscheme for the docs
   palette:
   - scheme: default
     primary: blue
-    accent: amber
+    accent: blue
     toggle:
-      icon: material/lightbulb-outline
+      icon: material/weather-sunny
       name: Switch to light mode
   - scheme: slate
-    primary: blue
-    accent: amber
+    primary: red
+    accent: red
     toggle:
-      icon: material/lightbulb
+      icon: material/weather-night
       name: Switch to dark mode
+
+  # Enabled mkdocs features for the site
   features:
+  - navigation.top
+  - navigation.instant
   - search.suggest
   - search.highlight
   icon:
@@ -25,19 +42,23 @@ theme:
   logo: img/modmail_no_bg.png
   favicon: img/favicon.png
   language: en
-repo_name: discord-modmail/modmail
-repo_url: https://github.com/discord-modmail/modmail
-edit_uri: ''
+
+# Plugins
 plugins:
 - search
 - markdownextradata:
     data: data
+
+# Page tree
 nav:
 - DiscordModmail: index.md
 - Languages:
   - en: /
 - contributing.md
+- security.md
 - release-notes.md
+
+# Extensions
 markdown_extensions:
 - toc:
     permalink: true
@@ -52,20 +73,24 @@ markdown_extensions:
       class: mermaid
       format: !!python/name:pymdownx.superfences.fence_div_format ''
 - pymdownx.tabbed
+
+# Customization
 extra:
   social:
   - icon: fontawesome/brands/github-alt
     link: https://github.com/discord-modmail/modmail
   - icon: fontawesome/brands/discord
     link: https://discord.gg/ERteGkedDW
-  - icon: fontawesome/brands/twitter
-    link: https://twitter.com/
   alternate:
   - link: /
     name: en - English
+
+# Custom css for the site
 extra_css:
 - css/termynal.css
 - css/custom.css
+
+# Custom javascript for the site
 extra_javascript:
 - https://unpkg.com/mermaid@8.4.6/dist/mermaid.min.js
 - js/termynal.js
