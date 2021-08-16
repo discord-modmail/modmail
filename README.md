@@ -9,9 +9,9 @@
 
 ______________________________________________________________________
 
-**Documentation**: <a href="https://abcabc.com/" target="_blank">https://abcabc.com/</a>
+**Documentation**: <a href="hhttps://discord-modmail.readthedocs.io/" target="_blank">https://discord-modmail.readthedocs.io/</a>
 
-**Source Code**: <a href="https://github.com/discord-modmail/modmail" target="\_blank"https://github.com/discord-modmail/modmail</a>
+**Source Code**: <a href="https://github.com/discord-modmail/modmail" target="_blank">https://github.com/discord-modmail/modmail</a>
 
 ______________________________________________________________________
 
