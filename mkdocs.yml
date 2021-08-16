@@ -53,10 +53,10 @@ plugins:
 
 # Page tree
 nav:
-- 'Discord Modmail': README.md
-- contributing.md
-- security.md
-- changelog.md
+- Home: README.md
+- Contributing: contributing.md
+- Security: security.md
+- Changelog: changelog.md
 
 # Extensions
 markdown_extensions:
