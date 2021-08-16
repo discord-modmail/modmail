@@ -1,0 +1,19 @@
+# This file can be used to quickly set up the modmail bot
+
+version: "3.7"
+
+x-restart-policy: &restart_policy
+  restart: unless-stopped
+
+services:
+  modmail:
+    << : *restart_policy
+    container_name: modmail
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/modmail
+    env_file:
+      - .env
+    tty: true
