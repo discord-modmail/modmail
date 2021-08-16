@@ -1,4 +1,4 @@
-# modmail
+# Discord Modmail
 
 [![Lint & Test](https://img.shields.io/github/workflow/status/discord-modmail/modmail/Lint%20&%20Test/main?label=Lint+%26+Test&logo=github&style=flat)](https://github.com/discord-modmail/modmail/actions/workflows/lint_test.yml "Lint and Test")
 [![Code Coverage](https://img.shields.io/codecov/c/gh/discord-modmail/modmail/main?logo=codecov&style=flat&label=Code+Coverage)](https://app.codecov.io/gh/discord-modmail/modmail "Code Coverage")
@@ -7,4 +7,14 @@
 [![License](https://img.shields.io/github/license/discord-modmail/modmail?style=flat&label=License)](./LICENSE "License file")
 [![Code Style](https://img.shields.io/static/v1?label=Code%20Style&message=black&color=000000&style=flat)](https://github.com/psf/black "The uncompromising python formatter")
 
-An MIT licensed modmail bot for Discord.
+______________________________________________________________________
+
+**Documentation**: <a href="https://abcabc.com/" target="_blank">https://abcabc.com/</a>
+
+**Source Code**: <a href="https://github.com/discord-modmail/modmail" target="\_blank"https://github.com/discord-modmail/modmail</a>
+
+______________________________________________________________________
+
+## License
+
+This project is licensed under the terms of the MIT license.
