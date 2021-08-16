@@ -50,10 +50,10 @@ plugins:
 
 # Page tree
 nav:
-- DiscordModmail: readme.md
+- DiscordModmail: README.md
 - contributing.md
 - security.md
-- release-notes.md
+- changelog.md
 
 # Extensions
 markdown_extensions:
