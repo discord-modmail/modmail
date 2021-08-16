@@ -19,12 +19,11 @@ arrow = "^1.1.1"
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py.git", rev = "master" }
-environs = { version = "~=9.3.3", optional = true }
 pydantic = { version = "^1.8.2", extras = ["dotenv"] }
 toml = "^0.10.2"
 
 [tool.poetry.extras]
-environs = ["environs"]
+
 
 [tool.poetry.dev-dependencies]
 # always needed
@@ -56,8 +55,6 @@ pytest-xdist = { version = "^2.3.0", extras = ["psutil"] }
 mkdocs = ">=1.1.2,<2.0.0"
 mkdocs-material = ">=7.1.9,<8.0.0"
 mkdocs-markdownextradata-plugin = ">=0.1.7,<0.2.0"
-typer-cli = ">=0.0.12,<0.0.13"
-pyyaml = ">=5.3.1,<6.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
