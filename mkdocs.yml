@@ -14,7 +14,6 @@ copyright: Copyright &copy; 2021 Discord Modmail
 # Configuration
 theme:
   name: material
-  custom_dir: overrides
 
   # Colorscheme for the docs
   palette:
@@ -39,8 +38,8 @@ theme:
   - search.highlight
   icon:
     repo: fontawesome/brands/github-alt
-  logo: img/modmail_no_bg.png
-  favicon: img/favicon.png
+  logo: assets/modmail_no_bg.png
+  favicon: assets/favicon.png
   language: en
 
 # Plugins
@@ -52,8 +51,6 @@ plugins:
 # Page tree
 nav:
 - DiscordModmail: index.md
-- Languages:
-  - en: /
 - contributing.md
 - security.md
 - release-notes.md

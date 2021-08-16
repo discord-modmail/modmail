@@ -101,4 +101,4 @@ report = { cmd = "coverage report", help = "Show coverage report from previously
 start = { cmd = "python -m modmail", help = "Run bot" }
 test = { cmd = "pytest -n auto --dist loadfile --cov-report= --cov= --docs tests/docs.md", help = "Runs tests and save results to a coverage report" }
 test-nocov = { cmd = "pytest --no-cov", help = "Runs tests without creating a coverage report" }
-docs = { cmd = "python scripts/docs.py live", help = "Run the documentation site live"}
+docs = { cmd = "mkdocs serve --dev-addr 127.0.0.1:8008", help = "Run the documentation site live"}
