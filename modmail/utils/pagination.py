@@ -4,7 +4,7 @@ import typing as t
 import discord
 import dislash
 from discord.ext.commands import Context, Paginator
-from dislash import ActionRow, Button, ButtonStyle, ClickListener
+from dislash import ActionRow, Button, ButtonStyle, ClickListener, ResponseType
 
 from modmail.log import ModmailLogger
 
@@ -15,13 +15,13 @@ JUMP_LAST_EMOJI = "\u23ED"  # [:track_next:]
 STOP_PAGINATE_EMOJI = "\u274c"  # [:x:]
 
 logger: ModmailLogger = logging.getLogger(__name__)
-ephermals = True
+ephermals = False
 
 
 class ButtonPaginator(Paginator):
     """A paginator that has a set of buttons to jump to other pages."""
 
-    def __init__(self, prefix: str = "", suffix: str = "", max_size: int = 4000, linesep: str = "\n"):
+    def __init__(self, prefix: str = "", suffix: str = "", max_size: int = 300, linesep: str = "\n"):
         logger.trace("Created a paginator in __init__.")
         self.prefix = prefix
         self.suffix = suffix
@@ -61,7 +61,7 @@ class ButtonPaginator(Paginator):
             logger.trace("Disabled jump buttons")
 
         paginator.embed.description = paginator.pages[starting_page]
-
+        paginator.current_page = starting_page
         if len(paginator.pages) == 1:
             logger.debug("Sending without pagination as its only one page.")
             try:
@@ -81,25 +81,64 @@ class ButtonPaginator(Paginator):
         @on_click.matching_id("jump_to_first", cancel_others=True)
         async def _jump_to_first(inter: dislash.MessageInteraction) -> None:
             logger.debug("_jump_to_first")
-            await inter.reply(content=inter.button.custom_id, ephemeral=ephermals)
+            new_page = 0
+            logger.trace(new_page >= 0)
+            if new_page >= 0:
+                paginator.embed.description = paginator.pages[new_page]
+                paginator.current_page -= 1
+                paginator.embed.set_footer(text=f"Page {new_page + 1}/{len(paginator.pages)}")
+                await msg.edit(embeds=[paginator.embed], components=[row])
+                await inter.reply(type=ResponseType.DeferredUpdateMessage)
+            else:
+                # page is out of range
+                await inter.reply(content="You're at the first page!", ephemeral=True)
 
         @on_click.matching_id("prev_page", cancel_others=True)
         # @on_click.from_user(ctx.author, cancel_others=True)
         async def _prev_page(inter: dislash.MessageInteraction) -> None:
             logger.debug("_prev_page")
-            await inter.reply(content=inter.button.custom_id, ephemeral=ephermals)
+            new_page = paginator.current_page - 1
+            logger.trace(new_page >= 0)
+            if new_page >= 0:
+                paginator.embed.description = paginator.pages[new_page]
+                paginator.current_page -= 1
+                paginator.embed.set_footer(text=f"Page {new_page + 1}/{len(paginator.pages)}")
+                await msg.edit(embeds=[paginator.embed], components=[row])
+                await inter.reply(type=ResponseType.DeferredUpdateMessage)
+            else:
+                # page is out of range
+                await inter.reply(content="You're at the first page!", ephemeral=True)
 
         # @on_click.from_user(ctx.author, cancel_others=True)
         @on_click.matching_id("next_page", cancel_others=True)
         async def _next_page(inter: dislash.MessageInteraction) -> None:
             logger.debug("_next_page")
-            await inter.reply(content=inter.button.custom_id, ephemeral=ephermals)
+            logger.trace(paginator.current_page + 1 < len(paginator.pages))
+            if paginator.current_page + 1 < len(paginator.pages):
+                paginator.embed.description = paginator.pages[paginator.current_page + 1]
+                paginator.current_page += 1
+                paginator.embed.set_footer(text=f"Page {paginator.current_page + 1}/{len(paginator.pages)}")
+                await msg.edit(embeds=[paginator.embed], components=[row])
+                await inter.reply(type=ResponseType.DeferredUpdateMessage)
+            else:
+                # page is out of range
+                await inter.reply(content=f"There's only {len(paginator.pages)} pages!", ephemeral=True)
 
         # @on_click.from_user(ctx.author, cancel_others=True)
         @on_click.matching_id("jump_to_last", cancel_others=True)
         async def _jump_to_last(inter: dislash.MessageInteraction) -> None:
             logger.debug("_jump_to_last")
-            await inter.reply(content=inter.button.custom_id, ephemeral=ephermals)
+            new_page = len(paginator.pages) - 1
+            logger.trace(len(paginator.pages))
+            if new_page < len(paginator.pages):
+                await inter.reply(type=ResponseType.DeferredUpdateMessage)
+                paginator.embed.description = paginator.pages[new_page]
+                paginator.current_page = new_page
+                paginator.embed.set_footer(text=f"Page {new_page + 1}/{len(paginator.pages)}")
+                await msg.edit(embeds=[paginator.embed], components=[row])
+            else:
+                # page is out of range
+                await inter.reply(content=f"There's only {len(paginator.pages)} pages!", ephemeral=True)
 
         @on_click.timeout
         async def on_timeout() -> None:
