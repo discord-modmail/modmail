@@ -68,8 +68,10 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
+# documentation
 docs/_build/
+site
+docs_dir
 
 # PyBuilder
 target/
@@ -135,7 +137,3 @@ logs
 
 # Configuration
 *config.toml
-
-# Documentation
-site
-docs_dir
