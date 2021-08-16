@@ -90,7 +90,7 @@ help = "Export installed packages in requirements.txt format"
 [tool.taskipy.tasks]
 black = { cmd = "black --check .", help = "dry run of black" }
 codecov-validate = { cmd = "curl --data-binary @.codecov.yml https://codecov.io/validate", help = "Validate `.codecov.yml` with their api." }
-docs = { cmd = "mkdocs serve --dev-addr 127.0.0.1:8008", help = "Run the docs on a local automatically reloading server"}
+docs = { cmd = "mkdocs serve", help = "Run the docs on a local automatically reloading server"}
 flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
 lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }

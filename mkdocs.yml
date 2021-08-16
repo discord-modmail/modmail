@@ -11,6 +11,8 @@ edit_uri: ''
 # Copyright
 copyright: Copyright &copy; 2021 Discord Modmail
 
+# Dev Configuration
+dev_addr: 127.0.0.1:8008
 # Configuration
 theme:
   name: material
