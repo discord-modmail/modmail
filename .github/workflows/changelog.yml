@@ -17,7 +17,7 @@ jobs:
       - name: Grep Release Notes (docs-en) for PR number
         if: contains(github.event.pull_request.labels.*.name, 'skip changelog') != true
         run: |
-          grep -Pz "\((\n\s*)?#${{ github.event.pull_request.number }}(\n\s*)?\)" docs/en/docs/release-notes.md || \
+          grep -Pz "\((\n\s*)?#${{ github.event.pull_request.number }}(\n\s*)?\)" docs/changelog.md || \
           (
-            echo "Please add '(#${{ github.event.pull_request.number }})' change line to docs/en/docs/release-notes.md" && exit 1
+            echo "Please add '(#${{ github.event.pull_request.number }})' change line to docs/changelog.md" && exit 1
           )
