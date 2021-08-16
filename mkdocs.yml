@@ -50,7 +50,7 @@ plugins:
 
 # Page tree
 nav:
-- DiscordModmail: index.md
+- DiscordModmail: readme.md
 - contributing.md
 - security.md
 - release-notes.md
