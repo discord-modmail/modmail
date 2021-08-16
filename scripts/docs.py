@@ -413,3 +413,7 @@ def get_sections(nav: list) -> Dict[Tuple[str, ...], str]:
             for k, v in sub_sections.items():
                 sections[(item_key,) + k] = v
     return sections
+
+
+if __name__ == "__main__":
+    app()
