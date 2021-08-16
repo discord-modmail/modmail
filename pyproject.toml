@@ -19,6 +19,7 @@ arrow = "^1.1.1"
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py.git", rev = "master" }
+"dislash.py" = "^1.4.6"
 environs = { version = "~=9.3.3", optional = true }
 pydantic = { version = "^1.8.2", extras = ["dotenv"] }
 toml = "^0.10.2"
