@@ -15,6 +15,7 @@ from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
+from modmail.utils.pagination import ButtonPaginator
 
 log: ModmailLogger = logging.getLogger(__name__)
 
@@ -186,7 +187,8 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         log.debug(f"{ctx.author} requested a list of all {self.type}s. " "Returning a paginated list.")
 
         # TODO: since we currently don't have a paginator.
-        await ctx.send("".join(lines) or f"There are no {self.type}s installed.")
+        # await ctx.send("".join(lines) or f"There are no {self.type}s installed.")
+        await ButtonPaginator.paginate(ctx, lines)
 
     @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def resync_extensions(self, ctx: Context) -> None:
