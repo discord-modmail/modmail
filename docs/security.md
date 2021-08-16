@@ -8,7 +8,7 @@ versions long, as that may make contributing difficult.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| \<  1.0 | :white_check_mark: |
+| <  1.0  | ✅                |
 | >= 1.0  | Unreleased         |
 
 ## Reporting a Vulnerability
