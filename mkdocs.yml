@@ -82,9 +82,7 @@ extra:
     link: https://github.com/discord-modmail/modmail
   - icon: fontawesome/brands/discord
     link: https://discord.gg/ERteGkedDW
-  alternate:
-  - link: /
-    name: en - English
+
 
 # Custom css for the site
 extra_css:
