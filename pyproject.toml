@@ -93,6 +93,7 @@ help = "Export installed packages in requirements.txt format"
 [tool.taskipy.tasks]
 black = { cmd = "black --check .", help = "dry run of black" }
 codecov-validate = { cmd = "curl --data-binary @.codecov.yml https://codecov.io/validate", help = "Validate `.codecov.yml` with their api." }
+docs = { cmd = "mkdocs serve --dev-addr 127.0.0.1:8008", help = "Run the docs on a local automatically reloading server"}
 flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
 lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
@@ -101,4 +102,3 @@ report = { cmd = "coverage report", help = "Show coverage report from previously
 start = { cmd = "python -m modmail", help = "Run bot" }
 test = { cmd = "pytest -n auto --dist loadfile --cov-report= --cov= --docs tests/docs.md", help = "Runs tests and save results to a coverage report" }
 test-nocov = { cmd = "pytest --no-cov", help = "Runs tests without creating a coverage report" }
-docs = { cmd = "mkdocs serve --dev-addr 127.0.0.1:8008", help = "Run the documentation site live"}
