@@ -99,31 +99,33 @@ And you should be ready to go!
 
 Once you have your fork you will need to clone the repo to your computer.
 
-<div class="termy">
+=== "With Git"
 
-```console
-$ git clone https://github.com/your_username/modmail
+    <div class="termy">
 
----> 100%
+    ```console
+    $ git clone https://github.com/your_username/modmail
 
-$ cd modmail
-```
+    ---> 100%
 
-</div>
+    $ cd modmail
+    ```
 
-or using the [github cli](https://github.com/cli/cli):
+    </div>
 
-<div class="termy">
+=== "With [github cli](https://github.com/cli/cli)"
 
-```console
-$ gh repo clone your_username/modmail
+    <div class="termy">
 
----> 100%
+    ```console
+    $ gh repo clone your_username/modmail
 
-$ cd modmail
-```
+    ---> 100%
 
-</div>
+    $ cd modmail
+    ```
+
+    </div>
 
 !!! tip
         You can use the github cli to fork the repo as well, just use `gh repo fork discord-modmail/modmail` and it will allow you to clone it directly.
@@ -148,26 +150,39 @@ $ poetry install
         This runs our register pre-commit hooks on every commit to automatically point out issues in code such as missing semicolons, trailing whitespace, and debug statements. By pointing these issues out before code review, this allows a code reviewer to focus on the architecture of a change while not wasting time with trivial style nitpicks.
 
 
-### Set up environment variables
+### Set up modmail config
 
-1. Create a text file named `.env` in your project root (that's the base folder of your repository):
+1. Create a copy of `config-default.yml` named `config.yml` in the the `modmail/` directory.
+
+=== "Linux, macOS"
+
+    <div class="termy">
+
+    ```console
+    $ cp -v modmail/config-default.toml modmail/config.toml
+    ```
+
+    </div>
+
+=== "Windows "
+
+    <div class="termy">
+
+    ```console
+    $  xcopy /f modmail/config-default.toml modmail/config.toml
+    ```
+
+    </div>
+
+2. Set the modmail bot prefix in `bot.prefix`.
+3. In case you are a contributor set `dev.mode.plugin_dev` and `dev.mode.develop` to `true`. The `develop` variable enables the developer bot extensions and `plugin_dev` enables plugin-developer friendly bot extensions.
+4. Create a text file named `.env` in your project root (that's the base folder of your repository):
     - You can also copy the `.env.template` file to `.env`
 
 !!!note
         The entire file name is literally `.env`
 
-1. Open the file with any text editor.
-1. Each environment variable is on its own line, with the variable and the value separated by a `=` sign.
-
-#### The following variables are needed for running Modmail:
-
-| Required | ENV VARIABLE NAME | TYPE    | WHAT IS IT?                                      |
-| -------- | ----------------- | ------- | ------------------------------------------------ |
-| True     | `TOKEN`           | String  | Bot Token from the Discord developer portal      |
-| False    | `DEVELOP`         | Boolean | Enables the developer bot extensions             |
-| False    | `PLUGIN_DEV`      | Boolean | Enables plugin-developer friendly bot extensions |
-
-The rest of them can be viewed in our \[.env.template\] <!-- #TODO: Make this a link -->
+5. Open the file with any text editor and write the bot token to the files in this format: `TOKEN="my_token"`.
 
 ### Run The Project
 
