@@ -1,12 +1,12 @@
 # Project Information
 site_name: Discord Modmail
 site_description: A Modmail bot for Discord. Allowing safe moderator conversations with server members one server at a time.
-site_url: https://github.com/discord-modmail/modmail
+site_url: https://discord-modmail.readthedocs.io/
 
 # Repository
 repo_name: discord-modmail/modmail
 repo_url: https://github.com/discord-modmail/modmail
-edit_uri: ''
+edit_uri: "edit/main/docs/"
 
 # Copyright
 copyright: Copyright &copy; 2021 Discord Modmail
@@ -16,6 +16,7 @@ dev_addr: 127.0.0.1:8008
 # Configuration
 theme:
   name: material
+  locale: en
 
   # Colorscheme for the docs
   palette:
@@ -52,7 +53,7 @@ plugins:
 
 # Page tree
 nav:
-- DiscordModmail: README.md
+- 'Discord Modmail': README.md
 - contributing.md
 - security.md
 - changelog.md
