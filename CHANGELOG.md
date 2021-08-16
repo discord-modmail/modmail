@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Interaction Paginator that uses discord buttons (#50)
+
 ## [0.1.0] - 2021-08-13
 
 ### Added
