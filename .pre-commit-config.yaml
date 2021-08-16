@@ -7,7 +7,7 @@ repos:
       - id: check-merge-conflict
       - id: check-toml
       - id: check-yaml
-        exclude: 'docs' # Exclude all mkdocs.yml as they use tags i.e. `!!!`
+        exclude: 'mkdocs.yml' # Exclude all mkdocs.yml as they use tags i.e. `!!!`
       - id: end-of-file-fixer
       - id: no-commit-to-branch
         args: [--branch=main, --branch=master]
