@@ -9,7 +9,7 @@
 
 ______________________________________________________________________
 
-**Documentation**: <a href="hhttps://discord-modmail.readthedocs.io/" target="_blank">https://discord-modmail.readthedocs.io/</a>
+**Documentation**: <a href="https://discord-modmail.readthedocs.io/" target="_blank">https://discord-modmail.readthedocs.io/</a>
 
 **Source Code**: <a href="https://github.com/discord-modmail/modmail" target="_blank">https://github.com/discord-modmail/modmail</a>
 
