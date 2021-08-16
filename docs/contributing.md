@@ -1,53 +1,52 @@
-# Contributing Guidelines
+# Development - Contributing
 
 Thank you so much for your interest in contributing!. All types of contributions are encouraged and valued. See below for different ways to help, and details about how this project handles them!
 
 Please make sure to read the relevant section before making your contribution! It will make it a lot easier for us maintainers to make the most of it and smooth out the experience for all involved. 💚
 
-> **NOTE**: failing to comply with our guidelines may lead to a rejection of the contribution.
-> However, most features that are rejected can be written as a plugin, and used on your
-> modmail, without blocking you from getting updates.
+!!!note
+        Failing to comply with our guidelines may lead to a rejection of the contribution. However, most features that are rejected can be written as a plugin, and used on your modmail, without blocking you from getting updates.
 
 If you are confused by any of these rules, feel free to ask us in the `#support` channel in our  [Discord server.][modmail-discord]
 
 ## How do I...
 
 - Ask or Say Something 🤔🐛😱
-  - [Request Support](#request-support)
-  - [Report an Error or Bug](#report-an-error-or-bug)
-  - [Request a Feature](#request-a-feature)
+    - [Request Support](#request-support)
+    - [Report an Error or Bug](#report-an-error-or-bug)
+    - [Request a Feature](#request-a-feature)
 - Make Something 🤓👩🏽‍💻📜🍳
-  - [Project Setup](#project-setup)
-  - [Contribute Code](#contribute-code)
+    - [Project Setup](#project-setup)
+    - [Contribute Code](#contribute-code)
 - Style Guides ✅🙆🏼💃👔
-  - [Git Commit Messages](#git-commit-messages)
-  - [Python Styleguide](#python-styleguide)
-  - [Changelog Requirement](#changelog-requirement)
+    - [Git Commit Messages](#git-commit-messages)
+    - [ Python Styleguide](#python-styleguide)
+    - [Changelog Requirement](#changelog-requirement)
 
 ## Request Support
 
 - You can either ask your question as issue by opening one at [discord-modmail/modmail/issues][modmail-issues].
 
 - [Join the Modmail Discord Server][modmail-discord]
-
-  - Even though Discord is a chat service, sometimes it takes several hours for community members to respond — please be patient!
-  - Use the `#support` channel for questions or discussion about writing or contributing to Discord Modmail bot.
-  - There are many other channels available, check the channel list
+    - Even though Discord is a chat service, sometimes it takes several hours for community members to respond — please be patient!
+    - Use the `#support` channel for questions or discussion about writing or contributing to Discord Modmail bot.
+    - There are many other channels available, check the channel list
 
 ## Report an Error or Bug
 
 If you run into an error or bug with the project:
 
-> **Note:** If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and include a link to the original issue in the body of your new one.
+!!!note
+        If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and include a link to the original issue in the body of your new one.
 
 - Open an Issue at [discord-modmail/modmail/issues][modmail-issues].
 - Explain the problem and include additional details to help maintainers reproduce the problem:
-  - **Use a clear and descriptive title** for the issue to identify the problem.
-  - **Describe the exact steps which reproduce the problem** in as many details as possible. When listing steps, **don't just say what you did but explain how you did it**.
-  - **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, or copy/paste-able snippets, which you use in those examples. If you're providing snippets in the issue, use [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
-  - **Describe the behaviour you observed after following the steps** and point out what exactly is the problem with that behaviour.
-  - **Explain which behaviour you expected to see instead and why.**
-  - **Include screenshots and animated GIFs** which show you following the described steps and clearly demonstrate the problem. If you use the keyboard while following the steps, **record the GIF with the [Keybinding Resolver](https://github.com/atom/keybinding-resolver) shown**. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) on Linux (of course there are plenty more).
+    - **Use a clear and descriptive title** for the issue to identify the problem.
+    - **Describe the exact steps which reproduce the problem** in as many details as possible. When listing steps, **don't just say what you did but explain how you did it**.
+    - **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, or copy/paste-able snippets, which you use in those examples. If you're providing snippets in the issue, use [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
+    - **Describe the behaviour you observed after following the steps** and point out what exactly is the problem with that behaviour.
+    - **Explain which behaviour you expected to see instead and why.**
+    - **Include screenshots and animated GIFs** which show you following the described steps and clearly demonstrate the problem. If you use the keyboard while following the steps, **record the GIF with the [Keybinding Resolver](https://github.com/atom/keybinding-resolver) shown**. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) on Linux (of course there are plenty more).
 
 ## Request a Feature
 
@@ -55,10 +54,11 @@ If the project doesn't do something you need or want it to do:
 
 - Open an Issue at [discord-modmail/modmail/issues][modmail-issues].
 - Provide as much context as you can about what you're running into.
-  - **Use a clear and descriptive title** for the issue to identify the suggestion.
-  - **Provide a step-by-step description of the suggested enhancement** in as many details as possible.
-  - **Provide specific examples to demonstrate the steps**. Include copy/paste-able snippets which you use in those examples, as [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
-  - **Explain why this enhancement would be useful** to Modmail, and would benefit the community members.
+    - **Use a clear and descriptive title** for the issue to identify the suggestion.
+    - **Provide a step-by-step description of the suggested enhancement** in as many details as possible.
+    - **Provide specific examples to demonstrate the steps**. Include copy/paste-able snippets which you use in those examples, as [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
+    - **Explain why this enhancement would be useful** to Modmail, and would benefit the community members.
+
 - Please try and be clear about why existing features and alternatives would not work for you.
 
 Once it's filed:
@@ -67,7 +67,8 @@ Once it's filed:
 - The Maintainers will evaluate the feature request, possibly asking you more questions to understand its purpose and any relevant requirements. If the issue is closed, the team will convey their reasoning and suggest an alternative path forward.
 - If the feature request is accepted, it will be marked for implementation with `status: approved`, which can then be done either by a core team member or by anyone in the community who wants to contribute code.
 
-> **Note**: The team is unlikely to be able to accept every single feature request that is filed. Please understand if they need to say no. However for most features requested, you can always write a plugin for your modmail bot.
+!!!note
+        The team is unlikely to be able to accept every single feature request that is filed. Please understand if they need to say no. However for most features requested, you can always write a plugin for your modmail bot.
 
 ## Project Setup
 
@@ -84,8 +85,8 @@ You will need your own test server and bot account on Discord to test your chang
 TODO: Add required channel and role IDS when needed.
 -->
 
-Note down the IDs for your server.
-Learn how to obtain the ID of a server, channel or role **[here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-).**
+!!! tip
+        Learn how to obtain the ID of a server, channel or role **[here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-).**
 
 ### Fork the Project
 
@@ -98,60 +99,104 @@ And you should be ready to go!
 
 Once you have your fork you will need to clone the repo to your computer.
 
-```sh
-$ git clone https://github.com/<your username>/modmail
-...
-$ cd modmail
-```
+=== "With Git"
 
-or using the [github cli](https://github.com/cli/cli):
+    <div class="termy">
 
-```sh
-$ gh repo clone <your username>/modmail
-...
-$ cd modmail
-```
+    ```console
+    $ git clone https://github.com/your_username/modmail
 
-> Tip: You can use the github cli to fork the repo as well, just use `gh repo fork discord-modmail/modmail` and it will allow you to clone it directly.
+    ---> 100%
+
+    $ cd modmail
+    ```
+
+    </div>
+
+=== "With [github cli](https://github.com/cli/cli)"
+
+    <div class="termy">
+
+    ```console
+    $ gh repo clone your_username/modmail
+
+    ---> 100%
+
+    $ cd modmail
+    ```
+
+    </div>
+
+!!! tip
+        You can use the github cli to fork the repo as well, just use `gh repo fork discord-modmail/modmail` and it will allow you to clone it directly.
 
 ### Install development dependencies
 
 Make sure you are in the project directory.
 
-```sh
-# This will install the development and project dependencies.
-poetry install
-# This will install the pre-commit hooks.
-poetry run task precommit
+<div class="termy">
+
+```console
+$ poetry install
+
+---> 100%
 ```
 
-### Set up environment variables
+</div>
 
-1. Create a text file named `.env` in your project root (that's the base folder of your repository):
-   - You can also copy the `.env.template` file to `.env`
+!!! tip
+        Run `poetry run task precommit` to install precommit hooks.
 
-> Note: The entire file name is literally `.env`
+        This runs our register pre-commit hooks on every commit to automatically point out issues in code such as missing semicolons, trailing whitespace, and debug statements. By pointing these issues out before code review, this allows a code reviewer to focus on the architecture of a change while not wasting time with trivial style nitpicks.
 
-1. Open the file with any text editor.
-1. Each environment variable is on its own line, with the variable and the value separated by a `=` sign.
 
-#### The following variables are needed for running Modmail:
+### Set up modmail config
 
-| Required | ENV VARIABLE NAME | TYPE    | WHAT IS IT?                                      |
-| -------- | ----------------- | ------- | ------------------------------------------------ |
-| True     | `TOKEN`           | String  | Bot Token from the Discord developer portal      |
-| False    | `DEVELOP`         | Boolean | Enables the developer bot extensions             |
-| False    | `PLUGIN_DEV`      | Boolean | Enables plugin-developer friendly bot extensions |
+1. Create a copy of `config-default.yml` named `config.yml` in the the `modmail/` directory.
 
-The rest of them can be viewed in our [.env.template](./.env.template)
+=== "Linux, macOS"
+
+    <div class="termy">
+
+    ```console
+    $ cp -v modmail/config-default.toml modmail/config.toml
+    ```
+
+    </div>
+
+=== "Windows "
+
+    <div class="termy">
+
+    ```console
+    $  xcopy /f modmail/config-default.toml modmail/config.toml
+    ```
+
+    </div>
+
+2. Set the modmail bot prefix in `bot.prefix`.
+3. In case you are a contributor set `dev.mode.plugin_dev` and `dev.mode.develop` to `true`. The `develop` variable enables the developer bot extensions and `plugin_dev` enables plugin-developer friendly bot extensions.
+4. Create a text file named `.env` in your project root (that's the base folder of your repository):
+    - You can also copy the `.env.template` file to `.env`
+
+!!!note
+        The entire file name is literally `.env`
+
+5. Open the file with any text editor and write the bot token to the files in this format: `TOKEN="my_token"`.
 
 ### Run The Project
 
 To run the project, use the (below) in the project root.
 
-```shell
+<div class="termy">
+
+```console
 $ poetry run task start
+
+---> 100%
 ```
+
+</div>
 
 ## Contribute Code
 
@@ -164,13 +209,14 @@ To contribute code:
 - [Set up the project](#project-setup).
 - Make any necessary changes to the source code.
 - Write clear, concise commit message(s).
-  - A more in-depth guide to writing great commit messages can be found in Chris Beam's [*How to Write a Git Commit Message*](https://chris.beams.io/posts/git-commit/).
+    - A more in-depth guide to writing great commit messages can be found in Chris Beam's [*How to Write a Git Commit Message*](https://chris.beams.io/posts/git-commit/).
 - Run `flake8`, `black` and `pre-commit` against your code **before** you push. Your commit will be rejected by the build server if it fails to lint. You can run the lint by executing `poetry run task lint` in your command line.
 - Go to [discord-modmail/modmail/pulls][modmail-pulls] and open a new pull request with your changes.
 - If PRing from your own fork, **ensure that "Allow edits from maintainers" is checked**. This permits maintainers to commit changes directly to your fork, speeding up the review process.
 - If your PR is connected to an open issue, add a line in your PR's description that says `Closes #123`, where `#123` is the number of the issue you're fixing. This will make github link your issue, and make it easier for us (and other contributers) to find and understand the context behind your PR.
 
-> Pull requests (or PRs for short) are the primary mechanism we use to change modmail. GitHub itself has some [great documentation][about-pull-requests] on using the Pull Request feature. We use the "fork and pull" model [described here][development-models], where contributors push changes to their personal fork and create pull requests to bring those changes into the source repository.
+!!! note "Technical Details"
+        Pull requests (or PRs for short) are the primary mechanism we use to change modmail. GitHub itself has some [great documentation][about-pull-requests] on using the Pull Request feature. We use the "fork and pull" model [described here][development-models], where contributors push changes to their personal fork and create pull requests to bring those changes into the source repository.
 
 Once you've filed the PR:
 
@@ -223,13 +269,12 @@ If you feel this PR does not require a changelog entry please state that in a co
 and a maintainer can add a `skip changelog` label to make the CI pass. Otherwise,
 please ensure you have a line in the following format:
 
-```
+```markdown
 - `Modmail` is now more awesome (#X)
 ```
 
-Note that X should be your PR number, not issue number! This is not perfect but
-saves a lot of release overhead as now the releaser does not need to go back and
-workout what to add to the `CHANGES.md` for each release.
+!!!note
+        X should be your PR number, not issue number! This is not perfect but saves a lot of release overhead as now the releaser does not need to go back and workout what to add to the `CHANGES.md` for each release.
 
 ## Attribution
 
