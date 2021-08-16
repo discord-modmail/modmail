@@ -13,6 +13,7 @@ copyright: Copyright &copy; 2021 Discord Modmail
 
 # Dev Configuration
 dev_addr: 127.0.0.1:8008
+
 # Configuration
 theme:
   name: material
@@ -41,7 +42,7 @@ theme:
   - search.highlight
   icon:
     repo: fontawesome/brands/github-alt
-  logo: assets/modmail_no_bg.png
+  logo: assets/logo.png
   favicon: assets/favicon.png
   language: en
 
