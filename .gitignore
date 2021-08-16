@@ -135,3 +135,6 @@ logs
 
 # Configuration
 *config.toml
+
+# Custom docker compose override
+docker-compose.override.yml

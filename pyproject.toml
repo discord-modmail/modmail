@@ -18,10 +18,13 @@ aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 arrow = "^1.1.1"
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
-"discord.py" = { git = "https://github.com/Rapptz/discord.py.git", rev = "master" }
+"discord.py" = { git = "https://github.com/Rapptz/discord.py.git", branch = "master", rev = "1e17b7f"}
 environs = { version = "~=9.3.3", optional = true }
 pydantic = { version = "^1.8.2", extras = ["dotenv"] }
 toml = "^0.10.2"
+# HACK: Poetry uses requests to install git dependencies, which are not explicitly installed when `--no-dev`
+# is set in docker, and hence is needed to successfully install discord.py from git
+requests = ">=2.7.9"
 
 [tool.poetry.extras]
 environs = ["environs"]
