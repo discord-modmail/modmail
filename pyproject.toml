@@ -19,7 +19,6 @@ arrow = "^1.1.1"
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py.git", rev = "master" }
-"dislash.py" = "^1.4.6"
 pydantic = { version = "^1.8.2", extras = ["dotenv"] }
 toml = "^0.10.2"
 # HACK: Poetry uses requests to install git dependencies, which are not explicitly installed when `--no-dev`

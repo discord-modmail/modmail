@@ -1,7 +1,5 @@
 import logging
 
-from dislash import InteractionClient
-
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 
@@ -20,7 +18,6 @@ log: ModmailLogger = logging.getLogger(__name__)
 def main() -> None:
     """Run the bot."""
     bot = ModmailBot()
-    InteractionClient(bot)
     bot.load_extensions()
     bot.load_plugins()
     log.notice("Running the bot.")
