@@ -186,9 +186,12 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         log.debug(f"{ctx.author} requested a list of all {self.type}s. " "Returning a paginated list.")
 
-        # TODO: since we currently don't have a paginator.
-        # await ctx.send("".join(lines) or f"There are no {self.type}s installed.")
-        await Paginator.paginate(ctx, lines)
+        if lines:
+            # we have stuff installed, lets paginate it.
+            await Paginator.paginate(ctx.message, lines)
+        else:
+            # since we don't have any lines to paginate, nothing is installed.
+            await ctx.send("There are no {self.type}s installed.")
 
     @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def resync_extensions(self, ctx: Context) -> None:

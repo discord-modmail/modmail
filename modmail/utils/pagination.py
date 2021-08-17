@@ -32,21 +32,25 @@ CHANGES:
 """
 import logging
 from enum import Enum
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import discord
 from discord import ButtonStyle, Interaction
-from discord.ext import commands
 from discord.ui import Button, View, button
 
 from modmail.log import ModmailLogger
 
+# Deprecated variables
 JUMP_FIRST_EMOJI = "\u23EE"  # [:track_previous:]
 BACK_EMOJI = "\u2B05"  # [:arrow_left:]
 FORWARD_EMOJI = "\u27A1"  # [:arrow_right:]
 JUMP_LAST_EMOJI = "\u23ED"  # [:track_next:]
-STOP_PAGINATE_EMOJI = "\U0001f6d1"  # [:octagonal_sign:]
+STOP_PAGINATE_EMOJI = "\u274c"  # [:x:]
 
+JUMP_FIRST_LABEL = "<<"
+BACK_LABEL = "<"
+FORWARD_LABEL = ">"
+JUMP_LAST_LABEL = ">>"
 logger: ModmailLogger = logging.getLogger(__name__)
 
 
@@ -101,7 +105,7 @@ class Paginator(View):
 
     def __init__(
         self,
-        ctx: commands.Context = None,
+        message: discord.Message = None,
         contents: Optional[List[str]] = None,
         embeds: Optional[List[discord.Embed]] = None,
         timeout: float = 180,
@@ -109,19 +113,21 @@ class Paginator(View):
         only: Optional[discord.abc.User] = None,
     ) -> None:
         """Creates a new Paginator instance. At least one of ctx or message must be supplied."""
-        self.ctx = ctx
-        self.timeout = timeout
+        self.source_msg = message
         self.only = only
         self.index = 0
         self.pages: List[Union[discord.Embed, str]] = []
 
-        if not (isinstance(timeout, float) or isinstance(timeout, int)):
+        if not isinstance(timeout, (int, float)):
             raise InvalidArgumentError("timeout must be a float")
+
+        self.timeout = float(timeout)
 
         if contents is None and embeds is None:
             raise MissingAttributeError("Both contents and embeds are None.")
         elif contents is not None and embeds is not None:
             raise TooManyAttributesError("Both contents and embeds are given. Please choose one.")
+
         if contents:
             # contents exist, so embeds is be None
             self.pages = contents
@@ -129,74 +135,88 @@ class Paginator(View):
         else:
             self.pages = embeds
             self.type = Types.EMBEDS
-
+        # create the super so the children attributes are set
         super().__init__()
+
+        # store component states for disabling
+        self.states: Dict[str, Dict[str, Any]] = dict()
+        for child in self.children:
+            attrs = child.to_component_dict()
+            self.states[attrs["custom_id"]] = attrs
 
     @classmethod
     async def paginate(
         cls,
-        ctx: commands.Context = None,
+        message: discord.Message = None,
         contents: Optional[List[str]] = None,
         embeds: Optional[List[discord.Embed]] = None,
         timeout: float = 180,
         only: Optional[discord.abc.User] = None,
+        channel: discord.abc.Messageable = None,
     ) -> None:
         """Something."""
-        paginator = cls(ctx, contents, embeds, timeout, only)
+        paginator = cls(message, contents, embeds, timeout, only)
 
-        # remove buttons based on how many pages we have
-        if len(paginator.pages) <= 2:
-            pass
-            # paginator.remove_item()
-        paginator.modify_disabled()
+        if channel is None and message is None:
+            raise MissingAttributeError("Both channel and message are None.")
+        elif channel is None:
+            channel = message.channel
+
+        paginator.modify_states()
         if paginator.type == Types.CONTENTS:
-            msg: discord.Message = await ctx.send(content=paginator.pages[paginator.index], view=paginator)
+            msg: discord.Message = await channel.send(
+                content=paginator.pages[paginator.index], view=paginator
+            )
         else:
-            msg: discord.Message = await ctx.send(embeds=paginator.pages[paginator.index], view=paginator)
+            msg: discord.Message = await channel.send(embeds=paginator.pages[paginator.index], view=paginator)
 
         await paginator.wait()
         await msg.edit(view=None)
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         """Check if the interaction is by the author of the paginatior."""
-        if not (is_valid := self.ctx.author.id == interaction.user.id):
+        if self.source_msg is None:
+            return True
+        if not (is_valid := self.source_msg.author.id == interaction.user.id):
             await interaction.response.send_message(
                 content="This is not your message to paginate!", ephemeral=True
             )
         return is_valid
 
-    def modify_disabled(self) -> None:
-        """Disable specific buttons depending on paginator page and length."""
-        ids = ["jump_first", "back", "next", "jump_last"]
-        states = []
-        if len(self.pages) > 2:
-            states = [False for _ in range(4)]
-        elif len(self.pages) == 2:
-            # there are two pages
-            states = [True, False, False, True]
-        else:
-            # there is only one page
-            states = [True for _ in range(4)]
+    def modify_states(self) -> None:
+        """Disable specific components depending on paginator page and length."""
+        less_than_2_pages = len(self.pages) <= 2
+        components = {
+            "jump_first": less_than_2_pages,
+            "back": False,
+            "next": False,
+            "jump_last": less_than_2_pages,
+        }
+
         if self.index == 0:
-            for i in range(2):
-                states[i] = True
-        elif self.index == len(self.pages) - 1:
-            for i in range(2):
-                states[(-1 * (i + 1))] = True
-        for item in self.children:
-            id = item.to_component_dict()["custom_id"]
-            if id in ids:
-                item.disabled = states[ids.index(id)]
+            components["jump_first"] = True
+            components["back"] = True
+
+        if self.index == len(self.pages) - 1:
+            components["next"] = True
+            components["jump_last"] = True
+
+        for child in self.children:
+            if child.custom_id in components.keys():
+                if getattr(child, "disabled", None) is not None:
+                    child.disabled = components[child.custom_id]
+                    if getattr(child, "style", None) is not None:
+                        child.style = ButtonStyle.secondary if child.disabled else ButtonStyle.primary
 
     async def send_page(self, interaction: Interaction) -> None:
         """Send new page."""
-        self.modify_disabled()
+        self.modify_states()
         if self.type == Types.CONTENTS:
             await interaction.message.edit(content=self.pages[self.index], view=self)
         else:
             await interaction.message.edit(embed=self.pages[self.index], view=self)
 
-    @button(emoji=JUMP_FIRST_EMOJI, custom_id="jump_first")
+    @button(label=JUMP_FIRST_LABEL, custom_id="jump_first", style=ButtonStyle.primary)
     async def go_first(self, button: Button, interaction: Interaction) -> None:
         """Move the paginator to the first page."""
         if self.index == 0:
@@ -205,32 +225,34 @@ class Paginator(View):
         self.index = 0
         await self.send_page(interaction)
 
-    @button(emoji=BACK_EMOJI, custom_id="back")
+    @button(label=BACK_LABEL, custom_id="back", style=ButtonStyle.primary)
     async def go_previous(self, button: Button, interaction: Interaction) -> None:
         """Move the paginator to the previous page."""
         if self.index == 0:
-            button.disabled = True
-            await interaction.message.edit(view=self)
             return
 
         self.index -= 1
         await self.send_page(interaction)
 
-    @button(emoji=FORWARD_EMOJI, custom_id="next")
+    @button(label=FORWARD_LABEL, custom_id="next", style=ButtonStyle.primary)
     async def go_next(self, button: Button, interaction: Interaction) -> None:
         """Move the paginator to the next page."""
-        if self.index < len(self.pages) - 1:
-            self.index += 1
-            await self.send_page(interaction)
+        if self.index == len(self.pages) - 1:
+            return
 
-    @button(emoji=JUMP_LAST_EMOJI, custom_id="jump_last")
+        self.index += 1
+        await self.send_page(interaction)
+
+    @button(label=JUMP_LAST_LABEL, custom_id="jump_last", style=ButtonStyle.primary)
     async def go_last(self, button: Button, interaction: Interaction) -> None:
         """Move the paginator to the last page."""
-        if self.index < len(self.pages) - 1:
-            self.index = len(self.pages) - 1
-            await self.send_page(interaction)
+        if self.index == len(self.pages) - 1:
+            return
 
-    @button(emoji=STOP_PAGINATE_EMOJI, style=ButtonStyle.grey, custom_id="stop_paginate")
+        self.index = len(self.pages) - 1
+        await self.send_page(interaction)
+
+    @button(emoji=STOP_PAGINATE_EMOJI, custom_id="stop_paginate", style=ButtonStyle.grey)
     async def _stop(self, button: Button, interaction: Interaction) -> None:
         """Stop the paginator early."""
         await interaction.response.defer()
