@@ -2,13 +2,14 @@ import asyncio
 import logging
 import typing as t
 
-import discord
+import arrow
 from aiohttp import ClientSession
 from discord.ext import commands
 
-from .config import CONFIG, INTERNAL
-
-log = logging.getLogger(__name__)
+from modmail.config import CONFIG
+from modmail.log import ModmailLogger
+from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
+from modmail.utils.plugins import PLUGINS, walk_plugins
 
 
 class ModmailBot(commands.Bot):
@@ -19,60 +20,107 @@ class ModmailBot(commands.Bot):
     """
 
     main_task: asyncio.Task
+    logger: ModmailLogger = logging.getLogger(__name__)
 
     def __init__(self, **kwargs):
         self.config = CONFIG
-        self.internal = INTERNAL
-        super().__init__(command_prefix=self.get_prefix, **kwargs)
+        self.http_session: t.Optional[ClientSession] = None
+        self.start_time = arrow.utcnow()
+        super().__init__(command_prefix=commands.when_mentioned_or(self.config.bot.prefix), **kwargs)
+
+    async def create_session(self) -> None:
+        """Create an aiohttp client session."""
         self.http_session = ClientSession()
 
-    async def get_prefix(self, message: discord.Message = None) -> t.List[str]:
-        """Returns the bot prefix, but also allows the bot to work with user mentions."""
-        return [self.config.bot.prefix, f"<@{self.user.id}> ", f"<@!{self.user.id}> "]
+    async def start(self, *args, **kwargs) -> None:
+        """
+        Start the bot.
+
+        This just serves to create the http session.
+        """
+        await self.create_session()
+        await super().start(*args, **kwargs)
 
     async def close(self) -> None:
-        """Safely close HTTP session and extensions when bot is shutting down."""
-        await super().close()
+        """Safely close HTTP session, unload plugins and extensions when the bot is shutting down."""
+        plugins = self.extensions & PLUGINS.keys()
+        for plug in list(plugins):
+            try:
+                self.unload_extension(plug)
+            except Exception:
+                self.logger.error(f"Exception occured while unloading plugin {plug.name}", exc_info=True)
 
         for ext in list(self.extensions):
             try:
                 self.unload_extension(ext)
             except Exception:
-                log.error(f"Exception occured while unloading {ext.name}", exc_info=1)
+                self.logger.error(f"Exception occured while unloading {ext.name}", exc_info=True)
 
         for cog in list(self.cogs):
             try:
                 self.remove_cog(cog)
             except Exception:
-                log.error(f"Exception occured while removing cog {cog.name}", exc_info=1)
-
-        await super().close()
+                self.logger.error(f"Exception occured while removing cog {cog.name}", exc_info=True)
 
         if self.http_session:
             await self.http_session.close()
 
-    def add_cog(self, cog: commands.Cog) -> None:
+        await super().close()
+
+    def load_extensions(self) -> None:
+        """Load all enabled extensions."""
+        EXTENSIONS.update(walk_extensions())
+
+        # set up no_unload global too
+        for ext, value in EXTENSIONS.items():
+            if value[1]:
+                NO_UNLOAD.append(ext)
+
+        for extension, value in EXTENSIONS.items():
+            if value[0]:
+                self.logger.debug(f"Loading extension {extension}")
+                self.load_extension(extension)
+
+    def load_plugins(self) -> None:
+        """Load all enabled plugins."""
+        PLUGINS.update(walk_plugins())
+
+        for plugin, should_load in PLUGINS.items():
+            if should_load:
+                self.logger.debug(f"Loading plugin {plugin}")
+                try:
+                    # since we're loading user generated content,
+                    # any errors here will take down the entire bot
+                    self.load_extension(plugin)
+                except Exception:
+                    self.logger.error("Failed to load plugin {0}".format(plugin), exc_info=True)
+
+    def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         """
-        Delegate to super to register `cog`.
+        Load a given cog.
+
+        Utilizes the default discord.py loader beneath, but also checks so we can warn when we're
+        loading a non-ModmailCog cog.
+        """
+        from modmail.utils.cogs import ModmailCog
+
+        if not isinstance(cog, ModmailCog):
+            self.logger.warning(
+                f"Cog {cog.name} is not a ModmailCog. All loaded cogs should always be"
+                f" instances of ModmailCog."
+            )
+        super().add_cog(cog, override=override)
+        self.logger.info(f"Cog loaded: {cog.qualified_name}")
+
+    def remove_cog(self, cog: str) -> None:
+        """
+        Delegate to super to unregister `cog`.
 
         This only serves to make the info log, so that extensions don't have to.
         """
-        super().add_cog(cog)
-        log.info(f"Cog loaded: {cog.qualified_name}")
-
-    async def nonblocking_start(self) -> None:
-        """Start an instance of the bot without blocking and triggering exceptions properly."""
-        log.notice("Starting bot")
-        self.main_task = asyncio.create_task(self.start(CONFIG.bot.token))
-
-        def ensure_exception(fut: asyncio.Future) -> None:
-            """Ensure an exception in a task is raised without hard awaiting."""
-            if fut.done() and not fut.cancelled():
-                return
-            fut.result()
-
-        self.main_task.add_done_callback(ensure_exception)
+        super().remove_cog(cog)
+        self.logger.info(f"Cog unloaded: {cog}")
 
     async def on_ready(self) -> None:
         """Send basic login success message."""
-        log.info("Logged in as %s", self.user)
+        self.logger.info("Logged in as %s", self.user)

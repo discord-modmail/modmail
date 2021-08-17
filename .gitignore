@@ -68,8 +68,10 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
+# documentation
 docs/_build/
+site
+docs_dir
 
 # PyBuilder
 target/
@@ -126,14 +128,15 @@ dmypy.json
 .pyre/
 
 # Editors
+.vscode
 .vscode/
 .idea/
 
 # logs
 logs
 
-# Editors
-.vscode
-
 # Configuration
 *config.toml
+
+# Custom docker compose override
+docker-compose.override.yml
