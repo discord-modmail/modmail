@@ -18,6 +18,20 @@ EXT_METADATA = ExtMetadata()
 logger: ModmailLogger = logging.getLogger(__name__)
 
 
+class Ticket:
+    """
+    Represents a ticket.
+
+    This class represents a ticket for Modmail.  A ticket is a way to send
+    messages to a specific user.
+    """
+
+    user: discord.User
+    thread: discord.Thread
+    log_message: discord.Message
+    close_after: t.Optional[int] = None
+
+
 class Tickets(ModmailCog, name="Threads"):
     """A cog for relaying direct messages."""
 
@@ -77,7 +91,15 @@ class Tickets(ModmailCog, name="Threads"):
         else:
             thread_channel = await self.start_discord_thread(message)
 
-        await thread_channel.send(message)
+        await thread_channel.send(message.content)
+
+    @is_thread_channel()
+    @commands.command(aliases=("r",))
+    async def reply(self, ctx: Context, *, message: str) -> None:
+        """Send a reply to the user."""
+        user = await self.bot.fetch_user(ctx.message.channel.name)
+        await user.send(message)
+        await ctx.message.add_reaction("📬")
 
     @is_thread_channel()
     @commands.group(invoke_without_command=True)
