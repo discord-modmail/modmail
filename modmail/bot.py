@@ -28,7 +28,12 @@ class ModmailBot(commands.Bot):
         self.http_session: t.Optional[ClientSession] = None
         self._guild_available = asyncio.Event()
         self.start_time = arrow.utcnow()
-        super().__init__(command_prefix=commands.when_mentioned_or(self.config.bot.prefix), **kwargs)
+        intents = discord.Intents(
+            guilds=True, messages=True, reactions=True, typing=True, members=True, emojis_and_stickers=True
+        )
+        super().__init__(
+            command_prefix=commands.when_mentioned_or(self.config.bot.prefix), intents=intents, **kwargs
+        )
 
     async def create_session(self) -> None:
         """Create an aiohttp client session."""
