@@ -40,17 +40,14 @@ from discord.ui import Button, View, button
 
 from modmail.log import ModmailLogger
 
-# Deprecated variables
-JUMP_FIRST_EMOJI = "\u23EE"  # [:track_previous:]
-BACK_EMOJI = "\u2B05"  # [:arrow_left:]
-FORWARD_EMOJI = "\u27A1"  # [:arrow_right:]
-JUMP_LAST_EMOJI = "\u23ED"  # [:track_next:]
+# Stop button
 STOP_PAGINATE_EMOJI = "\u274c"  # [:x:]
 
-JUMP_FIRST_LABEL = "<<"
-BACK_LABEL = "<"
-FORWARD_LABEL = ">"
-JUMP_LAST_LABEL = ">>"
+# Labels
+JUMP_FIRST_LABEL = "\u2590\u276e\u2012"  # bar, left arrow, ‒
+BACK_LABEL = "  \u276e  "  # left arrow
+FORWARD_LABEL = "  \u276f  "  # right arrow
+JUMP_LAST_LABEL = "\u2012\u276f\u258c"  # ‒, right arrow, bar
 logger: ModmailLogger = logging.getLogger(__name__)
 
 
