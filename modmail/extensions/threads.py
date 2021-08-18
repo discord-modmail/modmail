@@ -12,7 +12,6 @@ from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.converters import Duration
 from modmail.utils.decorators import is_thread_channel
-from modmail.utils.messages import sub_clyde
 
 EXT_METADATA = ExtMetadata()
 
@@ -27,35 +26,6 @@ class DmRelay(ModmailCog):
         self.config = CONFIG
 
         self.relay_channel: t.Optional[discord.TextChannel] = None
-        self.webhook_id: int = self.config.thread.thread_relay_webhook_id
-        self.webhook: t.Optional[discord.Webhook] = None
-
-        self.bot.loop.create_task(self.fetch_webhook())
-
-    async def fetch_webhook(self) -> None:
-        """Fetches the webhook object, so we can post to it."""
-        await self.bot.wait_until_guild_available()
-
-        try:
-            self.webhook = await self.bot.fetch_webhook(self.webhook_id)
-        except discord.HTTPException:
-            logger.exception(f"Failed to fetch webhook with id `{self.webhook_id}`")
-
-    async def send_webhook_message(self, message: discord.Message, thread: discord.Thread) -> discord.Message:
-        """
-        Send a message using the provided webhook.
-
-        This uses sub_clyde() and tries for an HTTPException to ensure it doesn't crash.
-        """
-        try:
-            return await self.webhook.send(
-                content=message.content,
-                username=sub_clyde(message.author.name),
-                avatar_url=message.author.avatar,
-                thread=thread,
-            )
-        except discord.HTTPException:
-            logger.exception("Failed to send a message to the webhook!", exc_info=True)
 
     @staticmethod
     def format_message_embed(message: discord.Message, **kwargs) -> discord.Embed:
@@ -107,7 +77,7 @@ class DmRelay(ModmailCog):
         else:
             thread_channel = await self.start_discord_thread(message)
 
-        await self.send_webhook_message(message, thread_channel)
+        await thread_channel.send(message)
 
     @is_thread_channel()
     @commands.group(invoke_without_command=True)

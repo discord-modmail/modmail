@@ -88,7 +88,7 @@ class BaseSettings(PydanticBaseSettings):
 class BotConfig(BaseSettings):
     prefix: str = "?"
     token: str = None
-    guild_id: int
+    guild_id: int = None
 
     class Config:
         # env_prefix = "bot."
@@ -118,8 +118,7 @@ class DevConfig(BaseSettings):
 
 
 class ThreadConfig(BaseSettings):
-    thread_relay_webhook_id: int
-    thread_mention_role_id: int
+    thread_mention_role_id: int = None
 
 
 class ModmailConfig(BaseSettings):

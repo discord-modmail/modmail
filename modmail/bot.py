@@ -137,11 +137,6 @@ class ModmailBot(commands.Bot):
             msg = "Guild available event was dispatched but the cache appears to still be empty!"
             self.logger.warning(msg)
 
-            try:
-                _ = await self.fetch_webhook(self.config.thread.thread_relay_webhook_id)
-            except discord.HTTPException as e:
-                self.logger.error(f"Failed to fetch webhook to send empty cache warning: status {e.status}")
-
             return
 
         self._guild_available.set()
