@@ -119,6 +119,7 @@ class DevConfig(BaseSettings):
 
 class ThreadConfig(BaseSettings):
     thread_mention_role_id: int = None
+    thread_channel_id: int = None
 
 
 class ModmailConfig(BaseSettings):

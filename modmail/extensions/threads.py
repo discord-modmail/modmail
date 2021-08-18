@@ -7,7 +7,6 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from modmail.bot import ModmailBot
-from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.converters import Duration
@@ -37,7 +36,6 @@ class Tickets(ModmailCog, name="Threads"):
 
     def __init__(self, bot: ModmailBot):
         self.bot = bot
-        self.config = CONFIG
 
         self.relay_channel: t.Optional[discord.TextChannel] = None
 
@@ -57,8 +55,12 @@ class Tickets(ModmailCog, name="Threads"):
         allowed_mentions = discord.AllowedMentions(
             everyone=False, users=False, roles=True, replied_user=False
         )
+        if self.bot.config.thread.thread_mention_role_id is not None:
+            mention = f"<@&{self.bot.config.thread.thread_mention_role_id}>"
+        else:
+            mention = "@here"
         relayed_msg = await self.relay_channel.send(
-            content=f"<@&{self.config.thread.thread_mention_role_id}>",
+            content=mention,
             embed=self.format_message_embed(message),
             allowed_mentions=allowed_mentions,
         )
@@ -82,9 +84,12 @@ class Tickets(ModmailCog, name="Threads"):
             return
 
         if not self.relay_channel:
-            self.relay_channel = await self.bot.fetch_channel(875225854349803520)
+            self.relay_channel = await self.bot.fetch_channel(self.bot.config.thread.thread_channel_id)
 
-        guild = self.bot.get_guild(self.config.bot.guild_id)
+        if len(self.bot.guilds) == 1:
+            guild = self.bot.get_guild(self.bot.guilds[0].id)
+        else:
+            guild = self.bot.config.bot.guild_id
         if thread_channel := discord.utils.get(guild.threads, name=str(author.id)):
             if thread_channel.archived:
                 thread_channel = await self.start_discord_thread(message)
