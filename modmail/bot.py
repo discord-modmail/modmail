@@ -4,6 +4,7 @@ import typing as t
 
 import arrow
 from aiohttp import ClientSession
+from discord import Intents
 from discord.ext import commands
 
 from modmail.config import CONFIG
@@ -26,7 +27,12 @@ class ModmailBot(commands.Bot):
         self.config = CONFIG
         self.http_session: t.Optional[ClientSession] = None
         self.start_time = arrow.utcnow()
-        super().__init__(command_prefix=commands.when_mentioned_or(self.config.bot.prefix), **kwargs)
+        intents = Intents(
+            guilds=True, messages=True, reactions=True, typing=True, members=True, emojis_and_stickers=True
+        )
+        super().__init__(
+            command_prefix=commands.when_mentioned_or(self.config.bot.prefix), intents=intents, **kwargs
+        )
 
     async def create_session(self) -> None:
         """Create an aiohttp client session."""
