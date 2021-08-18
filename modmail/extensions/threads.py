@@ -18,7 +18,7 @@ EXT_METADATA = ExtMetadata()
 logger: ModmailLogger = logging.getLogger(__name__)
 
 
-class DmRelay(ModmailCog):
+class Tickets(ModmailCog, name="Threads"):
     """A cog for relaying direct messages."""
 
     def __init__(self, bot: ModmailBot):
@@ -94,5 +94,5 @@ class DmRelay(ModmailCog):
 
 
 def setup(bot: ModmailBot) -> None:
-    """Add the DmRelay cog to the bot."""
-    bot.add_cog(DmRelay(bot))
+    """Add the Tickets cog to the bot."""
+    bot.add_cog(Tickets(bot))
