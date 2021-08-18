@@ -11,7 +11,7 @@ from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.converters import Duration
-from modmail.utils.decorators import is_thread_channel
+from modmail.utils.threads import is_thread_channel
 
 EXT_METADATA = ExtMetadata()
 
