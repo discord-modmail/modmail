@@ -27,7 +27,7 @@ def bot() -> ModmailBot:
 
     ModmailBot instance.
     """
-    bot: ModmailBot = ModmailBot(loop=asyncio.get_event_loop())
+    bot: ModmailBot = ModmailBot()
     return bot
 
 
