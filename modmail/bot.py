@@ -37,18 +37,8 @@ class ModmailBot(commands.Bot):
     def __init__(self, **kwargs):
         self.config = CONFIG
         self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
-        super().__init__(
-            **kwargs,
-        )
         self.http_session: t.Optional[ClientSession] = None
 
-    @classmethod
-    def create(cls, *args, **kwargs) -> "ModmailBot":
-        """
-        Create a ModmailBot instance.
-
-        This configures our instance with all of our custom options, without making __init__ unusable.
-        """
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
         # listen to messages mentioning the bot or matching the prefix
@@ -57,7 +47,7 @@ class ModmailBot(commands.Bot):
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
-        return cls(
+        super().__init__(
             case_insensitive=True,
             description="Modmail bot by discord-modmail.",
             status=status,

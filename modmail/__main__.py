@@ -17,7 +17,7 @@ log: ModmailLogger = logging.getLogger(__name__)
 
 def main() -> None:
     """Run the bot."""
-    bot = ModmailBot.create()
+    bot = ModmailBot()
     bot.run(bot.config.bot.token)
 
 

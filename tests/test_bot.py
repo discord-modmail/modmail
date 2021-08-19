@@ -15,9 +15,7 @@ from modmail.bot import ModmailBot
 @pytest.mark.asyncio
 async def test_bot_creation():
     """Ensure we can make a ModmailBot instance."""
-    bot = ModmailBot(command_prefix="!")
-    assert isinstance(bot, ModmailBot)
-    assert bot.command_prefix == "!"
+    bot = ModmailBot()
     # cleanup
     await bot.close()
 
@@ -29,7 +27,7 @@ def bot() -> ModmailBot:
 
     ModmailBot instance.
     """
-    bot: ModmailBot = ModmailBot.create(loop=asyncio.get_event_loop())
+    bot: ModmailBot = ModmailBot(loop=asyncio.get_event_loop())
     return bot
 
 
