@@ -10,7 +10,7 @@ from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.converters import Duration
-from modmail.utils.threads import is_thread_channel
+from modmail.utils.threads import is_modmail_thread
 
 EXT_METADATA = ExtMetadata()
 
@@ -89,7 +89,7 @@ class Tickets(ModmailCog, name="Threads"):
         if len(self.bot.guilds) == 1:
             guild = self.bot.get_guild(self.bot.guilds[0].id)
         else:
-            guild = self.bot.config.bot.guild_id
+            guild = self.bot.get_guild(self.bot.config.bot.guild_id)
         if thread_channel := discord.utils.get(guild.threads, name=str(author.id)):
             if thread_channel.archived:
                 thread_channel = await self.start_discord_thread(message)
@@ -98,7 +98,7 @@ class Tickets(ModmailCog, name="Threads"):
 
         await thread_channel.send(message.content)
 
-    @is_thread_channel()
+    @is_modmail_thread()
     @commands.command(aliases=("r",))
     async def reply(self, ctx: Context, *, message: str) -> None:
         """Send a reply to the user."""
@@ -106,7 +106,7 @@ class Tickets(ModmailCog, name="Threads"):
         await user.send(message)
         await ctx.message.add_reaction("📬")
 
-    @is_thread_channel()
+    @is_modmail_thread()
     @commands.group(invoke_without_command=True)
     async def close(self, ctx: Context, *, _: Duration = None) -> None:
         """Close the current thread after `after` time from now."""
