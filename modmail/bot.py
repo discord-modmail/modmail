@@ -69,14 +69,23 @@ class ModmailBot(commands.Bot):
             # create the aiohttp session
             self.http_session = ClientSession(loop=self.loop)
             self.logger.trace("Created ClientSession.")
-            # set start time to when we started the bot
+            # set start time to when we started the bot.
+            # This is now, since we're about to connect to the gateway.
+            # This should also be before we load any extensions, since if they have a load time, it should
+            # be after the bot start time.
             self.start_time = arrow.utcnow()
             # we want to load extensions before we log in, so that any issues in them are discovered
-            # before we connect to discord
+            # before we connect to discord. This keeps us from connecting to the gateway a lot if we have a
+            # problem with an extension.
             self.load_extensions()
             # next, we log in to discord, to ensure that we are able to connect to discord
+            # This only logs in to discord and gets a gateway, it does not connect to the websocket
             await self.login(token)
-            # now that we're logged in and gotten a connection, we load all of the plugins
+            # now that we're logged in and ensured we can have connection, we load all of the plugins
+            # The reason to wait until we know we have a gateway we can connect to, even though we have not
+            # signed in yet, is in some cases, a plugin may be poorly made and mess up if it is loaded but
+            # the bot never connects to discord. Putting this below the login ensures that we don't load if
+            # we don't have a gateway.
             self.load_plugins()
             # alert the user that we're done loading everything
             self.logger.notice("Loaded all extensions, and plugins. Starting bot.")
