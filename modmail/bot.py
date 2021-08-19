@@ -15,6 +15,15 @@ from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
 
+INTENTS = Intents(
+    guilds=True,
+    messages=True,
+    reactions=True,
+    typing=True,
+    members=True,
+    emojis_and_stickers=True,
+)
+
 
 class ModmailBot(commands.Bot):
     """
@@ -40,33 +49,22 @@ class ModmailBot(commands.Bot):
 
         This configures our instance with all of our custom options, without making __init__ unusable.
         """
-        intents = Intents(
-            guilds=True,
-            messages=True,
-            reactions=True,
-            typing=True,
-            members=True,
-            emojis_and_stickers=True,
-        )
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
         # listen to messages mentioning the bot or matching the prefix
         # ! NOTE: This needs to use the configuration system to get the prefix from the db once it exists.
         prefix = commands.when_mentioned_or(CONFIG.bot.prefix)
-        description = "Modmail bot by discord-modmail."
-        # allow commands not caring of the case
-        case_insensitive_commands = True
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
         return cls(
-            case_insensitive=case_insensitive_commands,
-            description=description,
+            case_insensitive=True,
+            description="Modmail bot by discord-modmail.",
             status=status,
             activity=activity,
             allowed_mentions=allowed_mentions,
             command_prefix=prefix,
-            intents=intents,
+            intents=INTENTS,
             **kwargs,
         )
 
