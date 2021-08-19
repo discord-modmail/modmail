@@ -31,7 +31,7 @@ class ModmailBot(commands.Bot):
         super().__init__(
             **kwargs,
         )
-        self.http_session: ClientSession = ClientSession(loop=self.loop)
+        self.http_session: t.Optional[ClientSession] = None
 
     @classmethod
     def create(cls, *args, **kwargs) -> "ModmailBot":
@@ -107,6 +107,9 @@ class ModmailBot(commands.Bot):
 
         async def runner() -> None:
             try:
+                # create the aiohttp session
+                self.http_session = ClientSession(loop=self.loop)
+                self.logger.trace("Created ClientSession.")
                 # set start time to when we started the bot
                 self.start_time = arrow.utcnow()
                 # we want to load extensions before we log in, so that any issues in them are discovered
