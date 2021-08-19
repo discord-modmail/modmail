@@ -48,8 +48,7 @@ class ModmailBot(commands.Bot):
             members=True,
             emojis_and_stickers=True,
         )
-        # start with an invisible status while we load everything
-        status = discord.Status.invisible
+        status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
         # listen to messages mentioning the bot or matching the prefix
         # ! NOTE: This needs to use the configuration system to get the prefix from the db once it exists.
@@ -222,4 +221,3 @@ class ModmailBot(commands.Bot):
     async def on_ready(self) -> None:
         """Send basic login success message."""
         self.logger.info("Logged in as %s", self.user)
-        await self.change_presence(status=discord.Status.online, activity=self.activity)
