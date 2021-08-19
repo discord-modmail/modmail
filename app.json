@@ -1,3 +1,12 @@
 {
-    "stack": "container"
+    "env": {
+        "TOKEN": {
+            "description": "Discord bot token. This is from https://discord.com/developers/applications",
+            "required": true
+        }
+    },
+    "name": "Modmail Bot",
+    "repository": "https://github.com/discord-modmail/modmail",
+    "stack": "container",
+    "website": "https://discord-modmail.readthedocs.io/"
 }
