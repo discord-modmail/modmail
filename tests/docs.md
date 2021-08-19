@@ -12,12 +12,6 @@ Ensure we can make a ModmailBot instance.
 **Markers:**
 - asyncio
 - dependency  (name=create_bot)
-### test_bot_aiohttp
-Test aiohttp client session creates and closes without warnings.
-
-**Markers:**
-- asyncio
-- dependency  (depends=['create_bot'])
 ### test_bot_close
 Ensure bot closes without error.
 

@@ -5,9 +5,12 @@ repos:
     rev: v4.0.1
     hooks:
       - id: check-merge-conflict
+      - id: check-json
       - id: check-toml
       - id: check-yaml
         exclude: 'mkdocs.yml' # Exclude all mkdocs.yml as they use tags i.e. `!!!`
+      - id: pretty-format-json
+        args: ['--indent=4','--autofix']
       - id: end-of-file-fixer
       - id: no-commit-to-branch
         args: [--branch=main, --branch=master]

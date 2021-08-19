@@ -13,7 +13,7 @@ coverage:
       default: false
       bot:
         paths:
-          - modmail
+          - 'modmail/'
         # basic
         target: auto
         threshold: 5%

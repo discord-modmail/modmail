@@ -20,9 +20,6 @@ def main() -> None:
     """Run the bot."""
     patch_embed()
     bot = ModmailBot()
-    bot.load_extensions()
-    bot.load_plugins()
-    log.notice("Running the bot.")
     bot.run(bot.config.bot.token)
 
 
