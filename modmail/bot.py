@@ -76,25 +76,10 @@ class ModmailBot(commands.Bot):
 
         Start up our instance of the bot. Since this method is blocking, it must be called last.
 
-        This method sets up the bot, loads extensions and plugins, and then executes the main task.
+        This method does several things, it loads extensions and plugins,
+        and then executes the main task.
 
-        A blocking call that abstracts away the event loop
-        initialisation from you.
-        If you want more control over the event loop then this
-        function should not be used. Use :meth:`start` coroutine
-        or :meth:`connect` + :meth:`login`.
-        Roughly Equivalent to: ::
-            try:
-                loop.run_until_complete(start(*args, **kwargs))
-            except KeyboardInterrupt:
-                loop.run_until_complete(close())
-                # cancel all tasks lingering
-            finally:
-                loop.close()
-        .. warning::
-            This function must be the last function to call due to the fact that it
-            is blocking. That means that registration of events or anything being
-            called after this function call will not execute until it returns.
+        This method was copied from discord.py and modified to suit our needs.
         """
         loop = self.loop
 
