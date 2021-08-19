@@ -1,10 +1,13 @@
 import asyncio
 import logging
+import signal
 import typing as t
 
 import arrow
+import discord
 from aiohttp import ClientSession
-from discord import Intents
+from discord import Activity, AllowedMentions, Intents
+from discord.client import _cleanup_loop
 from discord.ext import commands
 
 from modmail.config import CONFIG
@@ -20,32 +23,127 @@ class ModmailBot(commands.Bot):
     Has an aiohttp.ClientSession and a ModmailConfig instance.
     """
 
-    main_task: asyncio.Task
     logger: ModmailLogger = logging.getLogger(__name__)
 
     def __init__(self, **kwargs):
         self.config = CONFIG
-        self.http_session: t.Optional[ClientSession] = None
-        self.start_time = arrow.utcnow()
-        intents = Intents(
-            guilds=True, messages=True, reactions=True, typing=True, members=True, emojis_and_stickers=True
-        )
+        self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
         super().__init__(
-            command_prefix=commands.when_mentioned_or(self.config.bot.prefix), intents=intents, **kwargs
+            **kwargs,
+        )
+        self.http_session: ClientSession = ClientSession(loop=self.loop)
+
+    @classmethod
+    def create(cls, *args, **kwargs) -> "ModmailBot":
+        """
+        Create a ModmailBot instance.
+
+        This configures our instance with all of our custom options, without making __init__ unusable.
+        """
+        intents = Intents(
+            guilds=True,
+            messages=True,
+            reactions=True,
+            typing=True,
+            members=True,
+            emojis_and_stickers=True,
+        )
+        # start with an invisible status while we load everything
+        status = discord.Status.invisible
+        activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
+        # listen to messages mentioning the bot or matching the prefix
+        # ! NOTE: This needs to use the configuration system to get the prefix from the db once it exists.
+        prefix = commands.when_mentioned_or(CONFIG.bot.prefix)
+        description = "Modmail bot by discord-modmail."
+        # allow commands not caring of the case
+        case_insensitive_commands = True
+        # allow only user mentions by default.
+        # ! NOTE: This may change in the future to allow roles as well
+        allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
+        return cls(
+            case_insensitive=case_insensitive_commands,
+            description=description,
+            status=status,
+            activity=activity,
+            allowed_mentions=allowed_mentions,
+            command_prefix=prefix,
+            intents=intents,
+            **kwargs,
         )
 
-    async def create_session(self) -> None:
-        """Create an aiohttp client session."""
-        self.http_session = ClientSession()
-
-    async def start(self, *args, **kwargs) -> None:
+    def run(self, *args, **kwargs) -> None:
         """
-        Start the bot.
 
-        This just serves to create the http session.
+        Start up our instance of the bot. Since this method is blocking, it must be called last.
+
+        This method sets up the bot, loads extensions and plugins, and then executes the main task.
+
+        A blocking call that abstracts away the event loop
+        initialisation from you.
+        If you want more control over the event loop then this
+        function should not be used. Use :meth:`start` coroutine
+        or :meth:`connect` + :meth:`login`.
+        Roughly Equivalent to: ::
+            try:
+                loop.run_until_complete(start(*args, **kwargs))
+            except KeyboardInterrupt:
+                loop.run_until_complete(close())
+                # cancel all tasks lingering
+            finally:
+                loop.close()
+        .. warning::
+            This function must be the last function to call due to the fact that it
+            is blocking. That means that registration of events or anything being
+            called after this function call will not execute until it returns.
         """
-        await self.create_session()
-        await super().start(*args, **kwargs)
+        loop = self.loop
+
+        try:
+            loop.add_signal_handler(signal.SIGINT, lambda: loop.stop())
+            # this one we may want to get rid of, depending on certain things, and just hard stop instead.
+            loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
+        except NotImplementedError:
+            pass
+
+        async def runner() -> None:
+            try:
+                # set start time to when we started the bot
+                self.start_time = arrow.utcnow()
+                # we want to load extensions before we log in, so that any issues in them are discovered
+                # before we connect to discord
+                self.load_extensions()
+                # next, we log in to discord, to ensure that we are able to connect to discord
+                await self.login(*args)
+                # now that we're logged in and gotten a connection, we load all of the plugins
+                self.load_plugins()
+                # alert the user that we're done loading everything
+                self.logger.notice("Loaded all extensions, and plugins. Starting bot.")
+                # finally, we enter the main loop
+                await self.connect(**kwargs)
+            finally:
+                if not self.is_closed():
+                    await self.close()
+
+        def stop_loop_on_completion(f) -> None:  # noqa: ANN001
+            loop.stop()
+
+        future = asyncio.ensure_future(runner(), loop=loop)
+        future.add_done_callback(stop_loop_on_completion)
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            self.logger.info("Received signal to terminate bot and event loop.")
+        finally:
+            future.remove_done_callback(stop_loop_on_completion)
+            self.logger.info("Cleaning up tasks.")
+            _cleanup_loop(loop)
+
+        if not future.cancelled():
+            try:
+                return future.result()
+            except KeyboardInterrupt:
+                # I am unsure why this gets raised here but suppress it anyway
+                return None
 
     async def close(self) -> None:
         """Safely close HTTP session, unload plugins and extensions when the bot is shutting down."""
