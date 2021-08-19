@@ -119,7 +119,7 @@ class ModmailBot(commands.Bot):
         def stop_loop_on_completion(f) -> None:  # noqa: ANN001
             loop.stop()
 
-        future = asyncio.ensure_future(self.start(), loop=loop)
+        future = asyncio.ensure_future(self.start(*args, **kwargs), loop=loop)
         future.add_done_callback(stop_loop_on_completion)
         try:
             loop.run_forever()
