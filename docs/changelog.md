@@ -10,8 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Refactored bot creation and bot running (#56)
-    - Bot creation is now a class method, `ModmailBot.create()`
     - Running the bot is still the same method, but it loads extensions and plugins now.
+    - `bot.start()` can also be used if already in a running event loop. Keep in mind using it will require
+        handling loop errors, as run() does this automatically.
 
 
 ## [0.1.0] - 2021-08-13
