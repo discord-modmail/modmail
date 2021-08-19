@@ -15,7 +15,7 @@ from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
 
-INTENTS = Intents(
+REQUIRED_INTENTS = Intents(
     guilds=True,
     messages=True,
     reactions=True,
@@ -54,7 +54,7 @@ class ModmailBot(commands.Bot):
             activity=activity,
             allowed_mentions=allowed_mentions,
             command_prefix=prefix,
-            intents=INTENTS,
+            intents=REQUIRED_INTENTS,
             **kwargs,
         )
 
