@@ -109,6 +109,7 @@ class ModmailBot(commands.Bot):
         loop = self.loop
 
         try:
+            # adds signal handlers so the loop is safely stopped
             loop.add_signal_handler(signal.SIGINT, lambda: loop.stop())
             # this one we may want to get rid of, depending on certain things, and just hard stop instead.
             loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
