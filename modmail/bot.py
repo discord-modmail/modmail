@@ -71,6 +71,34 @@ class ModmailBot(commands.Bot):
             **kwargs,
         )
 
+    async def start(self, token: str, reconnect: bool = True) -> None:
+        """
+        Start the bot.
+
+        This function is called by the run method, and finishes the set up of the bot that needs an
+        asyncrhonous event loop running, before connecting the bot to discord.
+        """
+        try:
+            # create the aiohttp session
+            self.http_session = ClientSession(loop=self.loop)
+            self.logger.trace("Created ClientSession.")
+            # set start time to when we started the bot
+            self.start_time = arrow.utcnow()
+            # we want to load extensions before we log in, so that any issues in them are discovered
+            # before we connect to discord
+            self.load_extensions()
+            # next, we log in to discord, to ensure that we are able to connect to discord
+            await self.login(token)
+            # now that we're logged in and gotten a connection, we load all of the plugins
+            self.load_plugins()
+            # alert the user that we're done loading everything
+            self.logger.notice("Loaded all extensions, and plugins. Starting bot.")
+            # finally, we enter the main loop
+            await self.connect(reconnect=reconnect)
+        finally:
+            if not self.is_closed():
+                await self.close()
+
     def run(self, *args, **kwargs) -> None:
         """
 
@@ -90,32 +118,10 @@ class ModmailBot(commands.Bot):
         except NotImplementedError:
             pass
 
-        async def runner() -> None:
-            try:
-                # create the aiohttp session
-                self.http_session = ClientSession(loop=self.loop)
-                self.logger.trace("Created ClientSession.")
-                # set start time to when we started the bot
-                self.start_time = arrow.utcnow()
-                # we want to load extensions before we log in, so that any issues in them are discovered
-                # before we connect to discord
-                self.load_extensions()
-                # next, we log in to discord, to ensure that we are able to connect to discord
-                await self.login(*args)
-                # now that we're logged in and gotten a connection, we load all of the plugins
-                self.load_plugins()
-                # alert the user that we're done loading everything
-                self.logger.notice("Loaded all extensions, and plugins. Starting bot.")
-                # finally, we enter the main loop
-                await self.connect(**kwargs)
-            finally:
-                if not self.is_closed():
-                    await self.close()
-
         def stop_loop_on_completion(f) -> None:  # noqa: ANN001
             loop.stop()
 
-        future = asyncio.ensure_future(runner(), loop=loop)
+        future = asyncio.ensure_future(self.start(), loop=loop)
         future.add_done_callback(stop_loop_on_completion)
         try:
             loop.run_forever()
