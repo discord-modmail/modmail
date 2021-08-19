@@ -228,3 +228,4 @@ class ModmailBot(commands.Bot):
     async def on_ready(self) -> None:
         """Send basic login success message."""
         self.logger.info("Logged in as %s", self.user)
+        await self.change_presence(status=discord.Status.online, activity=self.activity)
