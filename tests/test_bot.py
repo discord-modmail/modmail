@@ -4,6 +4,8 @@ Test modmail basics.
 - import module
 - create a bot object
 """
+import asyncio
+
 import pytest
 
 from modmail.bot import ModmailBot
@@ -14,8 +16,6 @@ from modmail.bot import ModmailBot
 async def test_bot_creation():
     """Ensure we can make a ModmailBot instance."""
     bot = ModmailBot()
-    assert isinstance(bot, ModmailBot)
-
     # cleanup
     await bot.close()
 
@@ -29,17 +29,6 @@ def bot() -> ModmailBot:
     """
     bot: ModmailBot = ModmailBot()
     return bot
-
-
-@pytest.mark.dependency(depends=["create_bot"])
-@pytest.mark.asyncio
-async def test_bot_aiohttp(bot):
-    """Test aiohttp client session creates and closes without warnings."""
-    import aiohttp
-
-    await bot.create_session()
-    assert isinstance(bot.http_session, aiohttp.ClientSession)
-    await bot.close()
 
 
 @pytest.mark.dependency(depends=["create_bot"])
