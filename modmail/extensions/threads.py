@@ -182,7 +182,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         if check_for_existing_thread and recipient.id in self.tickets.keys():
             raise ThreadAlreadyExistsError(recipient.id)
 
-        thread_channel = await self._start_discord_thread(initial_message, send_initial_message)
+        thread_channel = await self._start_discord_thread(initial_message)
         ticket = Ticket(recipient, thread_channel)
 
         # add the ticket as both the recipient and the thread ids so they can be retrieved from both sides.
@@ -190,7 +190,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         self.tickets[thread_channel.id] = ticket
         return ticket
 
-    async def _start_discord_thread(self, message: discord.Message, send_msg) -> discord.Thread:
+    async def _start_discord_thread(self, message: discord.Message) -> discord.Thread:
         """Create a discord thread."""
         await self.init_relay_channel()
         allowed_mentions = discord.AllowedMentions(
