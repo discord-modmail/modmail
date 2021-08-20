@@ -1,24 +1,26 @@
 import datetime
 import logging
-import typing as t
 from enum import IntEnum, auto
+from typing import TYPE_CHECKING, Dict, Optional, Union
 
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.utils import escape_markdown
 
-from modmail.bot import ModmailBot
-from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.converters import Duration
 from modmail.utils.threads import ThreadAlreadyExistsError, is_modmail_thread
 from modmail.utils.users import check_can_dm_user
 
+if TYPE_CHECKING:
+    from modmail.bot import ModmailBot
+    from modmail.log import ModmailLogger
+
+
 EXT_METADATA = ExtMetadata()
 
-logger: ModmailLogger = logging.getLogger(__name__)
-
+logger: "ModmailLogger" = logging.getLogger(__name__)
 USER_NOT_ABLE_TO_BE_DMED_MESSAGE = (
     "**{0}** is not able to be dmed! This is because they have either blocked the bot, "
     "or they are only accepting direct messages from friends.\n"
@@ -53,7 +55,7 @@ class Ticket:
     thread: discord.Thread
     messages: MessageDict
     log_message: discord.Message
-    close_after: t.Optional[int] = None
+    close_after: Optional[int] = None
 
     def __init__(self, recipient: discord.User, thread: discord.Thread):
         """
@@ -64,7 +66,7 @@ class Ticket:
         """
         self.thread = thread
         self.recipient = recipient
-        self.log_message: t.Union[
+        self.log_message: Union[
             discord.Message, discord.PartialMessage
         ] = self.thread.parent.get_partial_message(self.thread.id)
         self.messages = MessageDict()
@@ -84,11 +86,11 @@ class Ticket:
 class TicketsCog(ModmailCog, name="Threads"):
     """A cog for relaying direct messages."""
 
-    def __init__(self, bot: ModmailBot):
+    def __init__(self, bot: "ModmailBot"):
         self.bot = bot
         # user id, Ticket
-        self.tickets: t.Dict[int, Ticket] = dict()
-        self.relay_channel: t.Union[
+        self.tickets: Dict[int, Ticket] = dict()
+        self.relay_channel: Union[
             discord.TextChannel, discord.PartialMessageable
         ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
 
@@ -238,24 +240,6 @@ class TicketsCog(ModmailCog, name="Threads"):
         ticket.messages[message] = sent_message
 
     # listen for all messages
-    @ModmailCog.listener(name="on_message")
-    async def on_message(self, message: discord.Message) -> None:
-        """Relay all dms to a thread channel."""
-        author = message.author
-
-        if author.id == self.bot.user.id:
-            return
-
-        if message.guild:
-            return
-
-        try:
-            ticket = self.tickets[author.id]
-        except KeyError:
-            # Thread doesn't exist, so create one.
-            ticket = await self.create_ticket(message, check_for_existing_thread=False)
-        await self._send_thread(ticket, message)
-
     @is_modmail_thread()
     @commands.command(aliases=("r",))
     async def reply(self, ctx: Context, *, message: str) -> None:
@@ -288,7 +272,25 @@ class TicketsCog(ModmailCog, name="Threads"):
         await ctx.channel.edit(archived=True, locked=False)
         logger.debug("{0} has closed thread {1}.".format(ctx.author, ctx.channel.id))
 
+    @ModmailCog.listener(name="on_message")
+    async def on_message(self, message: discord.Message) -> None:
+        """Relay all dms to a thread channel."""
+        author = message.author
 
-def setup(bot: ModmailBot) -> None:
+        if author.id == self.bot.user.id:
+            return
+
+        if message.guild:
+            return
+
+        try:
+            ticket = self.tickets[author.id]
+        except KeyError:
+            # Thread doesn't exist, so create one.
+            ticket = await self.create_ticket(message, check_for_existing_thread=False)
+        await self._send_thread(ticket, message)
+
+
+def setup(bot: "ModmailBot") -> None:
     """Add the Tickets cog to the bot."""
     bot.add_cog(TicketsCog(bot))
