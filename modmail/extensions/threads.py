@@ -4,6 +4,7 @@ from enum import IntEnum, auto
 from typing import TYPE_CHECKING, Dict, Optional, Union
 
 import discord
+from arrow import Arrow
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.utils import escape_markdown
@@ -289,6 +290,29 @@ class TicketsCog(ModmailCog, name="Threads"):
             # Thread doesn't exist, so create one.
             ticket = await self.create_ticket(message, check_for_existing_thread=False)
         await self._send_thread(ticket, message)
+
+    # ! due to a library bug this won't be used at this time.
+    @ModmailCog.listener(name="on_typing")
+    async def on_typing(
+        self,
+        channel: discord.abc.Messageable,
+        user: Union[discord.User, discord.Member],
+        _: Arrow,
+    ) -> None:
+        """Relay typing events to the thread channel."""
+        logger.trace(f"Received typing event for {user} in channel {channel}.")
+        if user.id == self.bot.user.id:
+            return
+
+        if not isinstance(channel, discord.DMChannel):
+            return
+
+        try:
+            ticket = self.tickets[user.id]
+        except KeyError:
+            # Thread doesn't exist, so no where to relay the typing event.
+            return
+        await ticket.thread.trigger_typing()
 
 
 def setup(bot: "ModmailBot") -> None:
