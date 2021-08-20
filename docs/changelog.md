@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking
+- Bot now requires a `RELAY_CHANNEL_ID` configuration variable. (#53)
+    - This is where tickets with users will be relayed.
+    - At a later point in time, this will be additionally included in a configuration command.
+
 ### Added
 - docker-compose.yml (#13)
     - Running the bot after configuring the env vars is now as simple as `docker-compose up`
 - Automatic docker image creation: `ghcr.io/discord-modmail/modmail` (#19)
 - Dockerfile support for all supported hosting providers. (#58)
+- Threads system (#53)
+    - Messages can now be relayed between a user and a server.
+    - NOTE: There is not a database yet, so none of these messages are stored.
 
 ### Changed
 
