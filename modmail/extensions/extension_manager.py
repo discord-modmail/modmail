@@ -188,7 +188,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         if lines:
             # we have stuff installed, lets paginate it.
-            await ButtonPaginator.paginate(ctx.message, lines)
+            await ButtonPaginator.paginate(lines, ctx.message)
         else:
             # since we don't have any lines to paginate, nothing is installed.
             await ctx.send("There are no {self.type}s installed.")
