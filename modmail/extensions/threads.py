@@ -69,6 +69,7 @@ class Ticket:
         ] = self.thread.parent.get_partial_message(self.thread.id)
         self.messages = MessageDict()
         self.close_after = self.thread.auto_archive_duration
+        logger.trace("Created a Ticket object for recipient {0} with thread {1}.".format(recipient, thread))
 
     async def fetch_log_message(self) -> discord.Message:
         """
@@ -150,8 +151,8 @@ class TicketsCog(ModmailCog, name="Threads"):
         /,
         *,
         recipient: discord.User = None,
-        send_initial_message: bool = True,
         check_for_existing_thread: bool = True,
+        send_initial_message: bool = True,
     ) -> Ticket:
         """
         Creates a bot ticket with a user. Also adds it to the tickets dict.
@@ -215,11 +216,23 @@ class TicketsCog(ModmailCog, name="Threads"):
         self, ticket: Ticket, message: discord.Message, contents: str = None
     ) -> discord.Message:
         """Send a message to the thread."""
+        if ticket.recipient.dm_channel is None:
+            await ticket.recipient.create_dm()
         if message.guild is not None:
             # thread -> dm
+            logger.debug(
+                "Relaying message id {0} by {3} from thread {1} to dm channel {2}.".format(
+                    message.id, ticket.thread.id, ticket.recipient.dm_channel.id, message.author
+                )
+            )
             sent_message = await ticket.recipient.send(embed=self._format_user_embed(message, contents))
         else:
             # dm -> thread
+            logger.debug(
+                "Relaying message id {0} from dm channel {1} with {3} to thread {2}.".format(
+                    message.id, ticket.recipient.dm_channel.id, ticket.thread.id, message.author
+                )
+            )
             sent_message = await ticket.thread.send(embed=self._format_thread_embed(message))
         # add messages to the dict
         ticket.messages[message] = sent_message
@@ -264,11 +277,16 @@ class TicketsCog(ModmailCog, name="Threads"):
         # clean up variables
         await ctx.send(embed=thread_close_embed)
         ticket = self.tickets[ctx.channel.id]
-        del self.tickets[ticket.thread.id]
-        del self.tickets[ticket.recipient.id]
+        try:
+            del self.tickets[ticket.thread.id]
+            del self.tickets[ticket.recipient.id]
+        except KeyError:
+            logger.warning("Ticket not found in tickets dict when attempting removal.")
+        # ensure we get rid of the ticket messages, as this can be an extremely large dict
         del ticket.messages
         del ticket
         await ctx.channel.edit(archived=True, locked=False)
+        logger.debug("{0} has closed thread {1}.".format(ctx.author, ctx.channel.id))
 
 
 def setup(bot: ModmailBot) -> None:
