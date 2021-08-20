@@ -122,17 +122,11 @@ class TicketsCog(ModmailCog, name="Threads"):
             **kwargs,
         )
 
-    @commands.group(name="thread", invoke_without_command=True)
-    async def ticket_cmd(self, ctx: Context) -> None:
-        """Nothing."""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
-
-    @ticket_cmd.group()
+    @commands.command()
     # the reason we're checking for a user here rather than a member is because of future support for
     # a designated server to handle threads and a server where the community resides,
     # so its possible that the user isn't in the server where this command is run.
-    async def open(self, ctx: Context, recipient: commands.UserConverter) -> discord.Message:
+    async def contact(self, ctx: Context, recipient: commands.UserConverter) -> discord.Message:
         """
         Open a new ticket with a provided recipient.
 
