@@ -166,7 +166,13 @@ class ButtonPaginator(View, DpyPaginator):
             channel = source_message.channel
 
         paginator.modify_states()
-        msg: discord.Message = await channel.send(content=paginator.pages[paginator._index], view=paginator)
+        if len(paginator.pages) >= 2:
+            msg: discord.Message = await channel.send(
+                content=paginator.pages[paginator._index], view=paginator
+            )
+        else:
+            await channel.send(content=paginator.pages[paginator._index])
+            return
 
         await paginator.wait()
         await msg.edit(view=None)
