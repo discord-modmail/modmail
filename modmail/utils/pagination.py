@@ -76,7 +76,7 @@ class Types(Enum):
     EMBEDS = 1
 
 
-class Paginator(View):
+class ButtonPaginator(View):
     """
     Class for Pagination.
 

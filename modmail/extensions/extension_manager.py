@@ -15,7 +15,7 @@ from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
-from modmail.utils.pagination import Paginator
+from modmail.utils.pagination import ButtonPaginator
 
 log: ModmailLogger = logging.getLogger(__name__)
 
@@ -188,7 +188,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         if lines:
             # we have stuff installed, lets paginate it.
-            await Paginator.paginate(ctx.message, lines)
+            await ButtonPaginator.paginate(ctx.message, lines)
         else:
             # since we don't have any lines to paginate, nothing is installed.
             await ctx.send("There are no {self.type}s installed.")
