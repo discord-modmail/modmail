@@ -6,6 +6,7 @@ from enum import IntEnum, auto
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
+from discord.utils import escape_markdown
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
@@ -19,7 +20,7 @@ EXT_METADATA = ExtMetadata()
 logger: ModmailLogger = logging.getLogger(__name__)
 
 USER_NOT_ABLE_TO_BE_DMED_MESSAGE = (
-    "{0} is not able to be dmed! This is because they have either blocked the bot, "
+    "**{0}** is not able to be dmed! This is because they have either blocked the bot, "
     "or they are only accepting direct messages from friends.\n"
     "It is also possible that they are not in the same server as the bot. "
 )
@@ -143,7 +144,11 @@ class TicketsCog(ModmailCog, name="Threads"):
         ticket = await self.create_ticket(ctx.message, recipient=recipient, check_for_existing_thread=True)
 
         if not await check_can_dm_user(recipient):
-            await ticket.send(USER_NOT_ABLE_TO_BE_DMED_MESSAGE.format(recipient))
+            await ticket.thread.send(
+                USER_NOT_ABLE_TO_BE_DMED_MESSAGE.format(
+                    escape_markdown(f"{recipient.name}#{recipient.discriminator}")
+                )
+            )
 
     async def create_ticket(
         self,
