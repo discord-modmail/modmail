@@ -153,19 +153,19 @@ class ButtonPaginator(ui.View, DpyPaginator):
         """Disable specific components depending on paginator page and length."""
         less_than_2_pages = len(self.pages) <= 2
         components = {
-            "jump_first": less_than_2_pages,
-            "back": False,
-            "next": False,
-            "jump_last": less_than_2_pages,
+            "pag_jump_first": less_than_2_pages,
+            "pag_back": False,
+            "pag_next": False,
+            "pag_jump_last": less_than_2_pages,
         }
 
         if self._index == 0:
-            components["jump_first"] = True
-            components["back"] = True
+            components["pag_jump_first"] = True
+            components["pag_back"] = True
 
         if self._index == len(self.pages) - 1:
-            components["next"] = True
-            components["jump_last"] = True
+            components["pag_next"] = True
+            components["pag_jump_last"] = True
 
         for child in self.children:
             if child.custom_id in components.keys():
@@ -179,7 +179,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self.modify_states()
         await interaction.message.edit(content=self.pages[self._index], view=self)
 
-    @ui.button(label=JUMP_FIRST_LABEL, custom_id="jump_first", style=ButtonStyle.primary)
+    @ui.button(label=JUMP_FIRST_LABEL, custom_id="pag_jump_first", style=ButtonStyle.primary)
     async def go_first(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the first page."""
         if self._index == 0:
@@ -188,7 +188,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self._index = 0
         await self.send_page(interaction)
 
-    @ui.button(label=BACK_LABEL, custom_id="back", style=ButtonStyle.primary)
+    @ui.button(label=BACK_LABEL, custom_id="pag_back", style=ButtonStyle.primary)
     async def go_previous(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the previous page."""
         if self._index == 0:
@@ -197,7 +197,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self._index -= 1
         await self.send_page(interaction)
 
-    @ui.button(label=FORWARD_LABEL, custom_id="next", style=ButtonStyle.primary)
+    @ui.button(label=FORWARD_LABEL, custom_id="pag_next", style=ButtonStyle.primary)
     async def go_next(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the next page."""
         if self._index == len(self.pages) - 1:
@@ -206,7 +206,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self._index += 1
         await self.send_page(interaction)
 
-    @ui.button(label=JUMP_LAST_LABEL, custom_id="jump_last", style=ButtonStyle.primary)
+    @ui.button(label=JUMP_LAST_LABEL, custom_id="pag_jump_last", style=ButtonStyle.primary)
     async def go_last(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the last page."""
         if self._index == len(self.pages) - 1:
@@ -215,7 +215,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self._index = len(self.pages) - 1
         await self.send_page(interaction)
 
-    @ui.button(emoji=STOP_PAGINATE_EMOJI, custom_id="stop_paginate", style=ButtonStyle.grey)
+    @ui.button(emoji=STOP_PAGINATE_EMOJI, custom_id="pag_stop_paginate", style=ButtonStyle.grey)
     async def _stop(self, button: "Button", interaction: "Interaction") -> None:
         """Stop the paginator early."""
         await interaction.response.defer()
