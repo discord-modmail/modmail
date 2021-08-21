@@ -291,7 +291,6 @@ class TicketsCog(ModmailCog, name="Threads"):
             ticket = await self.create_ticket(message, check_for_existing_thread=False)
         await self._send_thread(ticket, message)
 
-    # ! due to a library bug this won't be used at this time.
     @ModmailCog.listener(name="on_typing")
     async def on_typing(
         self,
@@ -304,15 +303,29 @@ class TicketsCog(ModmailCog, name="Threads"):
         if user.id == self.bot.user.id:
             return
 
-        if not isinstance(channel, discord.DMChannel):
-            return
+        # only work in dms or a thread channel
 
-        try:
-            ticket = self.tickets[user.id]
-        except KeyError:
-            # Thread doesn't exist, so no where to relay the typing event.
+        if isinstance(channel, discord.Thread):
+            try:
+                ticket = self.tickets[channel.id]
+            except KeyError:
+                # Thread doesn't exist, so there's nowhere to relay the typing event.
+                return
+            await ticket.recipient.trigger_typing()
+
+        # ! Due to a library bug this tree will never be run
+        # it can be tracked here: https://github.com/Rapptz/discord.py/issues/7432
+        elif isinstance(channel, discord.DMChannel):
+            try:
+                ticket = self.tickets[user.id]
+            except KeyError:
+                # User doesn't have a ticket, so no where to relay the event.
+                return
+            else:
+                await ticket.thread.trigger_typing()
+
+        else:
             return
-        await ticket.thread.trigger_typing()
 
 
 def setup(bot: "ModmailBot") -> None:
