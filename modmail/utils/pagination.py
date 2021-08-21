@@ -85,7 +85,6 @@ class ButtonPaginator(ui.View, DpyPaginator):
             if not isinstance(embed.footer, EmbedProxy) and footer is None:
                 footer = embed.footer
         self.footer = footer
-        logger.debug(self.footer)
         self.clear()
         for line in contents:
             self.add_line(line)
