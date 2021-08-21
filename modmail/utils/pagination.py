@@ -7,9 +7,10 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import discord
-from discord import ButtonStyle
+from discord import ButtonStyle, ui
 from discord.ext.commands import Paginator as DpyPaginator
-from discord.ui import View, button
+
+from modmail.utils.errors import InvalidArgumentError, MissingAttributeError
 
 if TYPE_CHECKING:
     from discord import Interaction
@@ -31,19 +32,7 @@ JUMP_LAST_LABEL = "\u2012\u276f\u258c"  # ‒, right arrow, bar
 logger: "ModmailLogger" = logging.getLogger(__name__)
 
 
-class MissingAttributeError(Exception):
-    """Missing attribute."""
-
-    pass
-
-
-class InvalidArgumentError(Exception):
-    """Improper argument."""
-
-    pass
-
-
-class ButtonPaginator(View, DpyPaginator):
+class ButtonPaginator(ui.View, DpyPaginator):
     """
     A class that helps in paginating long messages/embeds, which can be interacted via discord buttons.
 
@@ -190,7 +179,7 @@ class ButtonPaginator(View, DpyPaginator):
         self.modify_states()
         await interaction.message.edit(content=self.pages[self._index], view=self)
 
-    @button(label=JUMP_FIRST_LABEL, custom_id="jump_first", style=ButtonStyle.primary)
+    @ui.button(label=JUMP_FIRST_LABEL, custom_id="jump_first", style=ButtonStyle.primary)
     async def go_first(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the first page."""
         if self._index == 0:
@@ -199,7 +188,7 @@ class ButtonPaginator(View, DpyPaginator):
         self._index = 0
         await self.send_page(interaction)
 
-    @button(label=BACK_LABEL, custom_id="back", style=ButtonStyle.primary)
+    @ui.button(label=BACK_LABEL, custom_id="back", style=ButtonStyle.primary)
     async def go_previous(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the previous page."""
         if self._index == 0:
@@ -208,7 +197,7 @@ class ButtonPaginator(View, DpyPaginator):
         self._index -= 1
         await self.send_page(interaction)
 
-    @button(label=FORWARD_LABEL, custom_id="next", style=ButtonStyle.primary)
+    @ui.button(label=FORWARD_LABEL, custom_id="next", style=ButtonStyle.primary)
     async def go_next(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the next page."""
         if self._index == len(self.pages) - 1:
@@ -217,7 +206,7 @@ class ButtonPaginator(View, DpyPaginator):
         self._index += 1
         await self.send_page(interaction)
 
-    @button(label=JUMP_LAST_LABEL, custom_id="jump_last", style=ButtonStyle.primary)
+    @ui.button(label=JUMP_LAST_LABEL, custom_id="jump_last", style=ButtonStyle.primary)
     async def go_last(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the last page."""
         if self._index == len(self.pages) - 1:
@@ -226,7 +215,7 @@ class ButtonPaginator(View, DpyPaginator):
         self._index = len(self.pages) - 1
         await self.send_page(interaction)
 
-    @button(emoji=STOP_PAGINATE_EMOJI, custom_id="stop_paginate", style=ButtonStyle.grey)
+    @ui.button(emoji=STOP_PAGINATE_EMOJI, custom_id="stop_paginate", style=ButtonStyle.grey)
     async def _stop(self, button: "Button", interaction: "Interaction") -> None:
         """Stop the paginator early."""
         await interaction.response.defer()
