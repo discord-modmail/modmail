@@ -56,7 +56,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         embed: Embed = None,
         timeout: float = 180,
         *,
-        footer: str = None,
+        footer_text: str = None,
         prefix: str = "```",
         suffix: str = "```",
         max_size: int = 2000,
@@ -82,9 +82,9 @@ class ButtonPaginator(ui.View, DpyPaginator):
         # set footer to embed.footer if embed is set
         # this is because we will be modifying the footer of this embed
         if embed is not None:
-            if not isinstance(embed.footer, EmbedProxy) and footer is None:
-                footer = embed.footer
-        self.footer = footer
+            if not isinstance(embed.footer, EmbedProxy) and footer_text is None:
+                footer_text = embed.footer
+        self.footer_text = footer_text
         self.clear()
         for line in contents:
             self.add_line(line)
@@ -107,7 +107,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         timeout: float = 180,
         embed: Embed = None,
         *,
-        footer: str = None,
+        footer_text: str = None,
         only: Optional[discord.abc.User] = None,
         channel: discord.abc.Messageable = None,
         prefix: str = "",
@@ -122,7 +122,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
             source_message=source_message,
             timeout=timeout,
             embed=embed,
-            footer=footer,
+            footer_text=footer_text,
             prefix=prefix,
             suffix=suffix,
             max_size=max_size,
@@ -161,8 +161,10 @@ class ButtonPaginator(ui.View, DpyPaginator):
     def get_footer(self) -> str:
         """Returns the footer text."""
         self._embed.description = self.pages[self._index]
-        page_indicator = f"(Page {self._index+1}/{len(self.pages)})"
-        footer_txt = self.footer + page_indicator if self.footer is not None else page_indicator
+        page_indicator = f"Page {self._index+1}/{len(self.pages)}"
+        footer_txt = (
+            f"{self.footer_text} ({page_indicator})" if self.footer_text is not None else page_indicator
+        )
         return footer_txt
 
     def modify_states(self) -> None:
