@@ -207,36 +207,24 @@ class ButtonPaginator(ui.View, DpyPaginator):
     @ui.button(label=JUMP_FIRST_LABEL, custom_id="pag_jump_first", style=ButtonStyle.primary)
     async def go_first(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the first page."""
-        if self._index == 0:
-            return
-
         self._index = 0
         await self.send_page(interaction)
 
     @ui.button(label=BACK_LABEL, custom_id="pag_back", style=ButtonStyle.primary)
     async def go_previous(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the previous page."""
-        if self._index == 0:
-            return
-
         self._index -= 1
         await self.send_page(interaction)
 
     @ui.button(label=FORWARD_LABEL, custom_id="pag_next", style=ButtonStyle.primary)
     async def go_next(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the next page."""
-        if self._index == len(self.pages) - 1:
-            return
-
         self._index += 1
         await self.send_page(interaction)
 
     @ui.button(label=JUMP_LAST_LABEL, custom_id="pag_jump_last", style=ButtonStyle.primary)
     async def go_last(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the last page."""
-        if self._index == len(self.pages) - 1:
-            return
-
         self._index = len(self.pages) - 1
         await self.send_page(interaction)
 
