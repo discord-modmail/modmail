@@ -167,7 +167,13 @@ class ButtonPaginator(ui.View, DpyPaginator):
         return footer_txt
 
     def modify_states(self) -> None:
-        """Disable specific components depending on paginator page and length."""
+        """
+        Disable specific components depending on paginator page and length.
+
+        If the paginatot has less than two pages, the jump buttons will be disabled.
+        If the paginator is on the first page, the jump first/move back buttons will be disabled.
+        if the paginator is on the last page, the jump last/move forward buttons will be disabled.
+        """
         less_than_2_pages = len(self.pages) <= 2
         components = {
             "pag_jump_first": less_than_2_pages,
