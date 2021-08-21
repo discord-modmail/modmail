@@ -72,7 +72,7 @@ class Ticket:
         ] = self.thread.parent.get_partial_message(self.thread.id)
         self.messages = MessageDict()
         self.close_after = self.thread.auto_archive_duration
-        logger.trace("Created a Ticket object for recipient {0} with thread {1}.".format(recipient, thread))
+        logger.trace(f"Created a Ticket object for recipient {recipient} with thread {thread}.")
 
     async def fetch_log_message(self) -> discord.Message:
         """
@@ -95,12 +95,44 @@ class TicketsCog(ModmailCog, name="Threads"):
             discord.TextChannel, discord.PartialMessageable
         ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
 
-    async def init_relay_channel(self) -> None:
-        """Fetch the relay channel."""
-        self.relay_channel = await self.bot.fetch_channel(self.bot.config.thread.relay_channel_id)
+    def _format_generic_embed_to_guild() -> discord.Embed:
+        """
+        Create a generic discord embed object to be sent to the guild.
 
-    @staticmethod
-    def _format_user_embed(
+        This contains configuration and special types which should be in nearly all embed creation methods.
+        """
+        raise NotImplementedError
+
+    def _format_generic_embed_to_user() -> discord.Embed:
+        """
+        Create a generic discord embed object to be sent to the user.
+
+        This contains configuration and special types which should be in nearly all embed creation methods.
+        """
+        raise NotImplementedError
+
+    def _format_inital_embed_to_user(self, message: discord.Message, **kwargs) -> discord.Embed:
+        """Create a discord embed object to be sent to the user in reply to their inital dm."""
+        raise NotImplementedError
+
+    def _format_inital_embed_to_guild(self, message: discord.Message, **kwargs) -> discord.Embed:
+        """
+        Create a discord embed object to be sent to the guild on inital dm.
+
+        This is used in the relay_channel, in order to share that there is a new ticket.
+        """
+        raise NotImplementedError
+
+    def _format_close_embed_to_user(self, message: discord.Message, **kwargs) -> discord.Embed:
+        """Create a discord embed object to be sent to the user on thread close."""
+        raise NotImplementedError
+
+    def _format_close_embed_to_guild(self, message: discord.Message, **kwargs) -> discord.Embed:
+        """Create a discord embed object to be sent to the guild on thread close."""
+        raise NotImplementedError
+
+    def _format_message_embed_to_user(
+        self,
         message: discord.Message,
         contents: str,
         **kwargs,
@@ -114,22 +146,33 @@ class TicketsCog(ModmailCog, name="Threads"):
             **kwargs,
         )
 
-    @staticmethod
-    def _format_thread_embed(message: discord.Message, **kwargs) -> discord.Embed:
-        """Given information, return a cute embed."""
+    def _format_message_embed_to_guild(self, message: discord.Message, **kwargs) -> discord.Embed:
+        """Given information, return an embed object to be sent to the server."""
         return discord.Embed(
             title=f"{message.author.name}#{message.author.discriminator}({message.author.id})",
             description=str(f"{message.content}"),
             author=message.author,
-            timestamp=datetime.datetime.now(),
+            timestamp=message.created_at,
             footer_text=f"Message ID: {message.id}",
             **kwargs,
         )
 
-    @commands.command()
+    def _format_edited_message_embed_to_user(self, message: discord.Message, **kwargs) -> discord.Embed:
+        """Creates a new embed from an edited message by staff, to be sent to the end user."""
+        raise NotImplementedError
+
+    def _format_edited_message_embed_to_guild(self, message: discord.Message, **kwargs) -> discord.Embed:
+        """Creates a new embed to be sent in guild from an edited message."""
+        raise NotImplementedError
+
+    async def init_relay_channel(self) -> None:
+        """Fetch the relay channel."""
+        self.relay_channel = await self.bot.fetch_channel(self.bot.config.thread.relay_channel_id)
+
     # the reason we're checking for a user here rather than a member is because of future support for
     # a designated server to handle threads and a server where the community resides,
     # so its possible that the user isn't in the server where this command is run.
+    @commands.command()
     async def contact(self, ctx: Context, recipient: commands.UserConverter) -> discord.Message:
         """
         Open a new ticket with a provided recipient.
@@ -271,7 +314,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         del ticket.messages
         del ticket
         await ctx.channel.edit(archived=True, locked=False)
-        logger.debug("{0} has closed thread {1}.".format(ctx.author, ctx.channel.id))
+        logger.debug(f"{ctx.author} has closed thread {ctx.channel.id}.")
 
     @ModmailCog.listener(name="on_message")
     async def on_message(self, message: discord.Message) -> None:
