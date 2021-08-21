@@ -72,7 +72,7 @@ class InvalidArgumentError(Exception):
 
 class ButtonPaginator(View, DpyPaginator):
     """
-    Class for Pagination.
+    A class that helps in paginating long messages/embeds, which can be interacted via discord buttons.
 
     Attributes
     ----------
