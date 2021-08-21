@@ -85,6 +85,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
     """
 
     type = "extension"
+    module_name = "extensions"  # modmail/extensions
 
     def __init__(self, bot: ModmailBot):
         self.bot = bot
@@ -180,6 +181,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         for category, extensions in sorted(categories.items()):
             # Treat each category as a single line by concatenating everything.
             # This ensures the paginator will not cut off a page in the middle of a category.
+            log.trace(f"Extensions in category {category}: {extensions}")
             category = category.replace("_", " ").title()
             extensions = "\n".join(sorted(extensions))
             lines.append(f"**{category}**\n{extensions}\n")
@@ -224,7 +226,10 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 status = ":red_circle:"
 
             root, name = ext.rsplit(".", 1)
-            category = " - ".join(root.split("."))
+            if root.split(".", 1)[1] == self.module_name:
+                category = f"General {self.type}s"
+            else:
+                category = " - ".join(root.split(".")[2:])
             categories[category].append(f"{status}  {name}")
 
         return dict(categories)
