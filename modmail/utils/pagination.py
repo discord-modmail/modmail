@@ -21,10 +21,10 @@ if TYPE_CHECKING:
 
 
 # Labels
-JUMP_FIRST_LABEL = "\u2590\u276e\u2012"  # bar, left arrow, ‒
+JUMP_FIRST_LABEL = " \u276e\u276e "  # bar, left arrow, ‒
 BACK_LABEL = "  \u276e  "  # left arrow
 FORWARD_LABEL = "  \u276f  "  # right arrow
-JUMP_LAST_LABEL = "\u2012\u276f\u258c"  # ‒, right arrow, bar
+JUMP_LAST_LABEL = " \u276f\u276f "  # ‒, right arrow, bar
 STOP_PAGINATE_EMOJI = "\u274c"  # [:x:] This is an emoji, which is treated differently from the above
 
 logger: "ModmailLogger" = logging.getLogger(__name__)
