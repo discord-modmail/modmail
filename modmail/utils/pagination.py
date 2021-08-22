@@ -160,8 +160,8 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
     def get_footer(self) -> str:
         """Returns the footer text."""
-        self._embed.description = self.pages[self._index]
-        page_indicator = f"Page {self._index+1}/{len(self.pages)}"
+        self._embed.description = self._pages[self._index]
+        page_indicator = f"Page {self._index+1}/{len(self._pages)}"
         footer_txt = (
             f"{self.footer_text} ({page_indicator})" if self.footer_text is not None else page_indicator
         )
@@ -175,7 +175,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         If the paginator is on the first page, the jump first/move back buttons will be disabled.
         if the paginator is on the last page, the jump last/move forward buttons will be disabled.
         """
-        less_than_2_pages = len(self.pages) <= 2
+        less_than_2_pages = len(self._pages) <= 2
         components = {
             "pag_jump_first": less_than_2_pages,
             "pag_back": False,
@@ -187,7 +187,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
             components["pag_jump_first"] = True
             components["pag_back"] = True
 
-        if self._index == len(self.pages) - 1:
+        if self._index == len(self._pages) - 1:
             components["pag_next"] = True
             components["pag_jump_last"] = True
 
@@ -226,7 +226,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
     @ui.button(label=JUMP_LAST_LABEL, custom_id="pag_jump_last", style=ButtonStyle.primary)
     async def go_last(self, button: "Button", interaction: "Interaction") -> None:
         """Move the paginator to the last page."""
-        self._index = len(self.pages) - 1
+        self._index = len(self._pages) - 1
         await self.send_page(interaction)
 
     @ui.button(emoji=STOP_PAGINATE_EMOJI, custom_id="pag_stop_paginate", style=ButtonStyle.grey)
