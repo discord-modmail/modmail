@@ -4,8 +4,7 @@ from discord import Embed, Message
 class ThreadEmbed:
     """Create embeds for threads."""
 
-    @staticmethod
-    def _create_generic_embed_to_user(message: Message, **kwargs) -> Embed:
+    def _create_generic_embed_to_user(self, message: Message, **kwargs) -> Embed:
         """
         Create a generic discord embed object to be sent to the user.
 
@@ -13,8 +12,7 @@ class ThreadEmbed:
         """
         raise NotImplementedError
 
-    @staticmethod
-    def _create_generic_embed_to_guild(message: Message, **kwargs) -> Embed:
+    def _create_generic_embed_to_guild(self, message: Message, **kwargs) -> Embed:
         """
         Create a generic discord embed object to be sent to the guild.
 
@@ -22,13 +20,11 @@ class ThreadEmbed:
         """
         raise NotImplementedError
 
-    @staticmethod
-    def create_inital_embed_to_user(message: Message, **kwargs) -> Embed:
+    def create_inital_embed_to_user(self, message: Message, **kwargs) -> Embed:
         """Create a discord embed object to be sent to the user in reply to their inital dm."""
         raise NotImplementedError
 
-    @staticmethod
-    def create_inital_embed_to_guild(message: Message, **kwargs) -> Embed:
+    def create_inital_embed_to_guild(self, message: Message, **kwargs) -> Embed:
         """
         Create a discord embed object to be sent to the guild on inital dm.
 
@@ -36,8 +32,8 @@ class ThreadEmbed:
         """
         return Embed(author=message.author, description=message.content)
 
-    @staticmethod
     def create_message_embed_to_user(
+        self,
         message: Message,
         contents: str,
         **kwargs,
@@ -51,8 +47,7 @@ class ThreadEmbed:
             **kwargs,
         )
 
-    @staticmethod
-    def create_message_embed_to_guild(message: Message, **kwargs) -> Embed:
+    def create_message_embed_to_guild(self, message: Message, **kwargs) -> Embed:
         """Given information, return an embed object to be sent to the server."""
         return Embed(
             title=f"{message.author.name}#{message.author.discriminator}({message.author.id})",
@@ -63,22 +58,18 @@ class ThreadEmbed:
             **kwargs,
         )
 
-    @staticmethod
-    def create_edited_message_embed_to_user(message: Message, **kwargs) -> Embed:
+    def create_edited_message_embed_to_user(self, message: Message, **kwargs) -> Embed:
         """Creates a new embed from an edited message by staff, to be sent to the end user."""
         raise NotImplementedError
 
-    @staticmethod
-    def create_edited_message_embed_to_guild(message: Message, **kwargs) -> Embed:
+    def create_edited_message_embed_to_guild(self, message: Message, **kwargs) -> Embed:
         """Creates a new embed to be sent in guild from an edited message."""
         raise NotImplementedError
 
-    @staticmethod
-    def create_close_embed_to_user(message: Message, **kwargs) -> Embed:
+    def create_close_embed_to_user(self, message: Message, **kwargs) -> Embed:
         """Create a discord embed object to be sent to the user on thread close."""
         raise NotImplementedError
 
-    @staticmethod
-    def create_close_embed_to_guild(message: Message, **kwargs) -> Embed:
+    def create_close_embed_to_guild(self, message: Message, **kwargs) -> Embed:
         """Create a discord embed object to be sent to the guild on thread close."""
         raise NotImplementedError

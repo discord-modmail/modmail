@@ -39,6 +39,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         self.relay_channel: Union[
             discord.TextChannel, discord.PartialMessageable
         ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
+        self.embed_creator = ThreadEmbed()
 
     async def init_relay_channel(self) -> None:
         """Fetch the relay channel."""
@@ -123,7 +124,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             mention = "@here"
         relayed_msg = await self.relay_channel.send(
             content=mention,
-            embed=ThreadEmbed.create_inital_embed_to_guild(message),
+            embed=self.embed_creator.create_inital_embed_to_guild(message),
             allowed_mentions=allowed_mentions,
         )
         thread_channel = await relayed_msg.create_thread(
@@ -147,7 +148,7 @@ class TicketsCog(ModmailCog, name="Threads"):
                 )
             )
             sent_message = await ticket.recipient.send(
-                embed=ThreadEmbed.create_message_embed_to_user(message, contents)
+                embed=self.embed_creator.create_message_embed_to_user(message, contents)
             )
         else:
             # dm -> thread
@@ -156,7 +157,9 @@ class TicketsCog(ModmailCog, name="Threads"):
                     message.id, ticket.recipient.dm_channel.id, ticket.thread.id, message.author
                 )
             )
-            sent_message = await ticket.thread.send(embed=ThreadEmbed.create_message_embed_to_guild(message))
+            sent_message = await ticket.thread.send(
+                embed=self.embed_creator.create_message_embed_to_guild(message)
+            )
         # add messages to the dict
         ticket.messages[message] = sent_message
 
@@ -249,5 +252,5 @@ class TicketsCog(ModmailCog, name="Threads"):
 
 
 def setup(bot: "ModmailBot") -> None:
-    """Add the Tickets cog to the bot."""
+    """Adds the Tickets cog to the bot."""
     bot.add_cog(TicketsCog(bot))
