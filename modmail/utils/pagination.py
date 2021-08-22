@@ -195,8 +195,6 @@ class ButtonPaginator(ui.View, DpyPaginator):
             if child.custom_id in components.keys():
                 if getattr(child, "disabled", None) is not None:
                     child.disabled = components[child.custom_id]
-                    if getattr(child, "style", None) is not None:
-                        child.style = ButtonStyle.secondary if child.disabled else ButtonStyle.primary
 
     async def send_page(self, interaction: "Interaction") -> None:
         """Send new page to discord, after updating the view to have properly disabled buttons."""
