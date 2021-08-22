@@ -5,24 +5,6 @@ from discord.ext.commands import Context
 from discord.threads import Thread
 
 
-class ThreadException(Exception):  # noqa: N818
-    """The base error for threads, all threads errors should inherit from this exception."""
-
-    pass
-
-
-class ThreadNotFoundError(ThreadException):
-    """Raised when a thread is not found."""
-
-    pass
-
-
-class ThreadAlreadyExistsError(ThreadException):
-    """Raised when a thread already exists."""
-
-    pass
-
-
 def is_modmail_thread() -> Callable:
     """Check to see whether the channel in which the command is invoked is a discord thread or not."""
 
