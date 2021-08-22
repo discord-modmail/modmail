@@ -14,6 +14,7 @@ from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
+from modmail.utils.threads import Ticket
 
 REQUIRED_INTENTS = Intents(
     guilds=True,
@@ -33,6 +34,7 @@ class ModmailBot(commands.Bot):
     """
 
     logger: ModmailLogger = logging.getLogger(__name__)
+    tickets: t.Dict[int, Ticket] = dict()
 
     def __init__(self, **kwargs):
         self.config = CONFIG

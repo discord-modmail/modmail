@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import TYPE_CHECKING, Dict, Union
+from typing import TYPE_CHECKING, Union
 
 import discord
 from arrow import Arrow
@@ -36,7 +36,6 @@ class TicketsCog(ModmailCog, name="Threads"):
     def __init__(self, bot: "ModmailBot"):
         self.bot = bot
         # user id, Ticket
-        self.tickets: Dict[int, Ticket] = dict()
         self.relay_channel: Union[
             discord.TextChannel, discord.PartialMessageable
         ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
@@ -101,15 +100,15 @@ class TicketsCog(ModmailCog, name="Threads"):
         if recipient is None:
             recipient = initial_message.author
 
-        if check_for_existing_thread and recipient.id in self.tickets.keys():
+        if check_for_existing_thread and recipient.id in self.bot.tickets.keys():
             raise ThreadAlreadyExistsError(recipient.id)
 
         thread_channel = await self._start_discord_thread(initial_message)
         ticket = Ticket(recipient, thread_channel)
 
         # add the ticket as both the recipient and the thread ids so they can be retrieved from both sides.
-        self.tickets[recipient.id] = ticket
-        self.tickets[thread_channel.id] = ticket
+        self.bot.tickets[recipient.id] = ticket
+        self.bot.tickets[thread_channel.id] = ticket
         return ticket
 
     async def _start_discord_thread(self, message: discord.Message) -> discord.Thread:
@@ -166,7 +165,7 @@ class TicketsCog(ModmailCog, name="Threads"):
     @commands.command(aliases=("r",))
     async def reply(self, ctx: Context, *, message: str) -> None:
         """Send a reply to the user."""
-        await self._send_thread(self.tickets[ctx.channel.id], ctx.message, message)
+        await self._send_thread(self.bot.tickets[ctx.channel.id], ctx.message, message)
         await ctx.message.add_reaction("📬")
 
     @is_modmail_thread()
@@ -182,10 +181,10 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # clean up variables
         await ctx.send(embed=thread_close_embed)
-        ticket = self.tickets[ctx.channel.id]
+        ticket = self.bot.tickets[ctx.channel.id]
         try:
-            del self.tickets[ticket.thread.id]
-            del self.tickets[ticket.recipient.id]
+            del self.bot.tickets[ticket.thread.id]
+            del self.bot.tickets[ticket.recipient.id]
         except KeyError:
             logger.warning("Ticket not found in tickets dict when attempting removal.")
         # ensure we get rid of the ticket messages, as this can be an extremely large dict
@@ -206,7 +205,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             return
 
         try:
-            ticket = self.tickets[author.id]
+            ticket = self.bot.tickets[author.id]
         except KeyError:
             # Thread doesn't exist, so create one.
             ticket = await self.create_ticket(message, check_for_existing_thread=False)
@@ -228,7 +227,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         if isinstance(channel, discord.Thread):
             try:
-                ticket = self.tickets[channel.id]
+                ticket = self.bot.tickets[channel.id]
             except KeyError:
                 # Thread doesn't exist, so there's nowhere to relay the typing event.
                 return
@@ -238,7 +237,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         # it can be tracked here: https://github.com/Rapptz/discord.py/issues/7432
         elif isinstance(channel, discord.DMChannel):
             try:
-                ticket = self.tickets[user.id]
+                ticket = self.bot.tickets[user.id]
             except KeyError:
                 # User doesn't have a ticket, so no where to relay the event.
                 return
