@@ -1,8 +1,9 @@
-from discord import Embed, Message
+import arrow
+from discord import Embed, Guild, Message, User
 
 
 class ThreadEmbed:
-    """Create embeds for threads."""
+    """Create embeds for tickets."""
 
     def _create_generic_embed_to_user(self, message: Message, **kwargs) -> Embed:
         """
@@ -20,24 +21,28 @@ class ThreadEmbed:
         """
         raise NotImplementedError
 
-    def create_inital_embed_to_user(self, message: Message, **kwargs) -> Embed:
+    def create_inital_embed_to_user(self, message: Message, guild: Guild, **kwargs) -> Embed:
         """Create a discord embed object to be sent to the user in reply to their inital dm."""
-        raise NotImplementedError
+        return Embed(
+            title="Ticket Opened",
+            description=f"Thanks for dming {guild.name}! A member of our staff will be with you shortly!",
+            timestamp=arrow.utcnow(),
+        )
 
-    def create_inital_embed_to_guild(self, message: Message, **kwargs) -> Embed:
+    def create_inital_embed_to_guild(
+        self, message: Message, content: str = None, was_command: bool = False, user: User = None, **kwargs
+    ) -> Embed:
         """
         Create a discord embed object to be sent to the guild on inital dm.
 
         This is used in the relay_channel, in order to share that there is a new ticket.
         """
+        if was_command:
+            # ticket was created by a command, which means the message is a staff message
+            return Embed(author=user, description=content)
         return Embed(author=message.author, description=message.content)
 
-    def create_message_embed_to_user(
-        self,
-        message: Message,
-        contents: str,
-        **kwargs,
-    ) -> Embed:
+    def create_message_embed_to_user(self, message: Message, contents: str, **kwargs) -> Embed:
         """Given information, return an embed to be sent to the user."""
         return Embed(
             description=contents,

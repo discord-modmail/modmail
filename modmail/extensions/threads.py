@@ -1,7 +1,7 @@
-import datetime
 import logging
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Optional, Union
 
+import arrow
 import discord
 from arrow import Arrow
 from discord.ext import commands
@@ -10,7 +10,8 @@ from discord.utils import escape_markdown
 
 from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.converters import Duration
-from modmail.utils.threads import ThreadAlreadyExistsError, ThreadEmbed, Ticket, is_modmail_thread
+from modmail.utils.threads import ThreadEmbed, Ticket, is_modmail_thread
+from modmail.utils.threads.errors import ThreadAlreadyExistsError, ThreadNotFoundError
 from modmail.utils.users import check_can_dm_user
 
 if TYPE_CHECKING:
@@ -44,6 +45,15 @@ class TicketsCog(ModmailCog, name="Threads"):
     async def init_relay_channel(self) -> None:
         """Fetch the relay channel."""
         self.relay_channel = await self.bot.fetch_channel(self.bot.config.thread.relay_channel_id)
+
+    def get_ticket(self, id: int, /) -> Ticket:
+        """Fetch a ticket from the tickets dict."""
+        try:
+            ticket = self.bot.tickets[id]
+        except KeyError:
+            raise ThreadNotFoundError(f"Could not find thread from id {id}.")
+        else:
+            return ticket
 
     # the reason we're checking for a user here rather than a member is because of future support for
     # a designated server to handle threads and a server where the community resides,
@@ -134,10 +144,10 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         return thread_channel
 
-    async def _send_thread(
+    async def _relay_message(
         self, ticket: Ticket, message: discord.Message, contents: str = None
     ) -> discord.Message:
-        """Send a message to the thread."""
+        """Send a message to the thread, either from dms or to guild, or from guild to dms."""
         if ticket.recipient.dm_channel is None:
             await ticket.recipient.create_dm()
         if message.guild is not None:
@@ -148,8 +158,15 @@ class TicketsCog(ModmailCog, name="Threads"):
                 )
             )
             sent_message = await ticket.recipient.send(
-                embed=self.embed_creator.create_message_embed_to_user(message, contents)
+                embed=ticket.embed_creator.create_message_embed_to_user(message, contents)
             )
+            # also relay it in the thread channel
+            new_message = await ticket.thread.send(
+                embed=ticket.embed_creator.create_message_embed_to_user(message, contents)
+            )
+            await message.delete()
+            message = new_message
+            ticket.last_sent_message = message
         else:
             # dm -> thread
             logger.debug(
@@ -158,18 +175,31 @@ class TicketsCog(ModmailCog, name="Threads"):
                 )
             )
             sent_message = await ticket.thread.send(
-                embed=self.embed_creator.create_message_embed_to_guild(message)
+                embed=ticket.embed_creator.create_message_embed_to_guild(message)
             )
+
         # add messages to the dict
         ticket.messages[message] = sent_message
+        return sent_message
 
-    # listen for all messages
     @is_modmail_thread()
     @commands.command(aliases=("r",))
     async def reply(self, ctx: Context, *, message: str) -> None:
         """Send a reply to the user."""
-        await self._send_thread(self.bot.tickets[ctx.channel.id], ctx.message, message)
-        await ctx.message.add_reaction("📬")
+        ticket = self.get_ticket(ctx.channel.id)
+        await self._relay_message(ticket, ctx.message, message)
+
+    @is_modmail_thread()
+    @commands.command(aliases=("e",))
+    async def edit(self, ctx: Context, message: Optional[discord.Message] = None, *, content: str) -> None:
+        """Edit a message in the thread."""
+        ticket = self.get_ticket(ctx.channel.id)
+        if message is None:
+            message = ticket.last_sent_message
+        await ticket.messages[message].edit(
+            embed=ticket.embed_creator.create_message_embed_to_user(message, content)
+        )
+        await ctx.message.add_reaction("✅")
 
     @is_modmail_thread()
     @commands.group(invoke_without_command=True)
@@ -179,7 +209,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         thread_close_embed = discord.Embed(
             title="Thread Closed",
             description=f"{ctx.author.mention} has closed this Modmail thread.",
-            timestamp=datetime.datetime.now(),
+            timestamp=arrow.utcnow(),
         )
 
         # clean up variables
@@ -212,7 +242,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         except KeyError:
             # Thread doesn't exist, so create one.
             ticket = await self.create_ticket(message, check_for_existing_thread=False)
-        await self._send_thread(ticket, message)
+        await self._relay_message(ticket, message)
 
     @ModmailCog.listener(name="on_typing")
     async def on_typing(
