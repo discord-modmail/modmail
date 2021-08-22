@@ -4,7 +4,7 @@ Paginator.
 Originally adapated from: https://github.com/khk4912/EZPaginator/tree/84b5213741a78de266677b805c6f694ad94fedd6
 """
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import discord
 from discord import ButtonStyle, ui
@@ -62,18 +62,47 @@ class ButtonPaginator(ui.View, DpyPaginator):
         suffix: str = "```",
         max_size: int = 2000,
         linesep: str = "\n",
-        only_users: Optional[List[discord.abc.User]] = None,
+        only_users: Optional[List[Union[discord.Object, discord.abc.User]]] = None,
+        only_roles: Optional[List[Union[discord.Object, discord.Role]]] = None,
     ) -> None:
-        """Creates a new Paginator instance. At least one of ctx or message must be supplied."""
-        self.only_users = only_users
+        """
+        Creates a new Paginator instance.
+
+        If source_message or only_users/only_roles are not provided, the paginator will respond to all users.
+        If source message is provided and only_users is NOT provided, the paginator will respond
+            to the author of the source message. To override this, pass an empty list to `only_users`.
+
+        """
         self._index = 0
         self._pages: List[str] = []
-        self.source_message = source_message
         self.prefix = prefix
         self.suffix = suffix
         self.max_size = max_size
         self.linesep = linesep
         self._embed = embed or Embed()
+
+        # ensure that only_users are all users
+        if only_users is not None:
+            if isinstance(only_users, list):
+                for user in only_users:
+                    if not isinstance(user, (discord.Object, discord.abc.User)):
+                        raise InvalidArgumentError(
+                            "only_users must be a list of discord.Object or discord.abc.User objects."
+                        )
+        elif source_message is not None:
+            logger.debug("Only users not provided, using source message author.")
+            only_users = [source_message.author]
+
+        if only_roles is not None:
+            if isinstance(only_roles, list):
+                for role in only_roles:
+                    if not isinstance(role, (discord.Object, discord.Role)):
+                        raise InvalidArgumentError(
+                            "only_roles must be a list of discord.Object or discord.Role objects."
+                        )
+
+        self.only_users = only_users
+        self.only_roles = only_roles
 
         if not isinstance(timeout, (int, float)):
             raise InvalidArgumentError("timeout must be a float")
@@ -115,7 +144,8 @@ class ButtonPaginator(ui.View, DpyPaginator):
         suffix: str = "",
         max_size: int = 4000,
         linesep: str = "\n",
-        only_users: Optional[List[discord.abc.User]] = None,
+        only_users: Optional[List[Union[discord.Object, discord.abc.User]]] = None,
+        only_roles: Optional[List[Union[discord.Object, discord.abc.Role]]] = None,
     ) -> None:
         """Create a paginator, and paginate the provided lines."""
         paginator = cls(
@@ -129,10 +159,11 @@ class ButtonPaginator(ui.View, DpyPaginator):
             max_size=max_size,
             linesep=linesep,
             only_users=only_users,
+            only_roles=only_roles,
         )
 
         if channel is None and source_message is None:
-            raise MissingAttributeError("Both channel and message are None.")
+            raise MissingAttributeError("Both channel and source_message are None.")
         elif channel is None:
             channel = source_message.channel
 
@@ -150,14 +181,23 @@ class ButtonPaginator(ui.View, DpyPaginator):
         await msg.edit(view=None)
 
     async def interaction_check(self, interaction: "Interaction") -> bool:
-        """Check if the interaction is by the author of the paginatior."""
-        if self.source_message is None:
-            return True
-        if not (is_valid := self.source_message.author.id == interaction.user.id):
-            await interaction.response.send_message(
-                content="This is not your message to paginate!", ephemeral=True
-            )
-        return is_valid
+        """Check if the interaction is by the author of the paginator."""
+        if self.only_users is not None:
+            logger.trace(f"All allowed users: {self.only_users}")
+            if any(user.id == interaction.user.id for user in self.only_users):
+                logger.debug("User is in allowed users")
+                return True
+        if self.only_roles is not None:
+            logger.trace(f"All allowed roles: {self.only_roles}")
+            if any(
+                (role.id == user_role.id for user_role in interaction.user.roles) for role in self.only_roles
+            ):
+                logger.debug("User has an allowed role.")
+                return True
+        await interaction.response.send_message(
+            content="This is not your message to paginate!", ephemeral=True
+        )
+        return False
 
     def get_footer(self) -> str:
         """Returns the footer text."""
@@ -232,4 +272,4 @@ class ButtonPaginator(ui.View, DpyPaginator):
     async def _stop(self, button: "Button", interaction: "Interaction") -> None:
         """Stop the paginator early."""
         await interaction.response.defer()
-        self.stop()
+        super().stop()
