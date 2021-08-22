@@ -21,14 +21,15 @@ if TYPE_CHECKING:
 
 EXT_METADATA = ExtMetadata()
 
-logger: "ModmailLogger" = logging.getLogger(__name__)
 
-
+BASE_JUMP_URL = "https://discord.com/channels/"
 USER_NOT_ABLE_TO_BE_DMED_MESSAGE = (
     "**{0}** is not able to be dmed! This is because they have either blocked the bot, "
     "or they are only accepting direct messages from friends.\n"
     "It is also possible that they are not in the same server as the bot. "
 )
+
+logger: "ModmailLogger" = logging.getLogger(__name__)
 
 
 class TicketsCog(ModmailCog, name="Threads"):
@@ -59,16 +60,28 @@ class TicketsCog(ModmailCog, name="Threads"):
     # a designated server to handle threads and a server where the community resides,
     # so its possible that the user isn't in the server where this command is run.
     @commands.command()
-    async def contact(self, ctx: Context, recipient: commands.UserConverter) -> discord.Message:
+    async def contact(self, ctx: Context, recipient: commands.UserConverter) -> None:
         """
         Open a new ticket with a provided recipient.
 
         This command uses nothing btw. Not arch.
         """
         if recipient.bot:
-            return await ctx.send("You can't open a ticket with a bot.")
+            await ctx.send("You can't open a ticket with a bot.")
+            return
 
-        ticket = await self.create_ticket(ctx.message, recipient=recipient, check_for_existing_thread=True)
+        try:
+            ticket = await self.create_ticket(
+                ctx.message, recipient=recipient, check_for_existing_thread=True
+            )
+        except ThreadAlreadyExistsError:
+            thread = self.get_ticket(recipient.id).thread
+            await ctx.send(
+                f"A thread already exists with {recipient.mention} ({recipient.id})."
+                f"You can find it here: <{BASE_JUMP_URL}{thread.guild.id}/{thread.id}>",
+                allowed_mentions=discord.AllowedMentions(users=False),
+            )
+            return
 
         if not await check_can_dm_user(recipient):
             await ticket.thread.send(
