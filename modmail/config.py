@@ -1,19 +1,12 @@
-import asyncio
-import datetime
-import json
 import logging
 import os
-import sys
 import typing
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-import discord
 import toml
-from discord.ext.commands import BadArgument
-from pydantic import BaseModel
 from pydantic import BaseSettings as PydanticBaseSettings
-from pydantic import Field, SecretStr
+from pydantic import PostgresDsn
 from pydantic.env_settings import SettingsSourceCallable
 from pydantic.types import conint
 
@@ -35,7 +28,7 @@ def determine_file_path(
     for file_path in paths:
         config_file = Path(file_path)
         if (config_file).exists():
-            path = config_file
+            path = str(config_file)
             log.debug(f"Found {config_type} config at {file_path}")
             break
     return path or None
@@ -45,7 +38,7 @@ DEFAULT_CONFIG_PATH = determine_file_path(DEFAULT_CONFIG_PATHS)
 USER_CONFIG_PATH = determine_file_path(CONFIG_PATHS, config_type="")
 
 
-def toml_default_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]:
+def toml_default_config_source(_: PydanticBaseSettings) -> Dict[str, Any]:
     """
     A simple settings source that loads variables from a toml file
     from within the module's source folder.
@@ -56,7 +49,7 @@ def toml_default_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]
     return dict(**toml.load(DEFAULT_CONFIG_PATH))
 
 
-def toml_user_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]:
+def toml_user_config_source(_: PydanticBaseSettings) -> Dict[str, Any]:
     """
     A simple settings source that loads variables from a toml file
     from within the module's source folder.
@@ -93,8 +86,9 @@ class BaseSettings(PydanticBaseSettings):
 
 
 class BotConfig(BaseSettings):
-    prefix: str = "?"
-    token: str = None
+    prefix: Optional[str] = "?"
+    token: str
+    sqlalchemy_database_uri: Optional[PostgresDsn] = None
 
     class Config:
         # env_prefix = "bot."
