@@ -189,13 +189,13 @@ class ButtonPaginator(ui.View, DpyPaginator):
                 return True
         if self.only_roles is not None:
             logger.trace(f"All allowed roles: {self.only_roles}")
-            if any(
-                (role.id == user_role.id for user_role in interaction.user.roles) for role in self.only_roles
-            ):
-                logger.debug("User has an allowed role.")
-                return True
+            user_roles = [role.id for role in interaction.user.roles]
+            for role in self.only_roles:
+                if role.id in user_roles:
+                    logger.debug("User is in allowed roles")
+                    return True
         await interaction.response.send_message(
-            content="This is not your message to paginate!", ephemeral=True
+            content="You are not authorised to use this paginator.", ephemeral=True
         )
         return False
 
