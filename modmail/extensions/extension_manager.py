@@ -101,7 +101,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     @extensions_group.command(name="load", aliases=("l",))
     async def load_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
-        """
+        r"""
         Load extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all unloaded extensions will be loaded.
@@ -118,7 +118,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     @extensions_group.command(name="unload", aliases=("ul",))
     async def unload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
-        """
+        r"""
         Unload currently loaded extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all loaded extensions will be unloaded.
@@ -145,7 +145,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     @extensions_group.command(name="reload", aliases=("r", "rl"))
     async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
-        """
+        r"""
         Reload extensions given their fully qualified or unqualified names.
 
         If an extension fails to be reloaded, it will be rolled-back to the prior working state.

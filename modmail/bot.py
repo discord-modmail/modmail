@@ -188,7 +188,7 @@ class ModmailBot(commands.Bot):
                     # any errors here will take down the entire bot
                     self.load_extension(plugin)
                 except Exception:
-                    self.logger.error("Failed to load plugin {0}".format(plugin), exc_info=True)
+                    self.logger.error(f"Failed to load plugin {plugin}", exc_info=True)
 
     def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         """

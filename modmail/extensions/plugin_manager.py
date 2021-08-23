@@ -47,7 +47,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
     @plugins_group.command(name="load", aliases=("l",))
     async def load_plugin(self, ctx: Context, *plugins: PluginConverter) -> None:
-        """
+        r"""
         Load plugins given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all unloaded plugins will be loaded.
@@ -56,7 +56,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
     @plugins_group.command(name="unload", aliases=("ul",))
     async def unload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
-        """
+        r"""
         Unload currently loaded plugins given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all loaded plugins will be unloaded.
@@ -65,7 +65,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
     @plugins_group.command(name="reload", aliases=("r", "rl"))
     async def reload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
-        """
+        r"""
         Reload plugins given their fully qualified or unqualified names.
 
         If an plugin fails to be reloaded, it will be rolled-back to the prior working state.

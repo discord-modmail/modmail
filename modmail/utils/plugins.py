@@ -38,13 +38,13 @@ def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
     #   support following symlinks, see: https://bugs.python.org/issue33428
     for path in glob.iglob(f"{BASE_PATH}/**/*.py", recursive=True):
 
-        log.trace("Path: {0}".format(path))
+        log.trace(f"Path: {path}")
 
         # calculate the module name, dervived from the relative path
         relative_path = Path(path).relative_to(BASE_PATH)
         name = relative_path.__str__().rstrip(".py").replace("/", ".")
         name = PLUGIN_MODULE + "." + name
-        log.trace("Module name: {0}".format(name))
+        log.trace(f"Module name: {name}")
 
         if unqualify(name.split(".")[-1]).startswith("_"):
             # Ignore module/package names starting with an underscore.
@@ -62,14 +62,14 @@ def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
             spec.loader.exec_module(imported)
         except Exception:
             log.error(
-                "Failed to import {0}. As a result, this plugin is not considered installed.".format(name),
+                f"Failed to import {name}. As a result, this plugin is not considered installed.",
                 exc_info=True,
             )
             continue
 
         if not inspect.isfunction(getattr(imported, "setup", None)):
             # If it lacks a setup function, it's not a plugin. This is enforced by dpy.
-            log.trace("{0} does not have a setup function. Skipping.".format(name))
+            log.trace(f"{name} does not have a setup function. Skipping.")
             continue
 
         ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)
