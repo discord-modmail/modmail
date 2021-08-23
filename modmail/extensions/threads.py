@@ -128,7 +128,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         if check_for_existing_thread and recipient.id in self.bot.tickets.keys():
             raise ThreadAlreadyExistsError(recipient.id)
 
-        thread_channel = await self._start_discord_thread(initial_message)
+        thread_channel = await self._start_discord_thread(initial_message, recipient)
         ticket = Ticket(recipient, thread_channel)
 
         # add the ticket as both the recipient and the thread ids so they can be retrieved from both sides.
@@ -136,9 +136,13 @@ class TicketsCog(ModmailCog, name="Threads"):
         self.bot.tickets[thread_channel.id] = ticket
         return ticket
 
-    async def _start_discord_thread(self, message: discord.Message) -> discord.Thread:
+    async def _start_discord_thread(
+        self, message: discord.Message, recipient: discord.User = None
+    ) -> discord.Thread:
         """Create a discord thread."""
         await self.init_relay_channel()
+        if recipient is None:
+            recipient = message.author
         allowed_mentions = discord.AllowedMentions(
             everyone=False, users=False, roles=True, replied_user=False
         )
@@ -152,7 +156,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             allowed_mentions=allowed_mentions,
         )
         thread_channel = await relayed_msg.create_thread(
-            name=str(message.author.name + "-" + message.author.discriminator),
+            name=str(recipient.name + "-" + recipient.discriminator),
             auto_archive_duration=relayed_msg.channel.default_auto_archive_duration,
         )
 
