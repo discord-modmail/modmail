@@ -74,8 +74,16 @@ class ThreadEmbed:
 
     def create_close_embed_to_user(self, message: Message, **kwargs) -> Embed:
         """Create a discord embed object to be sent to the user on thread close."""
-        raise NotImplementedError
+        return Embed(
+            title="Thread Closed",
+            description=f"{message.author.mention} has closed this Modmail thread.",
+            timestamp=message.created_at,
+        )
 
     def create_close_embed_to_guild(self, message: Message, **kwargs) -> Embed:
         """Create a discord embed object to be sent to the guild on thread close."""
-        raise NotImplementedError
+        return Embed(
+            title="Thread Closed",
+            description=f"{message.author.mention} has closed this Modmail thread.",
+            timestamp=message.created_at,
+        )
