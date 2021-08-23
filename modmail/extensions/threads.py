@@ -1,7 +1,6 @@
 import logging
 from typing import TYPE_CHECKING, Optional, Union
 
-import arrow
 import discord
 from arrow import Arrow
 from discord.ext import commands
@@ -28,7 +27,7 @@ USER_NOT_ABLE_TO_BE_DMED_MESSAGE = (
     "or they are only accepting direct messages from friends.\n"
     "It is also possible that they are not in the same server as the bot. "
 )
-
+ON_SUCCESS_EMOJI = "\u2705"  # ✅
 logger: "ModmailLogger" = logging.getLogger(__name__)
 
 
@@ -212,9 +211,24 @@ class TicketsCog(ModmailCog, name="Threads"):
         if message is None:
             message = ticket.last_sent_message
         await ticket.messages[message].edit(
-            embed=ticket.embed_creator.create_message_embed_to_user(message, content)
+            embed=ticket.embed_creator.create_edited_message_embed_to_user(content, message)
         )
-        await ctx.message.add_reaction("✅")
+        await ticket.thread.send(
+            embed=ticket.embed_creator.create_edited_message_embed_to_guild(content, message)
+        )
+        await ctx.message.add_reaction(ON_SUCCESS_EMOJI)
+
+    @is_modmail_thread()
+    @commands.command(aliases=("d", "del"))
+    async def delete(self, ctx: Context, message: Optional[discord.Message] = None) -> None:
+        """Delete a message in the thread."""
+        ticket = self.get_ticket(ctx.channel.id)
+        if message is None:
+            message = ticket.last_sent_message
+            ticket.last_sent_message = None
+        await ticket.messages[message].delete()
+        await message.delete()
+        await ctx.message.add_reaction(ON_SUCCESS_EMOJI)
 
     @is_modmail_thread()
     @commands.group(invoke_without_command=True)
@@ -224,7 +238,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         thread_close_embed = discord.Embed(
             title="Thread Closed",
             description=f"{ctx.author.mention} has closed this Modmail thread.",
-            timestamp=arrow.utcnow(),
+            timestamp=ctx.message.created_at,
         )
 
         # clean up variables
@@ -258,6 +272,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             # Thread doesn't exist, so create one.
             ticket = await self.create_ticket(message, check_for_existing_thread=False)
         await self._relay_message(ticket, message)
+        await message.add_reaction(ON_SUCCESS_EMOJI)
 
     @ModmailCog.listener(name="on_typing")
     async def on_typing(

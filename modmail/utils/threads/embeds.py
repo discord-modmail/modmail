@@ -1,4 +1,5 @@
-import arrow
+from __future__ import annotations
+
 from discord import Embed, Guild, Message, User
 
 
@@ -26,7 +27,7 @@ class ThreadEmbed:
         return Embed(
             title="Ticket Opened",
             description=f"Thanks for dming {guild.name}! A member of our staff will be with you shortly!",
-            timestamp=arrow.utcnow(),
+            timestamp=message.created_at,
         )
 
     def create_inital_embed_to_guild(
@@ -42,15 +43,11 @@ class ThreadEmbed:
             return Embed(author=user, description=content)
         return Embed(author=message.author, description=message.content)
 
-    def create_message_embed_to_user(self, message: Message, contents: str, **kwargs) -> Embed:
+    def create_message_embed_to_user(self, message: Message, contents: str, author: User = None) -> Embed:
         """Given information, return an embed to be sent to the user."""
-        return Embed(
-            description=contents,
-            timestamp=message.created_at,
-            color=message.author.color,
-            author=message.author,
-            **kwargs,
-        )
+        if author is None:
+            author = message.author
+        return Embed(description=contents, timestamp=message.created_at, color=author.color, author=author)
 
     def create_message_embed_to_guild(self, message: Message, **kwargs) -> Embed:
         """Given information, return an embed object to be sent to the server."""
@@ -63,13 +60,17 @@ class ThreadEmbed:
             **kwargs,
         )
 
-    def create_edited_message_embed_to_user(self, message: Message, **kwargs) -> Embed:
+    def create_edited_message_embed_to_user(self, new_content: str, original_message: Message) -> Embed:
         """Creates a new embed from an edited message by staff, to be sent to the end user."""
-        raise NotImplementedError
+        embed = original_message.embeds[0]
+        embed.description = new_content
+        return embed
 
-    def create_edited_message_embed_to_guild(self, message: Message, **kwargs) -> Embed:
+    def create_edited_message_embed_to_guild(self, new_content: str, original_message: Message) -> Embed:
         """Creates a new embed to be sent in guild from an edited message."""
-        raise NotImplementedError
+        embed = original_message.embeds[0]
+        embed.description = new_content
+        return embed
 
     def create_close_embed_to_user(self, message: Message, **kwargs) -> Embed:
         """Create a discord embed object to be sent to the user on thread close."""
