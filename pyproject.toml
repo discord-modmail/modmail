@@ -45,7 +45,7 @@ flake8-tidy-imports = "~=4.1"
 flake8-todo = "~=0.7"
 isort = "^5.9.2"
 pep8-naming = "~=0.11"
-# technically not for linting, but used to enforce f-string usage.
+# technically not for linting, but used to enforce f-string usage and ensure not using deprecated features
 pyupgrade = "^2.24.0"
 # testing
 codecov = "^2.1.11"
