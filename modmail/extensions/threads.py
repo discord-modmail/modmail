@@ -64,7 +64,9 @@ class TicketsCog(ModmailCog, name="Threads"):
         """
         Open a new ticket with a provided recipient.
 
-        This command uses nothing btw. Not arch.
+        This will create a new ticket with the recipient, if a ticket does not already exist.
+            If a ticket already exists, a message will be sent in reply with a link to the existing ticket.
+        If the user is not able to be dmed, a message will be sent to the channel.
         """
         if recipient.bot:
             await ctx.send("You can't open a ticket with a bot.")
