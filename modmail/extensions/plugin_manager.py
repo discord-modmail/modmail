@@ -1,12 +1,22 @@
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING
+
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from modmail.bot import ModmailBot
 from modmail.extensions.extension_manager import ExtensionConverter, ExtensionManager
-from modmail.utils.addons.plugins import PLUGINS, walk_plugins
+from modmail.utils.addons.plugins import BASE_PATH, PLUGINS, walk_plugins
 from modmail.utils.cogs import BotModes, ExtMetadata
 
+if TYPE_CHECKING:
+    from modmail.bot import ModmailBot
+    from modmail.log import ModmailLogger
+
 EXT_METADATA = ExtMetadata(load_if_mode=BotModes.PRODUCTION)
+
+logger: ModmailLogger = logging.getLogger(__name__)
 
 
 class PluginConverter(ExtensionConverter):
@@ -88,6 +98,28 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     async def resync_plugins(self, ctx: Context) -> None:
         """Refreshes the list of plugins from disk, but do not unload any currently active."""
         await self.resync_extensions.callback(self, ctx)
+
+    @plugins_group.command(name="install", aliases=("",))
+    async def install_plugins(self, ctx: Context, name: str, url: str) -> None:
+        """Install plugins from provided repo."""
+        # TODO: ensure path is a valid link and whatnot
+        # TODO: also to support providing normal github and gitlab links and convert to zip
+
+        logger.debug(f"Received command to download plugin {name} from {url}")
+        async with self.bot.http_session.get(url) as resp:
+            if resp.status != 200:
+                await ctx.send(f"Downloading {url} did not give a 200")
+            zip = await resp.read()
+
+        # TODO: make this use a regex to get the name of the plugin, or make it provided in the inital arg
+        zip_path = BASE_PATH / ".cache" / "onerandomusername" / f"{name}.zip"
+
+        if not zip_path.exists():
+            zip_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with zip_path.open("wb") as f:
+            f.write(zip)
+        await ctx.send(f"Downloaded {zip_path}")
 
     # TODO: Implement install/enable/disable/etc
 
