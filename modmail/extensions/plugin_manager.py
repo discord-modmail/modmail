@@ -3,8 +3,8 @@ from discord.ext.commands import Context
 
 from modmail.bot import ModmailBot
 from modmail.extensions.extension_manager import ExtensionConverter, ExtensionManager
+from modmail.utils.addons.plugins import PLUGINS, walk_plugins
 from modmail.utils.cogs import BotModes, ExtMetadata
-from modmail.utils.plugins import PLUGINS, walk_plugins
 
 EXT_METADATA = ExtMetadata(load_if_mode=BotModes.PRODUCTION)
 
