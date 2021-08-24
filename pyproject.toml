@@ -68,6 +68,9 @@ branch = true
 source_pkgs = ["modmail"]
 omit = ["modmail/plugins/**.*"]
 
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING", "pragma: no cover"]
+
 [tool.pytest.ini_options]
 addopts = "--cov -ra"
 minversion = "6.0"
