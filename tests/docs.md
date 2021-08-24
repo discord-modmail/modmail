@@ -67,3 +67,15 @@ Test creating an embed with extra parameters errors properly.
 
 **Markers:**
 - dependency  (depends_on=patch_embed)
+# tests.modmail.utils.addons.test_sources
+##
+### test_converter
+Convert a user input into a Source.
+
+**Markers:**
+- xfail  (reason=Not implemented)
+- skip
+### test_zip_regex
+Test the zip regex correctly gets zip and not the other.
+### test_repo_regex
+Test the repo regex to ensure that it matches what it should and none of what it shouldn't.
