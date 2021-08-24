@@ -6,7 +6,7 @@ from textwrap import dedent
 import pytest
 
 import modmail.utils.addons.sources
-from modmail.utils.addons.sources import REPO_REGEX, ZIP_REGEX, AddonSourceConverter
+from modmail.utils.addons.sources import REPO_REGEX, ZIP_REGEX, AddonConverter
 
 ZIP_TEST_CASES_PASS = [
     "https://github.com/onerandomusername/modmail-addons/archive/main.zip",
@@ -37,7 +37,7 @@ REPO_TEST_CASES_PASS = [
 @pytest.mark.xfail(reason="Not implemented")
 def test_converter() -> None:
     """Convert a user input into a Source."""
-    source = AddonSourceConverter().convert(None, "github")  # noqa: F841
+    addon = AddonConverter().convert(None, "github")  # noqa: F841
 
 
 def test_zip_regex() -> None:

@@ -7,7 +7,9 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from modmail.extensions.extension_manager import ExtensionConverter, ExtensionManager
+from modmail.utils.addons.models import Addon
 from modmail.utils.addons.plugins import BASE_PATH, PLUGINS, walk_plugins
+from modmail.utils.addons.sources import AddonWithSourceConverter
 from modmail.utils.cogs import BotModes, ExtMetadata
 
 if TYPE_CHECKING:
@@ -100,19 +102,19 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await self.resync_extensions.callback(self, ctx)
 
     @plugins_group.command(name="install", aliases=("",))
-    async def install_plugins(self, ctx: Context, name: str, url: str) -> None:
+    async def install_plugins(self, ctx: Context, *, plugin: AddonWithSourceConverter) -> None:
         """Install plugins from provided repo."""
         # TODO: ensure path is a valid link and whatnot
         # TODO: also to support providing normal github and gitlab links and convert to zip
-
-        logger.debug(f"Received command to download plugin {name} from {url}")
-        async with self.bot.http_session.get(url) as resp:
+        plugin: Addon = plugin
+        logger.debug(f"Received command to download plugin {plugin.name} from {plugin.source.url}")
+        async with self.bot.http_session.get(plugin.source.url) as resp:
             if resp.status != 200:
-                await ctx.send(f"Downloading {url} did not give a 200")
+                await ctx.send(f"Downloading {plugin.source.url} did not give a 200")
             zip = await resp.read()
 
         # TODO: make this use a regex to get the name of the plugin, or make it provided in the inital arg
-        zip_path = BASE_PATH / ".cache" / "onerandomusername" / f"{name}.zip"
+        zip_path = BASE_PATH / ".cache" / f"{plugin.source.name}.zip"
 
         if not zip_path.exists():
             zip_path.parent.mkdir(parents=True, exist_ok=True)
