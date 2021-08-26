@@ -1,1 +1,1 @@
-from .ticket import Ticket  # noqa: F401
+from .tickets import Tickets  # noqa: F401
