@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from modmail.bot import ModmailBot
@@ -18,6 +19,9 @@ log: ModmailLogger = logging.getLogger(__name__)
 def main() -> None:
     """Run the bot."""
     bot = ModmailBot()
+    # Check if the database is alive before running the bot
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(bot.init_db())
     bot.run(bot.config.bot.token)
 
 

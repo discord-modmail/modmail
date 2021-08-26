@@ -9,6 +9,8 @@ from aiohttp import ClientSession
 from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
+from sqlalchemy import create_engine, engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
@@ -38,6 +40,8 @@ class ModmailBot(commands.Bot):
         self.config = CONFIG
         self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
         self.http_session: t.Optional[ClientSession] = None
+        self._db_engine: t.Optional[engine.Engine] = None
+        self.db: t.Optional[Session] = None
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
@@ -47,6 +51,7 @@ class ModmailBot(commands.Bot):
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
+
         super().__init__(
             case_insensitive=True,
             description="Modmail bot by discord-modmail.",
@@ -58,12 +63,25 @@ class ModmailBot(commands.Bot):
             **kwargs,
         )
 
+    async def init_db(self) -> None:
+        """Initiate the bot DB session and check if the DB is alive."""
+        self._db_engine = create_engine(CONFIG.bot.sqlalchemy_database_uri, pool_pre_ping=True)
+        self.db = sessionmaker(autocommit=False, autoflush=False, bind=self._db_engine)
+        try:
+            self._db_engine.execute("SELECT 1")
+            self.logger.notice(f"DB Connection pool established at {self._db_engine.url}")
+        except Exception as e:
+            self.logger.error(
+                f"DB connection at {CONFIG.bot.sqlalchemy_database_uri} not successful, raised\n{e}"
+            )
+            exit()
+
     async def start(self, token: str, reconnect: bool = True) -> None:
         """
         Start the bot.
 
         This function is called by the run method, and finishes the set up of the bot that needs an
-        asyncrhonous event loop running, before connecting the bot to discord.
+        asynchronous event loop running, before connecting the bot to discord.
         """
         try:
             # create the aiohttp session
