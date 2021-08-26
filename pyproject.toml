@@ -24,6 +24,7 @@ toml = "^0.10.2"
 # HACK: Poetry uses requests to install git dependencies, which are not explicitly installed when `--no-dev`
 # is set in docker, and hence is needed to successfully install discord.py from git
 requests = ">=2.7.9"
+SQLAlchemy = ">=1.4,<1.4.23"
 
 [tool.poetry.extras]
 
