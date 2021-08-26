@@ -57,3 +57,4 @@ logging.getLogger("discord").setLevel(logging.WARNING)
 logging.getLogger("websockets").setLevel(logging.ERROR)
 # Set asyncio logging back to the default of INFO even if asyncio's debug mode is enabled.
 logging.getLogger("asyncio").setLevel(logging.INFO)
+logging.getLogger("sqlalchemy").setLevel(logging.INFO)

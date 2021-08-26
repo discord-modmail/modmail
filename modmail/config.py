@@ -6,7 +6,6 @@ from typing import Any, Dict, Optional, Tuple
 
 import toml
 from pydantic import BaseSettings as PydanticBaseSettings
-from pydantic import PostgresDsn
 from pydantic.env_settings import SettingsSourceCallable
 from pydantic.types import conint
 
@@ -88,7 +87,7 @@ class BaseSettings(PydanticBaseSettings):
 class BotConfig(BaseSettings):
     prefix: Optional[str] = "?"
     token: str
-    sqlalchemy_database_uri: Optional[PostgresDsn] = None
+    sqlalchemy_database_uri: Optional[str] = None
 
     class Config:
         # env_prefix = "bot."

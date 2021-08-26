@@ -1,6 +1,6 @@
 [bot]
 prefix = "?"
-sqlalchemy_database_uri = "postgres://jasonthedestroyer:ihavemnesia33@localhost/modmail"
+sqlalchemy_database_uri = "postgresql+asyncpg://jasonthedestroyer:ihavemnesia33@localhost/modmail"
 
 [dev]
 log_level = 25  # "NOTICE"

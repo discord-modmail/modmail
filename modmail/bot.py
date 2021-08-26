@@ -9,8 +9,8 @@ from aiohttp import ClientSession
 from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
-from sqlalchemy import create_engine, engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.orm import Session
 
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
@@ -40,7 +40,7 @@ class ModmailBot(commands.Bot):
         self.config = CONFIG
         self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
         self.http_session: t.Optional[ClientSession] = None
-        self._db_engine: t.Optional[engine.Engine] = None
+        self._db_engine: t.Optional[AsyncEngine] = None
         self.db: t.Optional[Session] = None
 
         status = discord.Status.online
@@ -65,10 +65,11 @@ class ModmailBot(commands.Bot):
 
     async def init_db(self) -> None:
         """Initiate the bot DB session and check if the DB is alive."""
-        self._db_engine = create_engine(CONFIG.bot.sqlalchemy_database_uri, pool_pre_ping=True)
-        self.db = sessionmaker(autocommit=False, autoflush=False, bind=self._db_engine)
+        self._db_engine = create_async_engine(CONFIG.bot.sqlalchemy_database_uri, echo=True)
+        self.db = AsyncSession(self._db_engine)
         try:
-            self._db_engine.execute("SELECT 1")
+            # Try to check if DB is awake
+            await self.db.execute("SELECT 1")
             self.logger.notice(f"DB Connection pool established at {self._db_engine.url}")
         except Exception as e:
             self.logger.error(
@@ -161,22 +162,28 @@ class ModmailBot(commands.Bot):
             try:
                 self.unload_extension(plug)
             except Exception:
-                self.logger.error(f"Exception occured while unloading plugin {plug.name}", exc_info=True)
+                self.logger.error(f"Exception occurred while unloading plugin {plug.name}", exc_info=True)
 
         for ext in list(self.extensions):
             try:
                 self.unload_extension(ext)
             except Exception:
-                self.logger.error(f"Exception occured while unloading {ext.name}", exc_info=True)
+                self.logger.error(f"Exception occurred while unloading {ext.name}", exc_info=True)
 
         for cog in list(self.cogs):
             try:
                 self.remove_cog(cog)
             except Exception:
-                self.logger.error(f"Exception occured while removing cog {cog.name}", exc_info=True)
+                self.logger.error(f"Exception occurred while removing cog {cog.name}", exc_info=True)
 
         if self.http_session:
             await self.http_session.close()
+
+        if self._db_engine:
+            await self._db_engine.dispose()
+
+        if self.db:
+            await self.db.close()
 
         await super().close()
 
