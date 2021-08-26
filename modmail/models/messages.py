@@ -7,7 +7,7 @@ class Messages(Base):
     """Database model representing a message sent in a modmail ticket."""
 
     id = Column(Integer, primary_key=True)
-    ticket_id = Column(Integer, ForeignKey("ticket.id"))
+    ticket_id = Column(Integer, ForeignKey("tickets.id"))
     mirrored_id = Column(Integer)
     author_id = Column(Integer)
     content = Column(String)
