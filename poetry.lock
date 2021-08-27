@@ -255,7 +255,7 @@ toml = ["toml"]
 
 [[package]]
 name = "discord.py"
-version = "2.0.0a3501+gfbc4a51c"
+version = "2.0.0a3563+ge7821be4"
 description = "A Python wrapper for the Discord API"
 category = "main"
 optional = false
@@ -274,7 +274,7 @@ voice = ["PyNaCl (>=1.3.0,<1.5)"]
 type = "git"
 url = "https://github.com/Rapptz/discord.py.git"
 reference = "master"
-resolved_reference = "fbc4a51c355c029af61363038d0a8a9ac0bd8ace"
+resolved_reference = "e7821be4aac7ab68be37a991a68796f01ffc1ece"
 
 [[package]]
 name = "distlib"

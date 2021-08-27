@@ -52,7 +52,7 @@ def __init__(self: discord.Embed, **kwargs):  # noqa: N807
         self.set_author(
             name=author_name if author_name is not None else author.name,
             url=author_url,
-            icon_url=author_icon or str(author.avatar.url),
+            icon_url=author_icon or str(author.display_avatar.url),
         )
 
     fields: List[Union[Tuple[str, str], Tuple[str, str, bool]]] = kwargs.pop("fields", [])
