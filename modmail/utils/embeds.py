@@ -3,10 +3,14 @@ from typing import List, Tuple, Union
 import discord
 from discord.embeds import EmptyEmbed
 
+from modmail.config import CONFIG
+
+DEFAULT_COLOR = int(CONFIG.colors.embed_color.as_hex().lstrip("#"), 16)
+
 original_init = discord.Embed.__init__
 
 
-def __init__(self: discord.Embed, **kwargs):  # noqa: N807
+def __init__(self: discord.Embed, description: str = None, **kwargs):  # noqa: N807
     """
     Overrides discord.Embed.__init__ to add new arguments.
 
@@ -27,13 +31,17 @@ def __init__(self: discord.Embed, **kwargs):  # noqa: N807
     * description
     * timestamp
     """
+    content = kwargs.pop("content", None)
+    if description is not None and content is not None:
+        raise TypeError("Description and content are aliases for the same field, but both were provided.")
+
     original_init(
         self,
         title=kwargs.pop("title", EmptyEmbed),
-        description=kwargs.pop("description", kwargs.pop("content", EmptyEmbed)),
+        description=description or content or EmptyEmbed,
         type=kwargs.pop("type", "rich"),
         url=kwargs.pop("url", EmptyEmbed),
-        colour=kwargs.pop("color", None) or kwargs.pop("colour", 0xE67E22),
+        colour=kwargs.pop("color", kwargs.pop("colour", DEFAULT_COLOR)),
         timestamp=kwargs.pop("timestamp", EmptyEmbed),
     )
 
@@ -75,18 +83,3 @@ def __init__(self: discord.Embed, **kwargs):  # noqa: N807
 def patch_embed() -> None:
     """Modifies discord.Embed to have new arguments for input."""
     discord.Embed.__init__ = __init__
-
-
-if __name__ == "__main__":
-    e = discord.Embed(
-        title="Test title",
-        description="test description",
-        footer_text="hi",
-        fields=[
-            ("Field 1", "test"),
-            ("Field 2", "more test", True),
-            {"name": "test", "value": "data", "inline": True},
-        ],
-        colour=0xFFF,
-    )
-    print(e.to_dict())
