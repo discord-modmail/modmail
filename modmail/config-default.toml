@@ -1,6 +1,8 @@
 [bot]
 prefix = "?"
 
+[colors]
+
 [dev]
 log_level = 25  # "NOTICE"
 

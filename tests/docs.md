@@ -41,3 +41,29 @@ Test trace logging level prints a trace response.
 **Markers:**
 - skip
 - dependency  (depends=['create_logger'])
+# tests.modmail.utils.test_embeds
+##
+### test_patch_embed
+Ensure that the function changes init only after the patch is called.
+
+**Markers:**
+- dependency  (name=patch_embed)
+### test_create_embed
+Test creating an embed with patched parameters works properly.
+
+**Markers:**
+- dependency  (depends_on=patch_embed)
+### test_create_embed_with_extra_params
+Test creating an embed with extra parameters errors properly.
+
+**Markers:**
+- dependency  (depends_on=patch_embed)
+### test_create_embed_with_description_and_content
+
+    Create an embed while providing both description and content parameters.
+
+    Providing both is ambiguous and should error.
+
+
+**Markers:**
+- dependency  (depends_on=patch_embed)

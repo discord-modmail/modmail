@@ -14,6 +14,7 @@ from discord.ext.commands import BadArgument
 from pydantic import BaseModel
 from pydantic import BaseSettings as PydanticBaseSettings
 from pydantic import Field, SecretStr
+from pydantic.color import Color as ColorBase
 from pydantic.env_settings import SettingsSourceCallable
 from pydantic.types import conint
 
@@ -113,6 +114,16 @@ class BotMode(BaseSettings):
     develop: bool = False
 
 
+class Colors(BaseSettings):
+    """
+    Default colors.
+
+    These should only be changed here to change the default colors.
+    """
+
+    embed_color: ColorBase = "0087BD"
+
+
 class DevConfig(BaseSettings):
     """
     Developer specific configuration.
@@ -126,6 +137,7 @@ class DevConfig(BaseSettings):
 class ModmailConfig(BaseSettings):
     bot: BotConfig
     dev: DevConfig
+    colors: Colors
 
 
 CONFIG = ModmailConfig()
