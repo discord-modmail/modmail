@@ -31,10 +31,14 @@ def __init__(self: discord.Embed, description: str = None, **kwargs):  # noqa: N
     * description
     * timestamp
     """
+    content = kwargs.pop("content", None)
+    if description is not None and content is not None:
+        raise TypeError("Description and content are aliases for the same field, but both were provided.")
+
     original_init(
         self,
         title=kwargs.pop("title", EmptyEmbed),
-        description=description or kwargs.pop("description", kwargs.pop("content", EmptyEmbed)),
+        description=description or content or EmptyEmbed,
         type=kwargs.pop("type", "rich"),
         url=kwargs.pop("url", EmptyEmbed),
         colour=kwargs.pop("color", kwargs.pop("colour", DEFAULT_COLOR)),
