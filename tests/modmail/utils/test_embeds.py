@@ -7,7 +7,7 @@ from modmail.utils.embeds import patch_embed
 
 @pytest.mark.dependency(name="patch_embed")
 def test_patch_embed():
-    """Test that the function returns the original embed if no embed is found."""
+    """Ensure that the function changes init only after the patch is called."""
     from modmail.utils.embeds import __init__ as init
     from modmail.utils.embeds import original_init
 
@@ -50,14 +50,18 @@ def test_create_embed():
 
 @pytest.mark.dependency(depends_on="patch_embed")
 def test_create_embed_with_extra_params():
-    """Test creating an embed with extra parameters works properly."""
+    """Test creating an embed with extra parameters errors properly."""
     with pytest.raises(TypeError, match="ooga_booga"):
         discord.Embed("hello", ooga_booga=3)
 
 
 @pytest.mark.dependency(depends_on="patch_embed")
 def test_create_embed_with_description_and_content():
-    """Create an embed while providing both description and content parameters."""
+    """
+    Create an embed while providing both description and content parameters.
+
+    Providing both is ambiguous and should error.
+    """
     with pytest.raises(
         TypeError, match="Description and content are aliases for the same field, but both were provided."
     ):
