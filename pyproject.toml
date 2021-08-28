@@ -26,6 +26,7 @@ toml = "^0.10.2"
 requests = ">=2.7.9"
 SQLAlchemy = ">=1.4,<1.4.23"
 asyncpg = "^0.24.0"
+alembic = "^1.6.5"
 
 [tool.poetry.extras]
 
