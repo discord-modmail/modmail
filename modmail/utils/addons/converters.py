@@ -6,13 +6,14 @@ from typing import TYPE_CHECKING, Type
 
 from discord.ext import commands
 
-from modmail.utils.addons.models import Addon, Plugin
+from modmail.utils.addons.models import Addon, AddonSource, Plugin, SourceTypeEnum
 
 if TYPE_CHECKING:
     from discord.ext.commands import Context
 
     from modmail.log import ModmailLogger
 
+LOCAL_REGEX: re.Pattern = re.compile(r"^\@local (?P<addon>[^@\s]+)$")
 ZIP_REGEX: re.Pattern = re.compile(
     r"^(?:https?:\/\/)?(?P<url>(?P<domain>.*\..+?)\/(?P<path>.*\.zip)) (?P<addon>[^@\s]+)$"
 )
@@ -43,6 +44,11 @@ class PluginWithSourceConverter(AddonConverter):
 
     async def convert(self, _: Context, argument: str) -> Plugin:
         """Convert a provided plugin and source to a Plugin."""
+        match = LOCAL_REGEX.match(argument)
+        if match is not None:
+            logger.debug("Matched as a local file, creating a Plugin without a source url.")
+            source = AddonSource(None, SourceTypeEnum.LOCAL)
+            return Plugin(name=match.group("addon"), source=source)
         match = ZIP_REGEX.fullmatch(argument)
         if match is not None:
             logger.debug("Matched as a zip, creating a Plugin from zip.")

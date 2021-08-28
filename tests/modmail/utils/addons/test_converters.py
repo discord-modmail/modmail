@@ -5,7 +5,12 @@ from textwrap import dedent
 
 import pytest
 
-from modmail.utils.addons.converters import REPO_REGEX, ZIP_REGEX, AddonConverter, PluginWithSourceConverter
+# fmt: off
+from modmail.utils.addons.converters import (
+    REPO_REGEX, ZIP_REGEX, AddonConverter, PluginWithSourceConverter, SourceTypeEnum,
+)
+
+# fmt: on
 
 
 @pytest.mark.asyncio
@@ -127,30 +132,82 @@ def test_zip_regex(entry, url, domain, path, addon) -> None:
     assert match.group("addon") == addon
 
 
+# fmt: off
 @pytest.mark.parametrize(
-    "arg",
+    "entry, name, source_type",
     [
-        "github.com/onerandomusername/modmail-addons/archive/main.zip earth",
-        "onerandomusername/addons planet",
-        "github onerandomusername/addons planet @master",
-        "gitlab onerandomusername/repo planet @v1.0.2",
-        "github onerandomusername/repo planet @master",
-        "gitlab onerandomusername/repo planet @main",
-        "https://github.com/onerandomusername/repo planet",
-        "https://gitlab.com/onerandomusername/repo planet",
-        "https://github.com/psf/black black @21.70b",
-        "https://github.com/onerandomusername/modmail-addons/archive/main.zip planet",
-        "https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth",
-        "https://example.com/bleeeep.zip myanmar",
-        "http://github.com/discord-modmail/addons/archive/bast.zip thebot",
-        "rtfd.io/plugs.zip documentation",
-        "pages.dev/hiy.zip black",
-        pytest.param("the world exists.", marks=pytest.mark.xfail)
-
-    ]
+        (
+            "onerandomusername/addons planet",
+            "planet", SourceTypeEnum.REPO
+        ),
+        (
+            "github onerandomusername/addons planet @master",
+            "planet", SourceTypeEnum.REPO
+        ),
+        (
+            "gitlab onerandomusername/repo planet @v1.0.2",
+            "planet", SourceTypeEnum.REPO
+        ),
+        (
+            "github onerandomusername/repo planet @master",
+            "planet", SourceTypeEnum.REPO
+        ),
+        (
+            "gitlab onerandomusername/repo planet @main",
+            "planet", SourceTypeEnum.REPO
+        ),
+        (
+            "https://github.com/onerandomusername/repo planet",
+            "planet", SourceTypeEnum.REPO
+        ),
+        (
+            "https://gitlab.com/onerandomusername/repo planet",
+            "planet", SourceTypeEnum.REPO
+        ),
+        (
+            "https://github.com/psf/black black @21.70b",
+            "black", SourceTypeEnum.REPO
+        ),
+        (
+            "github.com/onerandomusername/modmail-addons/archive/main.zip earth",
+            "earth", SourceTypeEnum.ZIP
+        ),
+        (
+            "https://github.com/onerandomusername/modmail-addons/archive/main.zip planet",
+            "planet", SourceTypeEnum.ZIP
+        ),
+        (
+            "https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth",  # noqa: E501
+            "earth", SourceTypeEnum.ZIP
+        ),
+        (
+            "https://example.com/bleeeep.zip myanmar",
+            "myanmar", SourceTypeEnum.ZIP
+        ),
+        (
+            "http://github.com/discord-modmail/addons/archive/bast.zip thebot",
+            "thebot", SourceTypeEnum.ZIP
+        ),
+        (
+            "rtfd.io/plugs.zip documentation",
+            "documentation", SourceTypeEnum.ZIP
+        ),
+        (
+            "pages.dev/hiy.zip black",
+            "black", SourceTypeEnum.ZIP
+        ),
+        (
+            "@local earth",
+            "earth", SourceTypeEnum.LOCAL
+        ),
+        pytest.param("the world exists.", None, None, marks=pytest.mark.xfail),
+    ],
 )
+# fmt: on
 @pytest.mark.dependency(depends_on=["repo_regex", "zip_regex"])
 @pytest.mark.asyncio
-async def test_plugin_with_source_converter(arg: str) -> None:
+async def test_plugin_with_source_converter(entry: str, name: str, source_type: SourceTypeEnum) -> None:
     """Test the Plugin converter works, and successfully converts a plugin with its source."""
-    await PluginWithSourceConverter().convert(None, arg)  # noqa: F841
+    plugin = await PluginWithSourceConverter().convert(None, entry)
+    assert plugin.name == name
+    assert plugin.source.source_type == source_type

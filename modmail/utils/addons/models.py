@@ -10,6 +10,7 @@ class SourceTypeEnum(Enum):
 
     ZIP = 0
     REPO = 1
+    LOCAL = 2
 
 
 class GitHost:

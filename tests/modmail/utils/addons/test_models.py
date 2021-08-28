@@ -16,6 +16,7 @@ def test_addon_model():
     [
         ("github.com/bast0006.zip", SourceTypeEnum.ZIP),
         ("gitlab.com/onerandomusername.zip", SourceTypeEnum.REPO),
+        (None, SourceTypeEnum.LOCAL),
     ],
 )
 def test_addonsource_init(zip_url, source_type):
