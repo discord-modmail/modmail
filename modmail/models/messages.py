@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String
 
 from modmail.models.base import Base
 
@@ -7,7 +7,7 @@ class Messages(Base):
     """Database model representing a message sent in a modmail ticket."""
 
     id = Column(Integer, primary_key=True)
-    ticket_id = Column(Integer, ForeignKey("tickets.id"))
+    ticket_id = Column(Integer)
     mirrored_id = Column(Integer)
     author_id = Column(Integer)
     content = Column(String)
