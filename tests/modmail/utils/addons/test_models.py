@@ -82,51 +82,22 @@ class TestPlugin:
         assert isinstance(plugin, Plugin)
         assert plugin.name == name
 
-    # fmt: off
     @pytest.mark.parametrize(
-        "entry, user, repo, name, reflike, githost",
+        "user, repo, name, reflike, githost",
         [
-            (
-                "github onerandomusername/addons planet",
-                "onerandomusername", "addons", "planet", None, "github",
-            ),
-            (
-                "github onerandomusername/addons planet @master",
-                "onerandomusername", "addons", "planet", "master", "github",
-            ),
-            (
-                "gitlab onerandomusername/repo planet @v1.0.2",
-                "onerandomusername", "repo", "planet", "v1.0.2", "gitlab",
-            ),
-            (
-                "github onerandomusername/repo planet @master",
-                "onerandomusername", "repo", "planet", "master", "github",
-            ),
-            (
-                "gitlab onerandomusername/repo planet @main",
-                "onerandomusername", "repo", "planet", "main", "gitlab",
-            ),
-            (
-                "https://github.com/onerandomusername/repo planet",
-                "onerandomusername", "repo", "planet", None, "github",
-            ),
-            (
-                "https://gitlab.com/onerandomusername/repo planet",
-                "onerandomusername", "repo", "planet", None, "gitlab",
-            ),
-            (
-                "https://github.com/psf/black black @21.70b",
-                "psf", "black", "black", "21.70b", "github",
-            )
+            ("onerandomusername", "addons", "planet", None, "github"),
+            ("onerandomusername", "addons", "planet", "master", "github"),
+            ("onerandomusername", "repo", "planet", "v1.0.2", "gitlab"),
+            ("onerandomusername", "repo", "planet", "master", "github"),
+            ("onerandomusername", "repo", "planet", "main", "gitlab"),
+            ("onerandomusername", "repo", "planet", None, "github"),
+            ("onerandomusername", "repo", "planet", None, "gitlab"),
+            ("psf", "black", "black", "21.70b", "github"),
         ],
     )
-    # fmt: on
-    def test_plugin_from_repo_match(self, entry, user, repo, name, reflike, githost):
+    def test_plugin_from_repo_match(self, user, repo, name, reflike, githost):
         """Test that a plugin can be created from a repo."""
-        from modmail.utils.addons.converters import REPO_REGEX
-
-        match = REPO_REGEX.match(entry)
-        plug = Plugin.from_repo_match(match)
+        plug = Plugin.from_repo(name, user, repo, reflike, githost)
         assert plug.name == name
         assert plug.source.user == user
         assert plug.source.repo == repo
@@ -134,62 +105,20 @@ class TestPlugin:
         assert plug.source.githost == githost
         assert plug.source.source_type == SourceTypeEnum.REPO
 
-    # fmt: off
     @pytest.mark.parametrize(
-        "entry, url, domain, path, addon",
+        "url, addon",
         [
-            (
-                "https://github.com/onerandomusername/modmail-addons/archive/main.zip planet",
-                "github.com/onerandomusername/modmail-addons/archive/main.zip",
-                "github.com",
-                "onerandomusername/modmail-addons/archive/main.zip",
-                "planet",
-            ),
-            (
-                "https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth",  # noqa: E501
-                "gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip",
-                "gitlab.com",
-                "onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip",
-                "earth",
-            ),
-            (
-                "https://example.com/bleeeep.zip myanmar",
-                "example.com/bleeeep.zip",
-                "example.com",
-                "bleeeep.zip",
-                "myanmar",
-
-            ),
-            (
-                "http://github.com/discord-modmail/addons/archive/bast.zip thebot",
-                "github.com/discord-modmail/addons/archive/bast.zip",
-                "github.com",
-                "discord-modmail/addons/archive/bast.zip",
-                "thebot",
-            ),
-            (
-                "rtfd.io/plugs.zip documentation",
-                "rtfd.io/plugs.zip",
-                "rtfd.io",
-                "plugs.zip",
-                "documentation",
-            ),
-            (
-                "pages.dev/hiy.zip black",
-                "pages.dev/hiy.zip",
-                "pages.dev",
-                "hiy.zip",
-                "black",
-            ),
-        ]
+            ("github.com/onerandomusername/modmail-addons/archive/main.zip", "planet"),
+            ("gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip", "earth"),
+            ("example.com/bleeeep.zip", "myanmar"),
+            ("github.com/discord-modmail/addons/archive/bast.zip", "thebot"),
+            ("rtfd.io/plugs.zip", "documentation"),
+            ("pages.dev/hiy.zip", "black"),
+        ],
     )
-    # fmt: on
-    def test_plugin_from_zip_match(self, entry, url, domain, path, addon):
+    def test_plugin_from_zip(self, url, addon):
         """Test that a plugin can be created from a zip url."""
-        from modmail.utils.addons.converters import ZIP_REGEX
-
-        match = ZIP_REGEX.match(entry)
-        plug = Plugin.from_zip_match(match)
+        plug = Plugin.from_zip(addon, url)
         assert plug.name == addon
         assert plug.source.zip_url == url
         assert plug.source.source_type == SourceTypeEnum.ZIP

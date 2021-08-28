@@ -38,6 +38,9 @@ class Gitlab(GitHost):
     zip_archive_api_url = f"{repo_api_url}/repository/archive.zip"
 
 
+Host = Literal["Github", "Gitlab"]
+
+
 class AddonSource:
     """
     Represents an AddonSource.
@@ -49,7 +52,7 @@ class AddonSource:
         repo: Optional[str]
         user: Optional[str]
         reflike: Optional[str]
-        githost: Optional[Literal["github", "gitlab"]]
+        githost: Optional[Host]
         githost_api = Optional[GitHost]
 
     def __init__(self, zip_url: str, type: SourceTypeEnum) -> AddonSource:
@@ -58,9 +61,7 @@ class AddonSource:
         self.source_type = type
 
     @classmethod
-    def from_repo(
-        cls, user: str, repo: str, reflike: str = None, githost: Literal["github", "gitlab"] = "github"
-    ) -> AddonSource:
+    def from_repo(cls, user: str, repo: str, reflike: str = None, githost: Host = "github") -> AddonSource:
         """Create an AddonSource from a repo."""
         if githost == "github":
             Host = Github  # noqa: N806
@@ -84,6 +85,9 @@ class AddonSource:
         match = re.match(r"^(?:https?:\/\/)?(?P<url>(?P<domain>.*\..+?)\/(?P<path>.*\.zip))", url)
         source = cls(match.group("url"), SourceTypeEnum.ZIP)
         return source
+
+    def __repr__(self) -> str:
+        return f"<AddonSource zip_url={self.zip_url} source_type={self.source_type!r}>"
 
 
 class Addon:
@@ -109,17 +113,18 @@ class Plugin(Addon):
         self.enabled = kw.get("enabled", True)
 
     @classmethod
-    def from_repo_match(cls, match: re.Match) -> Plugin:
+    def from_repo(
+        cls, addon: str, user: str, repo: str, reflike: str = None, githost: Host = "github"
+    ) -> Plugin:
         """Create a Plugin from a repository regex match."""
-        name = match.group("addon")
-        source = AddonSource.from_repo(
-            match.group("user"), match.group("repo"), match.group("reflike"), match.group("githost")
-        )
-        return cls(name, source)
+        source = AddonSource.from_repo(user, repo, reflike, githost)
+        return cls(addon, source)
 
     @classmethod
-    def from_zip_match(cls, match: re.Match) -> Plugin:
+    def from_zip(cls, addon: str, url: str) -> Plugin:
         """Create a Plugin from a zip regex match."""
-        name = match.group("addon")
-        source = AddonSource.from_zip(match.group("url"))
-        return cls(name, source)
+        source = AddonSource.from_zip(url)
+        return cls(addon, source)
+
+    def __repr__(self) -> str:
+        return f"<Plugin {self.name!r} {self.source!r}>"
