@@ -5,14 +5,14 @@ from textwrap import dedent
 
 import pytest
 
-from modmail.utils.addons.converters import REPO_REGEX, ZIP_REGEX, AddonConverter
+from modmail.utils.addons.converters import REPO_REGEX, ZIP_REGEX, AddonConverter, PluginWithSourceConverter
 
 
-@pytest.mark.skip
+@pytest.mark.asyncio
 @pytest.mark.xfail(reason="Not implemented")
-def test_converter() -> None:
+async def test_converter() -> None:
     """Convert a user input into a Source."""
-    addon = AddonConverter().convert(None, "github")  # noqa: F841
+    addon = await AddonConverter().convert(None, "github")  # noqa: F841
 
 
 # fmt: off
@@ -54,6 +54,7 @@ def test_converter() -> None:
     ],
 )
 # fmt: on
+@pytest.mark.dependency(name="repo_regex")
 def test_repo_regex(entry, user, repo, addon, reflike, githost) -> None:
     """Test the repo regex to ensure that it matches what it should."""
     match = REPO_REGEX.fullmatch(entry)
@@ -115,6 +116,7 @@ def test_repo_regex(entry, user, repo, addon, reflike, githost) -> None:
     ]
 )
 # fmt: on
+@pytest.mark.dependency(name="zip_regex")
 def test_zip_regex(entry, url, domain, path, addon) -> None:
     """Test the repo regex to ensure that it matches what it should."""
     match = ZIP_REGEX.fullmatch(entry)
@@ -123,3 +125,32 @@ def test_zip_regex(entry, url, domain, path, addon) -> None:
     assert match.group("domain") == domain
     assert match.group("path") == path
     assert match.group("addon") == addon
+
+
+@pytest.mark.parametrize(
+    "arg",
+    [
+        "github.com/onerandomusername/modmail-addons/archive/main.zip earth",
+        "onerandomusername/addons planet",
+        "github onerandomusername/addons planet @master",
+        "gitlab onerandomusername/repo planet @v1.0.2",
+        "github onerandomusername/repo planet @master",
+        "gitlab onerandomusername/repo planet @main",
+        "https://github.com/onerandomusername/repo planet",
+        "https://gitlab.com/onerandomusername/repo planet",
+        "https://github.com/psf/black black @21.70b",
+        "https://github.com/onerandomusername/modmail-addons/archive/main.zip planet",
+        "https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth",
+        "https://example.com/bleeeep.zip myanmar",
+        "http://github.com/discord-modmail/addons/archive/bast.zip thebot",
+        "rtfd.io/plugs.zip documentation",
+        "pages.dev/hiy.zip black",
+        pytest.param("the world exists.", marks=pytest.mark.xfail)
+
+    ]
+)
+@pytest.mark.dependency(depends_on=["repo_regex", "zip_regex"])
+@pytest.mark.asyncio
+async def test_plugin_with_source_converter(arg: str) -> None:
+    """Test the Plugin converter works, and successfully converts a plugin with its source."""
+    await PluginWithSourceConverter().convert(None, arg)  # noqa: F841

@@ -7,9 +7,9 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from modmail.extensions.extension_manager import ExtensionConverter, ExtensionManager
-from modmail.utils.addons.models import Addon
+from modmail.utils.addons.converters import PluginWithSourceConverter
+from modmail.utils.addons.models import Plugin
 from modmail.utils.addons.plugins import BASE_PATH, PLUGINS, walk_plugins
-from modmail.utils.addons.sources import AddonWithSourceConverter
 from modmail.utils.cogs import BotModes, ExtMetadata
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ EXT_METADATA = ExtMetadata(load_if_mode=BotModes.PRODUCTION)
 logger: ModmailLogger = logging.getLogger(__name__)
 
 
-class PluginConverter(ExtensionConverter):
+class PluginPathConverter(ExtensionConverter):
     """
     Fully qualify the name of a plugin and ensure it exists.
 
@@ -58,7 +58,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await ctx.send_help(ctx.command)
 
     @plugins_group.command(name="load", aliases=("l",))
-    async def load_plugin(self, ctx: Context, *plugins: PluginConverter) -> None:
+    async def load_plugin(self, ctx: Context, *plugins: PluginPathConverter) -> None:
         """
         Load plugins given their fully qualified or unqualified names.
 
@@ -67,7 +67,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await self.load_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="unload", aliases=("ul",))
-    async def unload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
+    async def unload_plugins(self, ctx: Context, *plugins: PluginPathConverter) -> None:
         """
         Unload currently loaded plugins given their fully qualified or unqualified names.
 
@@ -76,7 +76,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await self.unload_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="reload", aliases=("r", "rl"))
-    async def reload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
+    async def reload_plugins(self, ctx: Context, *plugins: PluginPathConverter) -> None:
         """
         Reload plugins given their fully qualified or unqualified names.
 
@@ -101,12 +101,17 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """Refreshes the list of plugins from disk, but do not unload any currently active."""
         await self.resync_extensions.callback(self, ctx)
 
+    @plugins_group.command("convert")
+    async def plugin_convert_test(self, ctx: Context, *, plugin: PluginWithSourceConverter) -> None:
+        """Convert a plugin and given its source information."""
+        await ctx.send(f"```py\n{plugin.__repr__()}```")
+
     @plugins_group.command(name="install", aliases=("",))
-    async def install_plugins(self, ctx: Context, *, plugin: AddonWithSourceConverter) -> None:
+    async def install_plugins(self, ctx: Context, *, plugin: PluginWithSourceConverter) -> None:
         """Install plugins from provided repo."""
         # TODO: ensure path is a valid link and whatnot
         # TODO: also to support providing normal github and gitlab links and convert to zip
-        plugin: Addon = plugin
+        plugin: Plugin = plugin
         logger.debug(f"Received command to download plugin {plugin.name} from {plugin.source.url}")
         async with self.bot.http_session.get(plugin.source.url) as resp:
             if resp.status != 200:

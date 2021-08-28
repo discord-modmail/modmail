@@ -38,7 +38,7 @@ class Gitlab(GitHost):
     zip_archive_api_url = f"{repo_api_url}/repository/archive.zip"
 
 
-Host = Literal["Github", "Gitlab"]
+Host = Literal["github", "gitlab"]
 
 
 class AddonSource:
@@ -86,7 +86,7 @@ class AddonSource:
         source = cls(match.group("url"), SourceTypeEnum.ZIP)
         return source
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         return f"<AddonSource zip_url={self.zip_url} source_type={self.source_type!r}>"
 
 
@@ -114,7 +114,7 @@ class Plugin(Addon):
 
     @classmethod
     def from_repo(
-        cls, addon: str, user: str, repo: str, reflike: str = None, githost: Host = "github"
+        cls, addon: str, user: str, repo: str, reflike: str = None, githost: Optional[Host] = "github"
     ) -> Plugin:
         """Create a Plugin from a repository regex match."""
         source = AddonSource.from_repo(user, repo, reflike, githost)
@@ -126,5 +126,5 @@ class Plugin(Addon):
         source = AddonSource.from_zip(url)
         return cls(addon, source)
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         return f"<Plugin {self.name!r} {self.source!r}>"

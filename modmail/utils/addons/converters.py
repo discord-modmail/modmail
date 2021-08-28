@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from typing import TYPE_CHECKING, Type
 
@@ -9,6 +10,8 @@ from modmail.utils.addons.models import Addon, Plugin
 
 if TYPE_CHECKING:
     from discord.ext.commands import Context
+
+    from modmail.log import ModmailLogger
 
 ZIP_REGEX: re.Pattern = re.compile(
     r"^(?:https?:\/\/)?(?P<url>(?P<domain>.*\..+?)\/(?P<path>.*\.zip)) (?P<addon>[^@\s]+)$"
@@ -22,6 +25,7 @@ REPO_REGEX: re.Pattern = re.compile(
     r"(?P<addon>[^@\s]+)(?: \@(?P<reflike>[\w\.\s]*))?$"
 )
 
+logger: ModmailLogger = logging.getLogger(__name__)
 
 AddonClass = Type[Addon]
 
@@ -29,22 +33,28 @@ AddonClass = Type[Addon]
 class AddonConverter(commands.Converter):
     """A converter that takes an addon source, and gets a Addon object from it."""
 
-    async def convert(self, ctx: Context, argument: str, cls: AddonClass) -> Addon:
-        """Convert a string in to an Addon."""
-        match = ZIP_REGEX.fullmatch(argument)
-        if match is not None:
-            # we've matched, so its a zip
-            ...
-
-        match = REPO_REGEX.fullmatch(argument)
-        if match is None:
-            raise commands.BadArgument(f"{argument} is not a valid source.")
-        return ...
+    async def convert(self, ctx: Context, argument: str) -> None:
+        """Convert an argument into an Addon."""
+        raise NotImplementedError("Inheriting classes must overwrite this method.")
 
 
 class PluginWithSourceConverter(AddonConverter):
     """A plugin converter that takes a source, addon name, and returns a Plugin."""
 
-    async def convert(self, ctx: Context, argument: str) -> Plugin:
+    async def convert(self, _: Context, argument: str) -> Plugin:
         """Convert a provided plugin and source to a Plugin."""
-        super().convert(ctx, argument, cls=Plugin)
+        match = ZIP_REGEX.fullmatch(argument)
+        if match is not None:
+            logger.debug("Matched as a zip, creating a Plugin from zip.")
+            return Plugin.from_zip(match.group("addon"), match.group("url"))
+
+        match = REPO_REGEX.fullmatch(argument)
+        if match is None:
+            raise commands.BadArgument(f"{argument} is not a valid source and plugin.")
+        return Plugin.from_repo(
+            match.group("addon"),
+            match.group("user"),
+            match.group("repo"),
+            match.group("reflike"),
+            match.group("githost") or "github",
+        )

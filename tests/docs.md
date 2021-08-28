@@ -1,72 +1,3 @@
-# tests.test_bot
-
-Test modmail basics.
-
-- import module
-- create a bot object
-
-##
-### test_bot_creation
-Ensure we can make a ModmailBot instance.
-
-**Markers:**
-- asyncio
-- dependency  (name=create_bot)
-### test_bot_close
-Ensure bot closes without error.
-
-**Markers:**
-- asyncio
-- dependency  (depends=['create_bot'])
-### test_bot_main
-Import modmail.__main__.
-
-**Markers:**
-- dependency  (depends=['create_bot'])
-# tests.test_logs
-##
-### test_create_logging
-Modmail logging is importable and sets root logger correctly.
-
-**Markers:**
-- dependency  (name=create_logger)
-### test_notice_level
-Test notice logging level prints a notice response.
-
-**Markers:**
-- dependency  (depends=['create_logger'])
-### test_trace_level
-Test trace logging level prints a trace response.
-
-**Markers:**
-- skip
-- dependency  (depends=['create_logger'])
-# tests.modmail.utils.test_embeds
-##
-### test_patch_embed
-Ensure that the function changes init only after the patch is called.
-
-**Markers:**
-- dependency  (name=patch_embed)
-### test_create_embed
-Test creating an embed with patched parameters works properly.
-
-**Markers:**
-- dependency  (depends_on=patch_embed)
-### test_create_embed_with_extra_params
-Test creating an embed with extra parameters errors properly.
-
-**Markers:**
-- dependency  (depends_on=patch_embed)
-### test_create_embed_with_description_and_content
-
-    Create an embed while providing both description and content parameters.
-
-    Providing both is ambiguous and should error.
-
-
-**Markers:**
-- dependency  (depends_on=patch_embed)
 # tests.modmail.utils.addons.test_converters
 ##
 ### test_converter
@@ -74,77 +5,204 @@ Convert a user input into a Source.
 
 **Markers:**
 - xfail  (reason=Not implemented)
-- skip
+- asyncio
 ### test_repo_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=repo_regex)
 - parametrize (entry, user, repo, addon, reflike, githost[('onerandomusername/addons planet', 'onerandomusername', 'addons', 'planet', None, None), ('github onerandomusername/addons planet @master', 'onerandomusername', 'addons', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @v1.0.2', 'onerandomusername', 'repo', 'planet', 'v1.0.2', 'gitlab'), ('github onerandomusername/repo planet @master', 'onerandomusername', 'repo', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @main', 'onerandomusername', 'repo', 'planet', 'main', 'gitlab'), ('https://github.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'github'), ('https://gitlab.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'gitlab'), ('https://github.com/psf/black black @21.70b', 'psf', 'black', 'black', '21.70b', 'github')])
 ### test_repo_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=repo_regex)
 - parametrize (entry, user, repo, addon, reflike, githost[('onerandomusername/addons planet', 'onerandomusername', 'addons', 'planet', None, None), ('github onerandomusername/addons planet @master', 'onerandomusername', 'addons', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @v1.0.2', 'onerandomusername', 'repo', 'planet', 'v1.0.2', 'gitlab'), ('github onerandomusername/repo planet @master', 'onerandomusername', 'repo', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @main', 'onerandomusername', 'repo', 'planet', 'main', 'gitlab'), ('https://github.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'github'), ('https://gitlab.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'gitlab'), ('https://github.com/psf/black black @21.70b', 'psf', 'black', 'black', '21.70b', 'github')])
 ### test_repo_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=repo_regex)
 - parametrize (entry, user, repo, addon, reflike, githost[('onerandomusername/addons planet', 'onerandomusername', 'addons', 'planet', None, None), ('github onerandomusername/addons planet @master', 'onerandomusername', 'addons', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @v1.0.2', 'onerandomusername', 'repo', 'planet', 'v1.0.2', 'gitlab'), ('github onerandomusername/repo planet @master', 'onerandomusername', 'repo', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @main', 'onerandomusername', 'repo', 'planet', 'main', 'gitlab'), ('https://github.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'github'), ('https://gitlab.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'gitlab'), ('https://github.com/psf/black black @21.70b', 'psf', 'black', 'black', '21.70b', 'github')])
 ### test_repo_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=repo_regex)
 - parametrize (entry, user, repo, addon, reflike, githost[('onerandomusername/addons planet', 'onerandomusername', 'addons', 'planet', None, None), ('github onerandomusername/addons planet @master', 'onerandomusername', 'addons', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @v1.0.2', 'onerandomusername', 'repo', 'planet', 'v1.0.2', 'gitlab'), ('github onerandomusername/repo planet @master', 'onerandomusername', 'repo', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @main', 'onerandomusername', 'repo', 'planet', 'main', 'gitlab'), ('https://github.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'github'), ('https://gitlab.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'gitlab'), ('https://github.com/psf/black black @21.70b', 'psf', 'black', 'black', '21.70b', 'github')])
 ### test_repo_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=repo_regex)
 - parametrize (entry, user, repo, addon, reflike, githost[('onerandomusername/addons planet', 'onerandomusername', 'addons', 'planet', None, None), ('github onerandomusername/addons planet @master', 'onerandomusername', 'addons', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @v1.0.2', 'onerandomusername', 'repo', 'planet', 'v1.0.2', 'gitlab'), ('github onerandomusername/repo planet @master', 'onerandomusername', 'repo', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @main', 'onerandomusername', 'repo', 'planet', 'main', 'gitlab'), ('https://github.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'github'), ('https://gitlab.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'gitlab'), ('https://github.com/psf/black black @21.70b', 'psf', 'black', 'black', '21.70b', 'github')])
 ### test_repo_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=repo_regex)
 - parametrize (entry, user, repo, addon, reflike, githost[('onerandomusername/addons planet', 'onerandomusername', 'addons', 'planet', None, None), ('github onerandomusername/addons planet @master', 'onerandomusername', 'addons', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @v1.0.2', 'onerandomusername', 'repo', 'planet', 'v1.0.2', 'gitlab'), ('github onerandomusername/repo planet @master', 'onerandomusername', 'repo', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @main', 'onerandomusername', 'repo', 'planet', 'main', 'gitlab'), ('https://github.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'github'), ('https://gitlab.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'gitlab'), ('https://github.com/psf/black black @21.70b', 'psf', 'black', 'black', '21.70b', 'github')])
 ### test_repo_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=repo_regex)
 - parametrize (entry, user, repo, addon, reflike, githost[('onerandomusername/addons planet', 'onerandomusername', 'addons', 'planet', None, None), ('github onerandomusername/addons planet @master', 'onerandomusername', 'addons', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @v1.0.2', 'onerandomusername', 'repo', 'planet', 'v1.0.2', 'gitlab'), ('github onerandomusername/repo planet @master', 'onerandomusername', 'repo', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @main', 'onerandomusername', 'repo', 'planet', 'main', 'gitlab'), ('https://github.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'github'), ('https://gitlab.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'gitlab'), ('https://github.com/psf/black black @21.70b', 'psf', 'black', 'black', '21.70b', 'github')])
 ### test_repo_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=repo_regex)
 - parametrize (entry, user, repo, addon, reflike, githost[('onerandomusername/addons planet', 'onerandomusername', 'addons', 'planet', None, None), ('github onerandomusername/addons planet @master', 'onerandomusername', 'addons', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @v1.0.2', 'onerandomusername', 'repo', 'planet', 'v1.0.2', 'gitlab'), ('github onerandomusername/repo planet @master', 'onerandomusername', 'repo', 'planet', 'master', 'github'), ('gitlab onerandomusername/repo planet @main', 'onerandomusername', 'repo', 'planet', 'main', 'gitlab'), ('https://github.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'github'), ('https://gitlab.com/onerandomusername/repo planet', 'onerandomusername', 'repo', 'planet', None, 'gitlab'), ('https://github.com/psf/black black @21.70b', 'psf', 'black', 'black', '21.70b', 'github')])
 ### test_zip_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=zip_regex)
 - parametrize (entry, url, domain, path, addon[('https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'github.com/onerandomusername/modmail-addons/archive/main.zip', 'github.com', 'onerandomusername/modmail-addons/archive/main.zip', 'planet'), ('https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'gitlab.com', 'onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'earth'), ('https://example.com/bleeeep.zip myanmar', 'example.com/bleeeep.zip', 'example.com', 'bleeeep.zip', 'myanmar'), ('http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'github.com/discord-modmail/addons/archive/bast.zip', 'github.com', 'discord-modmail/addons/archive/bast.zip', 'thebot'), ('rtfd.io/plugs.zip documentation', 'rtfd.io/plugs.zip', 'rtfd.io', 'plugs.zip', 'documentation'), ('pages.dev/hiy.zip black', 'pages.dev/hiy.zip', 'pages.dev', 'hiy.zip', 'black')])
 ### test_zip_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=zip_regex)
 - parametrize (entry, url, domain, path, addon[('https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'github.com/onerandomusername/modmail-addons/archive/main.zip', 'github.com', 'onerandomusername/modmail-addons/archive/main.zip', 'planet'), ('https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'gitlab.com', 'onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'earth'), ('https://example.com/bleeeep.zip myanmar', 'example.com/bleeeep.zip', 'example.com', 'bleeeep.zip', 'myanmar'), ('http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'github.com/discord-modmail/addons/archive/bast.zip', 'github.com', 'discord-modmail/addons/archive/bast.zip', 'thebot'), ('rtfd.io/plugs.zip documentation', 'rtfd.io/plugs.zip', 'rtfd.io', 'plugs.zip', 'documentation'), ('pages.dev/hiy.zip black', 'pages.dev/hiy.zip', 'pages.dev', 'hiy.zip', 'black')])
 ### test_zip_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=zip_regex)
 - parametrize (entry, url, domain, path, addon[('https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'github.com/onerandomusername/modmail-addons/archive/main.zip', 'github.com', 'onerandomusername/modmail-addons/archive/main.zip', 'planet'), ('https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'gitlab.com', 'onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'earth'), ('https://example.com/bleeeep.zip myanmar', 'example.com/bleeeep.zip', 'example.com', 'bleeeep.zip', 'myanmar'), ('http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'github.com/discord-modmail/addons/archive/bast.zip', 'github.com', 'discord-modmail/addons/archive/bast.zip', 'thebot'), ('rtfd.io/plugs.zip documentation', 'rtfd.io/plugs.zip', 'rtfd.io', 'plugs.zip', 'documentation'), ('pages.dev/hiy.zip black', 'pages.dev/hiy.zip', 'pages.dev', 'hiy.zip', 'black')])
 ### test_zip_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=zip_regex)
 - parametrize (entry, url, domain, path, addon[('https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'github.com/onerandomusername/modmail-addons/archive/main.zip', 'github.com', 'onerandomusername/modmail-addons/archive/main.zip', 'planet'), ('https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'gitlab.com', 'onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'earth'), ('https://example.com/bleeeep.zip myanmar', 'example.com/bleeeep.zip', 'example.com', 'bleeeep.zip', 'myanmar'), ('http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'github.com/discord-modmail/addons/archive/bast.zip', 'github.com', 'discord-modmail/addons/archive/bast.zip', 'thebot'), ('rtfd.io/plugs.zip documentation', 'rtfd.io/plugs.zip', 'rtfd.io', 'plugs.zip', 'documentation'), ('pages.dev/hiy.zip black', 'pages.dev/hiy.zip', 'pages.dev', 'hiy.zip', 'black')])
 ### test_zip_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=zip_regex)
 - parametrize (entry, url, domain, path, addon[('https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'github.com/onerandomusername/modmail-addons/archive/main.zip', 'github.com', 'onerandomusername/modmail-addons/archive/main.zip', 'planet'), ('https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'gitlab.com', 'onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'earth'), ('https://example.com/bleeeep.zip myanmar', 'example.com/bleeeep.zip', 'example.com', 'bleeeep.zip', 'myanmar'), ('http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'github.com/discord-modmail/addons/archive/bast.zip', 'github.com', 'discord-modmail/addons/archive/bast.zip', 'thebot'), ('rtfd.io/plugs.zip documentation', 'rtfd.io/plugs.zip', 'rtfd.io', 'plugs.zip', 'documentation'), ('pages.dev/hiy.zip black', 'pages.dev/hiy.zip', 'pages.dev', 'hiy.zip', 'black')])
 ### test_zip_regex
 Test the repo regex to ensure that it matches what it should.
 
 **Markers:**
+- dependency  (name=zip_regex)
 - parametrize (entry, url, domain, path, addon[('https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'github.com/onerandomusername/modmail-addons/archive/main.zip', 'github.com', 'onerandomusername/modmail-addons/archive/main.zip', 'planet'), ('https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'gitlab.com', 'onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'earth'), ('https://example.com/bleeeep.zip myanmar', 'example.com/bleeeep.zip', 'example.com', 'bleeeep.zip', 'myanmar'), ('http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'github.com/discord-modmail/addons/archive/bast.zip', 'github.com', 'discord-modmail/addons/archive/bast.zip', 'thebot'), ('rtfd.io/plugs.zip documentation', 'rtfd.io/plugs.zip', 'rtfd.io', 'plugs.zip', 'documentation'), ('pages.dev/hiy.zip black', 'pages.dev/hiy.zip', 'pages.dev', 'hiy.zip', 'black')])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+### test_plugin_with_source_converter
+Test the Plugin converter works, and successfully converts a plugin with its source.
+
+**Markers:**
+- asyncio
+- dependency  (depends_on=['repo_regex', 'zip_regex'])
+- parametrize (arg['github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'onerandomusername/addons planet', 'github onerandomusername/addons planet @master', 'gitlab onerandomusername/repo planet @v1.0.2', 'github onerandomusername/repo planet @master', 'gitlab onerandomusername/repo planet @main', 'https://github.com/onerandomusername/repo planet', 'https://gitlab.com/onerandomusername/repo planet', 'https://github.com/psf/black black @21.70b', 'https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'https://example.com/bleeeep.zip myanmar', 'http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'rtfd.io/plugs.zip documentation', 'pages.dev/hiy.zip black', ParameterSet(values=('the world exists.',), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
+- xfail
 # tests.modmail.utils.addons.test_models
 ##
 ### test_addon_model
