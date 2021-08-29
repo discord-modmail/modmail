@@ -54,11 +54,23 @@ class AddonSource:
         user: Optional[str]
         reflike: Optional[str]
         githost: Optional[Host]
-        githost_api = Optional[GitHost]
+        githost_api: Optional[GitHost]
+
+        domain: Optional[str]
+        path: Optional[str]
 
     def __init__(self, zip_url: str, type: SourceTypeEnum) -> AddonSource:
         """Initialize the AddonSource."""
         self.zip_url = zip_url
+        if self.zip_url is not None:
+            match = re.match(r"^(?:https?:\/\/)?(?P<url>(?P<domain>.*\..+?)\/(?P<path>.*))$", self.zip_url)
+            self.zip_url = match.group("url")
+            self.domain = match.group("domain")
+            self.path = match.group("path")
+        else:
+            self.domain = None
+            self.path = None
+
         self.source_type = type
 
     @classmethod
@@ -83,7 +95,7 @@ class AddonSource:
     @classmethod
     def from_zip(cls, url: str) -> AddonSource:
         """Create an AddonSource from a zip file."""
-        match = re.match(r"^(?:https?:\/\/)?(?P<url>(?P<domain>.*\..+?)\/(?P<path>.*\.zip))", url)
+        match = re.match(r"^(?P<url>(?:https?:\/\/)?(?P<domain>.*\..+?)\/(?P<path>.*\.zip))$", url)
         source = cls(match.group("url"), SourceTypeEnum.ZIP)
         return source
 
