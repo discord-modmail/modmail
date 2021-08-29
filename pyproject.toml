@@ -16,6 +16,7 @@ packages = [{ include = "modmail" }]
 python = "^3.8"
 aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 arrow = "^1.1.1"
+atoml = "^1.0.3"
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py.git", rev = "master" }
