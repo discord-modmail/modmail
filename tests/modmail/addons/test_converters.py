@@ -7,7 +7,11 @@ import pytest
 
 # fmt: off
 from modmail.addons.converters import (
-    REPO_REGEX, ZIP_REGEX, AddonConverter, PluginWithSourceConverter, SourceTypeEnum,
+    REPO_REGEX,
+    ZIP_REGEX,
+    AddonConverter,
+    PluginWithSourceConverter,
+    SourceTypeEnum,
 )
 
 # fmt: on
