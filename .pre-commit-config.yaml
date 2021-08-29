@@ -5,17 +5,20 @@ repos:
     rev: v4.0.1
     hooks:
       - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: check-case-conflict
       - id: check-json
       - id: check-toml
+      - id: check-xml
       - id: check-yaml
         exclude: 'mkdocs.yml' # Exclude all mkdocs.yml as they use tags i.e. `!!!`
       - id: pretty-format-json
-        args: ['--indent=4','--autofix']
+        args: [--indent=4, --autofix]
       - id: end-of-file-fixer
       - id: no-commit-to-branch
         args: [--branch=main, --branch=master]
       - id: mixed-line-ending
-        args: [ --fix=lf ]
+        args: [--fix=lf]
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
 
