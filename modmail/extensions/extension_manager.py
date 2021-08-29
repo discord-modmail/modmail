@@ -188,13 +188,8 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         # TODO: since we currently don't have a paginator.
         await ctx.send("".join(lines) or f"There are no {self.type}s installed.")
 
-    @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
-    async def resync_extensions(self, ctx: Context) -> None:
-        """
-        Refreshes the list of extensions from disk, but do not unload any currently active.
-
-        Typical use case is in the event that the existing extensions have changed while the bot is running.
-        """
+    def _resync_extensions(self) -> None:
+        """Resyncs extensions. Useful for when the files are dynamically updated."""
         log.debug(f"Refreshing list of {self.type}s.")
 
         # make sure the new walk contains all currently loaded extensions, so they can be unloaded
@@ -209,6 +204,15 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         self.all_extensions.update(loaded_extensions)
         # now we can re-walk the extensions
         self.all_extensions.update(self.refresh_method())
+
+    @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
+    async def resync_extensions(self, ctx: Context) -> None:
+        """
+        Refreshes the list of extensions from disk, but do not unload any currently active.
+
+        Typical use case is in the event that the existing extensions have changed while the bot is running.
+        """
+        self._resync_extensions()
         await ctx.send(f":ok_hand: Refreshed list of {self.type}s.")
 
     def group_extension_statuses(self) -> t.Mapping[str, str]:
