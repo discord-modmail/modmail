@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional, Union
+
+if TYPE_CHECKING:
+    import pathlib
+    import zipfile
 
 
 class SourceTypeEnum(Enum):
@@ -58,6 +62,9 @@ class AddonSource:
 
         domain: Optional[str]
         path: Optional[str]
+
+        addon_directory: Optional[str]
+        cache_file: Optional[Union[zipfile.Path, pathlib.Path]]
 
     def __init__(self, zip_url: str, type: SourceTypeEnum) -> AddonSource:
         """Initialize the AddonSource."""
