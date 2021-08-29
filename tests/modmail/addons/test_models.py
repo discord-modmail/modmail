@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from modmail.utils.addons.models import Addon, AddonSource, Plugin, SourceTypeEnum
+from modmail.addons.models import Addon, AddonSource, Plugin, SourceTypeEnum
 
 
 def test_addon_model():

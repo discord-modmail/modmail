@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Type
 
 from discord.ext import commands
 
-from modmail.utils.addons.models import Addon, AddonSource, Plugin, SourceTypeEnum
+from modmail.addons.models import Addon, AddonSource, Plugin, SourceTypeEnum
 
 if TYPE_CHECKING:
     from discord.ext.commands import Context

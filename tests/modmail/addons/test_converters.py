@@ -6,7 +6,7 @@ from textwrap import dedent
 import pytest
 
 # fmt: off
-from modmail.utils.addons.converters import (
+from modmail.addons.converters import (
     REPO_REGEX, ZIP_REGEX, AddonConverter, PluginWithSourceConverter, SourceTypeEnum,
 )
 

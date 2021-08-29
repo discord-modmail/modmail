@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING
 from discord.ext import commands
 from discord.ext.commands import Context
 
+from modmail.addons.converters import PluginWithSourceConverter
+from modmail.addons.models import Plugin, SourceTypeEnum
+from modmail.addons.plugins import BASE_PATH, PLUGINS, walk_plugins
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
-from modmail.utils.addons.converters import PluginWithSourceConverter
-from modmail.utils.addons.models import Plugin, SourceTypeEnum
-from modmail.utils.addons.plugins import BASE_PATH, PLUGINS, walk_plugins
 from modmail.utils.cogs import BotModes, ExtMetadata
 
 if TYPE_CHECKING:

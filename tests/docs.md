@@ -1,4 +1,4 @@
-# tests.test_bot
+# tests.modmail.test_bot
 
 Test modmail basics.
 
@@ -23,7 +23,7 @@ Import modmail.__main__.
 
 **Markers:**
 - dependency  (depends=['create_bot'])
-# tests.test_logs
+# tests.modmail.test_logs
 ##
 ### test_create_logging
 Modmail logging is importable and sets root logger correctly.
@@ -41,33 +41,7 @@ Test trace logging level prints a trace response.
 **Markers:**
 - skip
 - dependency  (depends=['create_logger'])
-# tests.modmail.utils.test_embeds
-##
-### test_patch_embed
-Ensure that the function changes init only after the patch is called.
-
-**Markers:**
-- dependency  (name=patch_embed)
-### test_create_embed
-Test creating an embed with patched parameters works properly.
-
-**Markers:**
-- dependency  (depends_on=patch_embed)
-### test_create_embed_with_extra_params
-Test creating an embed with extra parameters errors properly.
-
-**Markers:**
-- dependency  (depends_on=patch_embed)
-### test_create_embed_with_description_and_content
-
-    Create an embed while providing both description and content parameters.
-
-    Providing both is ambiguous and should error.
-
-
-**Markers:**
-- dependency  (depends_on=patch_embed)
-# tests.modmail.utils.addons.test_converters
+# tests.modmail.addons.test_converters
 ##
 ### test_converter
 Convert a user input into a Source.
@@ -279,7 +253,7 @@ Test the Plugin converter works, and successfully converts a plugin with its sou
 - dependency  (depends_on=['repo_regex', 'zip_regex'])
 - parametrize (entry, name, source_type[('onerandomusername/addons planet', 'planet', <SourceTypeEnum.REPO: 1>), ('github onerandomusername/addons planet @master', 'planet', <SourceTypeEnum.REPO: 1>), ('gitlab onerandomusername/repo planet @v1.0.2', 'planet', <SourceTypeEnum.REPO: 1>), ('github onerandomusername/repo planet @master', 'planet', <SourceTypeEnum.REPO: 1>), ('gitlab onerandomusername/repo planet @main', 'planet', <SourceTypeEnum.REPO: 1>), ('https://github.com/onerandomusername/repo planet', 'planet', <SourceTypeEnum.REPO: 1>), ('https://gitlab.com/onerandomusername/repo planet', 'planet', <SourceTypeEnum.REPO: 1>), ('https://github.com/psf/black black @21.70b', 'black', <SourceTypeEnum.REPO: 1>), ('github.com/onerandomusername/modmail-addons/archive/main.zip earth', 'earth', <SourceTypeEnum.ZIP: 0>), ('https://github.com/onerandomusername/modmail-addons/archive/main.zip planet', 'planet', <SourceTypeEnum.ZIP: 0>), ('https://gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip earth', 'earth', <SourceTypeEnum.ZIP: 0>), ('https://example.com/bleeeep.zip myanmar', 'myanmar', <SourceTypeEnum.ZIP: 0>), ('http://github.com/discord-modmail/addons/archive/bast.zip thebot', 'thebot', <SourceTypeEnum.ZIP: 0>), ('rtfd.io/plugs.zip documentation', 'documentation', <SourceTypeEnum.ZIP: 0>), ('pages.dev/hiy.zip black', 'black', <SourceTypeEnum.ZIP: 0>), ('@local earth', 'earth', <SourceTypeEnum.LOCAL: 2>), ParameterSet(values=('the world exists.', None, None), marks=(MarkDecorator(mark=Mark(name='xfail', args=(), kwargs={})),), id=None)])
 - xfail
-# tests.modmail.utils.addons.test_models
+# tests.modmail.addons.test_models
 ##
 ### test_addon_model
 All addons will be of a specific type, so we should not be able to create a generic addon.
@@ -450,3 +424,29 @@ Test that a plugin can be created from a zip url.
 
 **Markers:**
 - parametrize (url, addon[('github.com/onerandomusername/modmail-addons/archive/main.zip', 'planet'), ('gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip', 'earth'), ('example.com/bleeeep.zip', 'myanmar'), ('github.com/discord-modmail/addons/archive/bast.zip', 'thebot'), ('rtfd.io/plugs.zip', 'documentation'), ('pages.dev/hiy.zip', 'black')])
+# tests.modmail.utils.test_embeds
+##
+### test_patch_embed
+Ensure that the function changes init only after the patch is called.
+
+**Markers:**
+- dependency  (name=patch_embed)
+### test_create_embed
+Test creating an embed with patched parameters works properly.
+
+**Markers:**
+- dependency  (depends_on=patch_embed)
+### test_create_embed_with_extra_params
+Test creating an embed with extra parameters errors properly.
+
+**Markers:**
+- dependency  (depends_on=patch_embed)
+### test_create_embed_with_description_and_content
+
+    Create an embed while providing both description and content parameters.
+
+    Providing both is ambiguous and should error.
+
+
+**Markers:**
+- dependency  (depends_on=patch_embed)
