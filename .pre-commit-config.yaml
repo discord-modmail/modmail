@@ -16,6 +16,8 @@ repos:
         args: [--indent=4, --autofix]
       - id: end-of-file-fixer
       - id: no-commit-to-branch
+        name: protect-branch
+        alias: protect-branch
         args: [--branch=main, --branch=master]
       - id: mixed-line-ending
         args: [--fix=lf]
