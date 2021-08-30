@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 # NOTE: the characters are similar to what is printed, but not exact.
 JUMP_FIRST_LABEL = " \u276e\u276e "  # <<
 BACK_LABEL = "  \u276e  "  # <
-FORWARD_LABEL = "  \u276f  "  # >>
+FORWARD_LABEL = "  \u276f  "  # >
 JUMP_LAST_LABEL = " \u276f\u276f "  # >>
 STOP_PAGINATE_EMOJI = "\u274c"  # [:x:] This is an emoji, which is treated differently from the above
 
@@ -149,7 +149,11 @@ class ButtonPaginator(ui.View, DpyPaginator):
         only_users: Optional[List[Union[discord.Object, discord.abc.User]]] = None,
         only_roles: Optional[List[Union[discord.Object, discord.abc.Role]]] = None,
     ) -> None:
-        """Create a paginator, and paginate the provided lines."""
+        """
+        Create a paginator, and paginate the provided lines.
+
+        One of source message or channel is required.
+        """
         paginator = cls(
             contents,
             source_message=source_message,
@@ -172,7 +176,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         paginator.modify_states()
         paginator._embed.description = paginator.pages[paginator._index]
         paginator._embed.set_footer(text=paginator.get_footer())
-        # if there's only one page, don't send hte view
+        # if there's only one page, don't send the view
         if len(paginator.pages) < 2:
             await channel.send(embeds=[paginator._embed])
             return
