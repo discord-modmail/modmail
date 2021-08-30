@@ -3,6 +3,8 @@ Paginator.
 
 Originally adapated from: https://github.com/khk4912/EZPaginator/tree/84b5213741a78de266677b805c6f694ad94fedd6
 """
+from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
@@ -28,7 +30,7 @@ FORWARD_LABEL = "  \u276f  "  # >>
 JUMP_LAST_LABEL = " \u276f\u276f "  # >>
 STOP_PAGINATE_EMOJI = "\u274c"  # [:x:] This is an emoji, which is treated differently from the above
 
-logger: "ModmailLogger" = logging.getLogger(__name__)
+logger: ModmailLogger = logging.getLogger(__name__)
 
 
 class ButtonPaginator(ui.View, DpyPaginator):
@@ -180,7 +182,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         await paginator.wait()
         await msg.edit(view=None)
 
-    async def interaction_check(self, interaction: "Interaction") -> bool:
+    async def interaction_check(self, interaction: Interaction) -> bool:
         """Check if the interaction is by the author of the paginator."""
         if self.only_users is not None:
             logger.trace(f"All allowed users: {self.only_users}")
@@ -237,7 +239,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
                 if getattr(child, "disabled", None) is not None:
                     child.disabled = components[child.custom_id]
 
-    async def send_page(self, interaction: "Interaction") -> None:
+    async def send_page(self, interaction: Interaction) -> None:
         """Send new page to discord, after updating the view to have properly disabled buttons."""
         self.modify_states()
 
@@ -245,31 +247,31 @@ class ButtonPaginator(ui.View, DpyPaginator):
         await interaction.message.edit(embed=self._embed, view=self)
 
     @ui.button(label=JUMP_FIRST_LABEL, custom_id="pag_jump_first", style=ButtonStyle.primary)
-    async def go_first(self, button: "Button", interaction: "Interaction") -> None:
+    async def go_first(self, _: Button, interaction: Interaction) -> None:
         """Move the paginator to the first page."""
         self._index = 0
         await self.send_page(interaction)
 
     @ui.button(label=BACK_LABEL, custom_id="pag_back", style=ButtonStyle.primary)
-    async def go_previous(self, button: "Button", interaction: "Interaction") -> None:
+    async def go_previous(self, _: Button, interaction: Interaction) -> None:
         """Move the paginator to the previous page."""
         self._index -= 1
         await self.send_page(interaction)
 
     @ui.button(label=FORWARD_LABEL, custom_id="pag_next", style=ButtonStyle.primary)
-    async def go_next(self, button: "Button", interaction: "Interaction") -> None:
+    async def go_next(self, _: Button, interaction: Interaction) -> None:
         """Move the paginator to the next page."""
         self._index += 1
         await self.send_page(interaction)
 
     @ui.button(label=JUMP_LAST_LABEL, custom_id="pag_jump_last", style=ButtonStyle.primary)
-    async def go_last(self, button: "Button", interaction: "Interaction") -> None:
+    async def go_last(self, _: Button, interaction: Interaction) -> None:
         """Move the paginator to the last page."""
         self._index = len(self._pages) - 1
         await self.send_page(interaction)
 
     @ui.button(emoji=STOP_PAGINATE_EMOJI, custom_id="pag_stop_paginate", style=ButtonStyle.grey)
-    async def _stop(self, button: "Button", interaction: "Interaction") -> None:
+    async def _stop(self, _: Button, interaction: Interaction) -> None:
         """Stop the paginator early."""
         await interaction.response.defer()
-        super().stop()
+        self.stop()
