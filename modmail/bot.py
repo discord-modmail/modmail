@@ -2,6 +2,7 @@ import asyncio
 import logging
 import signal
 import typing as t
+from typing import Any
 
 import arrow
 import discord
@@ -115,7 +116,7 @@ class ModmailBot(commands.Bot):
         except NotImplementedError:
             pass
 
-        def stop_loop_on_completion(f) -> None:  # noqa: ANN001
+        def stop_loop_on_completion(f: Any) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(self.start(*args, **kwargs), loop=loop)
