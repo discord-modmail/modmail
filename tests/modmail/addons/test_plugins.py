@@ -30,10 +30,11 @@ def test_parse_plugin_toml_from_string(
     toml: str, name: str, folder: str, description: str, min_bot_version: str
 ) -> None:
     """Make sure that a plugin toml file is correctly parsed."""
-    plugs = parse_plugin_toml_from_string(VALID_PLUGIN_TOML)
+    plugs = parse_plugin_toml_from_string(toml)
     plug = plugs[0]
     print(plug.__repr__())
     assert isinstance(plug, Plugin)
     assert plug.name == name
     assert plug.folder == folder
     assert plug.description == description
+    assert plug.min_bot_version == min_bot_version

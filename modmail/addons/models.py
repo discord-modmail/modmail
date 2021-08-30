@@ -113,9 +113,10 @@ class AddonSource:
 class Addon:
     """Base class of an addon which make the bot extendable."""
 
-    name: str
-    description: Optional[str]
-    min_version: str
+    if TYPE_CHECKING:
+        name: str
+        description: Optional[str]
+        min_bot_version: str
 
     def __init__(self):
         raise NotImplementedError("Inheriting classes need to implement their own init")
@@ -131,7 +132,7 @@ class Plugin(Addon):
         self.name = name
         self.description = kw.get("description", None)
         self.folder = kw.get("folder", None)
-        self.min_version = kw.get("min_version", None)
+        self.min_bot_version = kw.get("min_bot_version", None)
         self.enabled = kw.get("enabled", True)
 
     def __repr__(self) -> str:  # pragma: no cover
