@@ -67,3 +67,10 @@ Test creating an embed with extra parameters errors properly.
 
 **Markers:**
 - dependency  (depends_on=patch_embed)
+# tests.modmail.utils.test_pagination
+##
+### test_paginator_init
+Test that we can safely create a paginator.
+
+**Markers:**
+- asyncio
