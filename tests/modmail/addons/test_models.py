@@ -67,59 +67,12 @@ def test_addonsource_from_zip(url):
     assert src.source_type == SourceTypeEnum.ZIP
 
 
-@pytest.fixture(name="source_fixture")
-def addonsource_fixture():
-    """Addonsource fixture for tests. The contents of this source do not matter, as long as they are valid."""
-    return AddonSource("github.com/bast0006.zip", SourceTypeEnum.ZIP)
-
-
 class TestPlugin:
     """Test the Plugin class creation."""
 
     @pytest.mark.parametrize("name", [("earth"), ("mona-lisa")])
-    def test_plugin_init(self, name, source_fixture):
+    def test_plugin_init(self, name):
         """Create a plugin model, and ensure it has the right properties."""
-        plugin = Plugin(name, source_fixture)
+        plugin = Plugin(name)
         assert isinstance(plugin, Plugin)
         assert plugin.name == name
-
-    @pytest.mark.parametrize(
-        "user, repo, name, reflike, githost",
-        [
-            ("onerandomusername", "addons", "planet", None, "github"),
-            ("onerandomusername", "addons", "planet", "master", "github"),
-            ("onerandomusername", "repo", "planet", "v1.0.2", "gitlab"),
-            ("onerandomusername", "repo", "planet", "master", "github"),
-            ("onerandomusername", "repo", "planet", "main", "gitlab"),
-            ("onerandomusername", "repo", "planet", None, "github"),
-            ("onerandomusername", "repo", "planet", None, "gitlab"),
-            ("psf", "black", "black", "21.70b", "github"),
-        ],
-    )
-    def test_plugin_from_repo_match(self, user, repo, name, reflike, githost):
-        """Test that a plugin can be created from a repo."""
-        plug = Plugin.from_repo(name, user, repo, reflike, githost)
-        assert plug.name == name
-        assert plug.source.user == user
-        assert plug.source.repo == repo
-        assert plug.source.reflike == reflike
-        assert plug.source.githost == githost
-        assert plug.source.source_type == SourceTypeEnum.REPO
-
-    @pytest.mark.parametrize(
-        "url, addon",
-        [
-            ("github.com/onerandomusername/modmail-addons/archive/main.zip", "planet"),
-            ("gitlab.com/onerandomusername/modmail-addons/-/archive/main/modmail-addons-main.zip", "earth"),
-            ("example.com/bleeeep.zip", "myanmar"),
-            ("github.com/discord-modmail/addons/archive/bast.zip", "thebot"),
-            ("rtfd.io/plugs.zip", "documentation"),
-            ("pages.dev/hiy.zip", "black"),
-        ],
-    )
-    def test_plugin_from_zip(self, url, addon):
-        """Test that a plugin can be created from a zip url."""
-        plug = Plugin.from_zip(addon, url)
-        assert plug.name == addon
-        assert plug.source.zip_url == url
-        assert plug.source.source_type == SourceTypeEnum.ZIP

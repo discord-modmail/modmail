@@ -5,16 +5,13 @@ from textwrap import dedent
 
 import pytest
 
-# fmt: off
 from modmail.addons.converters import (
     REPO_REGEX,
     ZIP_REGEX,
     AddonConverter,
-    PluginWithSourceConverter,
+    SourceAndPluginConverter,
     SourceTypeEnum,
 )
-
-# fmt: on
 
 
 @pytest.mark.asyncio
@@ -212,6 +209,6 @@ def test_zip_regex(entry, url, domain, path, addon) -> None:
 @pytest.mark.asyncio
 async def test_plugin_with_source_converter(entry: str, name: str, source_type: SourceTypeEnum) -> None:
     """Test the Plugin converter works, and successfully converts a plugin with its source."""
-    plugin = await PluginWithSourceConverter().convert(None, entry)
+    plugin, source = await SourceAndPluginConverter().convert(None, entry)
     assert plugin.name == name
-    assert plugin.source.source_type == source_type
+    assert source.source_type == source_type

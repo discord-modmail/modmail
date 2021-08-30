@@ -115,7 +115,6 @@ class Addon:
 
     name: str
     description: Optional[str]
-    source: AddonSource
     min_version: str
 
     def __init__(self):
@@ -125,26 +124,15 @@ class Addon:
 class Plugin(Addon):
     """An addon which is a plugin."""
 
-    def __init__(self, name: str, source: AddonSource, **kw) -> Plugin:
+    if TYPE_CHECKING:
+        folder: Union[str, pathlib.Path, zipfile.Path]
+
+    def __init__(self, name: str, **kw) -> Plugin:
         self.name = name
-        self.source = source
         self.description = kw.get("description", None)
+        self.folder = kw.get("folder", None)
         self.min_version = kw.get("min_version", None)
         self.enabled = kw.get("enabled", True)
 
-    @classmethod
-    def from_repo(
-        cls, addon: str, user: str, repo: str, reflike: str = None, githost: Optional[Host] = "github"
-    ) -> Plugin:
-        """Create a Plugin from a repository regex match."""
-        source = AddonSource.from_repo(user, repo, reflike, githost)
-        return cls(addon, source)
-
-    @classmethod
-    def from_zip(cls, addon: str, url: str) -> Plugin:
-        """Create a Plugin from a zip regex match."""
-        source = AddonSource.from_zip(url)
-        return cls(addon, source)
-
     def __repr__(self) -> str:  # pragma: no cover
-        return f"<Plugin {self.name!r} {self.source!r}>"
+        return f"<Plugin {self.name!r} description={self.description!r} folder={self.folder!r}>"

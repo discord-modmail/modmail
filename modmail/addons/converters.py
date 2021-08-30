@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Tuple, Type
 
 from discord.ext import commands
 
@@ -39,26 +39,26 @@ class AddonConverter(commands.Converter):
         raise NotImplementedError("Inheriting classes must overwrite this method.")
 
 
-class PluginWithSourceConverter(AddonConverter):
+class SourceAndPluginConverter(AddonConverter):
     """A plugin converter that takes a source, addon name, and returns a Plugin."""
 
-    async def convert(self, _: Context, argument: str) -> Plugin:
+    async def convert(self, _: Context, argument: str) -> Tuple[Plugin, AddonSource]:
         """Convert a provided plugin and source to a Plugin."""
         match = LOCAL_REGEX.match(argument)
         if match is not None:
             logger.debug("Matched as a local file, creating a Plugin without a source url.")
             source = AddonSource(None, SourceTypeEnum.LOCAL)
-            return Plugin(name=match.group("addon"), source=source)
+            return Plugin(name=match.group("addon")), source
         match = ZIP_REGEX.fullmatch(argument)
         if match is not None:
             logger.debug("Matched as a zip, creating a Plugin from zip.")
-            return Plugin.from_zip(match.group("addon"), match.group("url"))
+            source = AddonSource.from_zip(match.group("url"))
+            return Plugin(match.group("addon")), source
 
         match = REPO_REGEX.fullmatch(argument)
         if match is None:
             raise commands.BadArgument(f"{argument} is not a valid source and plugin.")
-        return Plugin.from_repo(
-            match.group("addon"),
+        return Plugin(match.group("addon")), AddonSource.from_repo(
             match.group("user"),
             match.group("repo"),
             match.group("reflike"),

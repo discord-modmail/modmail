@@ -10,8 +10,8 @@ from discord.ext.commands import Context
 
 import modmail.addons.utils as addon_utils
 from modmail import errors
-from modmail.addons.converters import PluginWithSourceConverter
-from modmail.addons.models import Plugin, SourceTypeEnum
+from modmail.addons.converters import SourceAndPluginConverter
+from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
 from modmail.addons.plugins import BASE_PATH, PLUGINS, find_plugins_in_zip, walk_plugins
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
 from modmail.utils.cogs import BotModes, ExtMetadata
@@ -106,23 +106,25 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await self.resync_extensions.callback(self, ctx)
 
     @plugins_group.command("convert", hidden=True)
-    async def plugin_convert_test(self, ctx: Context, *, plugin: PluginWithSourceConverter) -> None:
+    async def plugin_convert_test(self, ctx: Context, *, plugin: SourceAndPluginConverter) -> None:
         """Convert a plugin and given its source information."""
         await ctx.send(f"```py\n{plugin.__repr__()}```")
 
     @plugins_group.command(name="install", aliases=("",))
-    async def install_plugins(self, ctx: Context, *, plugin: PluginWithSourceConverter) -> None:
+    async def install_plugins(self, ctx: Context, *, source_and_plugin: SourceAndPluginConverter) -> None:
         """Install plugins from provided repo."""
-        plugin: Plugin = plugin
-        if plugin.source.source_type is SourceTypeEnum.LOCAL:
+        plugin: Plugin
+        source: AddonSource
+        plugin, source = source_and_plugin
+        if source.source_type is SourceTypeEnum.LOCAL:
             # TODO: check the path of a local plugin
             await ctx.send("This plugin is a local plugin, and likely can be loaded with the load command.")
             return
-        logger.debug(f"Received command to download plugin {plugin.name} from {plugin.source.zip_url}")
+        logger.debug(f"Received command to download plugin {plugin.name} from {source.zip_url}")
         try:
-            file = await addon_utils.download_zip_from_source(plugin.source, self.bot.http_session)
-        except errors.HTTPException:
-            await ctx.send(f"Downloading {plugin.source.zip_url} did not give a 200 response code.")
+            file = await addon_utils.download_zip_from_source(source, self.bot.http_session)
+        except errors.HTTPError:
+            await ctx.send(f"Downloading {source.zip_url} did not give a 200 response code.")
             return
         else:
             file = zipfile.ZipFile(file.filename)
@@ -143,7 +145,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await asyncio.sleep(0)
 
         # extract the drive
-        file.extractall(BASE_PATH / plugin.source.addon_directory, all_plugin_files)
+        file.extractall(BASE_PATH / source.addon_directory, all_plugin_files)
 
         # TODO: rewrite this as it only needs to (and should) scan the new directory
         self._resync_extensions()
