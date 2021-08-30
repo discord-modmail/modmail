@@ -6,20 +6,23 @@ Helper utililites for managing plugins.
 
 TODO: Expand file to download plugins from github and gitlab from a list that is passed.
 """
-
+from __future__ import annotations
 
 import glob
 import importlib
 import importlib.util
 import inspect
 import logging
+import pathlib
 import typing as t
 import zipfile
-from pathlib import Path
-from zipfile import ZipFile
+from typing import List
+
+import atoml
 
 from modmail import plugins
 from modmail.addons.errors import NoPluginDirectoryError
+from modmail.addons.models import Plugin
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata
 from modmail.utils.extensions import BOT_MODE, unqualify
@@ -27,19 +30,35 @@ from modmail.utils.extensions import BOT_MODE, unqualify
 logger: ModmailLogger = logging.getLogger(__name__)
 
 VALID_ZIP_PLUGIN_DIRECTORIES = ["plugins", "Plugins"]
-BASE_PATH = Path(plugins.__file__).parent.resolve()
+BASE_PATH = pathlib.Path(plugins.__file__).parent.resolve()
 PLUGIN_MODULE = "modmail.plugins"
 PLUGINS: t.Dict[str, t.Tuple[bool, bool]] = dict()
 
 
-def find_plugins_in_zip(zip_path: t.Union[str, Path]) -> t.Tuple[t.List[str], t.List[str]]:
+def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /) -> List[Plugin]:
+    """Parses a plugin toml, given the string loaded in."""
+    doc = atoml.parse(unparsed_plugin_toml_str)
+    found_plugins: List[Plugin] = []
+    for plug_entry in doc["plugins"]:
+        found_plugins.append(
+            Plugin(
+                plug_entry["name"],
+                folder=plug_entry["folder"],
+                description=plug_entry["description"],
+                min_bot_version=plug_entry["min_bot_version"],
+            )
+        )
+    return found_plugins
+
+
+def find_plugins_in_zip(zip_path: t.Union[str, pathlib.Path]) -> t.Tuple[t.List[str], t.List[str]]:
     """
     Find the plugins that are in a zip file.
 
     All plugins in a zip folder will be located at either `Plugins/` or `plugins/`
     """
     archive_plugin_directory = None
-    file = ZipFile(zip_path)
+    file = zipfile.ZipFile(zip_path)
     for dir in VALID_ZIP_PLUGIN_DIRECTORIES:
         dir = dir + "/"
         if dir in file.namelist():
@@ -79,13 +98,13 @@ def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
     #   support following symlinks, see: https://bugs.python.org/issue33428
     for path in glob.iglob(f"{BASE_PATH}/**/*.py", recursive=True):
 
-        logger.trace("Path: {0}".format(path))
+        logger.trace(f"Path: {path}")
 
         # calculate the module name, dervived from the relative path
-        relative_path = Path(path).relative_to(BASE_PATH)
+        relative_path = pathlib.Path(path).relative_to(BASE_PATH)
         name = relative_path.__str__().rstrip(".py").replace("/", ".")
         name = PLUGIN_MODULE + "." + name
-        logger.trace("Module name: {0}".format(name))
+        logger.trace(f"Module name: {name}")
 
         if unqualify(name.split(".")[-1]).startswith("_"):
             # Ignore module/package names starting with an underscore.
@@ -103,14 +122,14 @@ def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
             spec.loader.exec_module(imported)
         except Exception:
             logger.error(
-                "Failed to import {0}. As a result, this plugin is not considered installed.".format(name),
+                f"Failed to import {name}. As a result, this plugin is not considered installed.",
                 exc_info=True,
             )
             continue
 
         if not inspect.isfunction(getattr(imported, "setup", None)):
             # If it lacks a setup function, it's not a plugin. This is enforced by dpy.
-            logger.trace("{0} does not have a setup function. Skipping.".format(name))
+            logger.trace(f"{name} does not have a setup function. Skipping.")
             continue
 
         ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)

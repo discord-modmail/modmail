@@ -354,6 +354,13 @@ Create a plugin model, and ensure it has the right properties.
 
 **Markers:**
 - parametrize (name['earth', 'mona-lisa'])
+# tests.modmail.addons.test_plugins
+##
+### test_parse_plugin_toml_from_string
+Make sure that a plugin toml file is correctly parsed.
+
+**Markers:**
+- parametrize (toml, name, folder, description, min_bot_version[('\n[[plugins]]\nname = "Planet"\nfolder = "planet"\ndescription = "Planet. Tells you which planet you are probably on."\nmin_bot_version = "v0.2.0"\n', 'Planet', 'planet', 'Planet. Tells you which planet you are probably on.', 'v0.2.0')])
 # tests.modmail.utils.test_embeds
 ##
 ### test_patch_embed
