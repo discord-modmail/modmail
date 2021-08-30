@@ -1,10 +1,11 @@
 import logging
+from typing import Any
 
 
 class ModmailLogger(logging.Logger):
     """Custom logging class implementation."""
 
-    def trace(self, msg, *args, **kwargs) -> None:  # noqa: ANN001
+    def trace(self, msg: Any, *args, **kwargs) -> None:
         """
         Log 'msg % args' with severity 'TRACE'.
 
@@ -15,7 +16,7 @@ class ModmailLogger(logging.Logger):
         """
         self.log(logging.TRACE, msg, *args, **kwargs)
 
-    def notice(self, msg, *args, **kwargs) -> None:  # noqa: ANN001
+    def notice(self, msg: Any, *args, **kwargs) -> None:
         """
         Log 'msg % args' with severity 'NOTICE'.
 

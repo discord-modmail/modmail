@@ -18,12 +18,10 @@ aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 arrow = "^1.1.1"
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
-"discord.py" = { git = "https://github.com/Rapptz/discord.py.git", rev = "master" }
+"discord.py" = { url = "https://github.com/Rapptz/discord.py/archive/master.zip" }
 pydantic = { version = "^1.8.2", extras = ["dotenv"] }
 toml = "^0.10.2"
-# HACK: Poetry uses requests to install git dependencies, which are not explicitly installed when `--no-dev`
-# is set in docker, and hence is needed to successfully install discord.py from git
-requests = ">=2.7.9"
+
 
 [tool.poetry.extras]
 
@@ -53,6 +51,7 @@ pytest-asyncio = "^0.15.1"
 pytest-cov = "^2.12.1"
 pytest-dependency = "^0.5.1"
 pytest-docs = "^0.1.0"
+pytest-sugar = "^0.9.4"
 pytest-xdist = { version = "^2.3.0", extras = ["psutil"] }
 # Documentation
 mkdocs = ">=1.1.2,<2.0.0"
@@ -69,7 +68,7 @@ source_pkgs = ["modmail"]
 omit = ["modmail/plugins/**.*"]
 
 [tool.pytest.ini_options]
-addopts = "--cov -ra"
+addopts = "--cov"
 minversion = "6.0"
 testpaths = ["tests"]
 
@@ -99,7 +98,7 @@ docs = { cmd = "mkdocs serve", help = "Run the docs on a local automatically rel
 flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
 lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
-pytest-docs = { cmd = "pytest --no-cov --docs tests/docs.md", help = "Create docs for tests using pytest-docs." }
+pytest-docs = { cmd = "pytest --no-cov --co -qqq --docs tests/docs.md", help = "Create docs for tests using pytest-docs." }
 report = { cmd = "coverage report", help = "Show coverage report from previously run tests." }
 start = { cmd = "python -m modmail", help = "Run bot" }
 test = { cmd = "pytest -n auto --dist loadfile --cov-report= --cov= --docs tests/docs.md", help = "Runs tests and save results to a coverage report" }
