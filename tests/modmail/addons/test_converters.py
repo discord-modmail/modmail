@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from re import Match
-from textwrap import dedent
+from typing import Optional
 
 import pytest
 
@@ -59,9 +58,11 @@ async def test_converter() -> None:
         )
     ],
 )
-# fmt: on
 @pytest.mark.dependency(name="repo_regex")
-def test_repo_regex(entry, user, repo, addon, reflike, githost) -> None:
+# fmt: on
+def test_repo_regex(
+    entry: str, user: str, repo: str, addon: str, reflike: Optional[str], githost: Optional[str]
+) -> None:
     """Test the repo regex to ensure that it matches what it should."""
     match = REPO_REGEX.fullmatch(entry)
     assert match is not None
@@ -123,7 +124,7 @@ def test_repo_regex(entry, user, repo, addon, reflike, githost) -> None:
 )
 # fmt: on
 @pytest.mark.dependency(name="zip_regex")
-def test_zip_regex(entry, url, domain, path, addon) -> None:
+def test_zip_regex(entry: str, url: str, domain: str, path: str, addon: str) -> None:
     """Test the repo regex to ensure that it matches what it should."""
     match = ZIP_REGEX.fullmatch(entry)
     assert match is not None
@@ -204,9 +205,9 @@ def test_zip_regex(entry, url, domain, path, addon) -> None:
         pytest.param("the world exists.", None, None, marks=pytest.mark.xfail),
     ],
 )
-# fmt: on
 @pytest.mark.dependency(depends_on=["repo_regex", "zip_regex"])
 @pytest.mark.asyncio
+# fmt: on
 async def test_plugin_with_source_converter(entry: str, name: str, source_type: SourceTypeEnum) -> None:
     """Test the Plugin converter works, and successfully converts a plugin with its source."""
     plugin, source = await SourceAndPluginConverter().convert(None, entry)

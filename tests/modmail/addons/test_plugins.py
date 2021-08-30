@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from textwrap import dedent
-from typing import List
-
 import pytest
 
 from modmail.addons.models import Plugin
@@ -31,7 +28,7 @@ min_bot_version = "v0.2.0"
 )
 def test_parse_plugin_toml_from_string(
     toml: str, name: str, folder: str, description: str, min_bot_version: str
-):
+) -> None:
     """Make sure that a plugin toml file is correctly parsed."""
     plugs = parse_plugin_toml_from_string(VALID_PLUGIN_TOML)
     plug = plugs[0]
