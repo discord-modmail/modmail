@@ -9,7 +9,6 @@ repos:
       - id: check-case-conflict
       - id: check-json
       - id: check-toml
-      - id: check-xml
       - id: check-yaml
         exclude: 'mkdocs.yml' # Exclude all mkdocs.yml as they use tags i.e. `!!!`
       - id: pretty-format-json
@@ -28,6 +27,8 @@ repos:
     rev: v1.9.0
     hooks:
       - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
+      - id: python-use-type-annotations
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.9.3
