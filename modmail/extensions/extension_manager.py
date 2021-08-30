@@ -37,7 +37,7 @@ class ExtensionConverter(commands.Converter):
     """
     Fully qualify the name of an extension and ensure it exists.
 
-    The * value bypasses this when used with the an extension manger command.
+    The * value bypasses this when used with an extension manger command.
     """
 
     source_list = EXTENSIONS
@@ -101,11 +101,11 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     @extensions_group.command(name="load", aliases=("l",))
     async def load_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
-        """
+        r"""
         Load extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all unloaded extensions will be loaded.
-        """  # noqa: W605
+        """
         if not extensions:
             await ctx.send_help(ctx.command)
             return
@@ -118,11 +118,11 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     @extensions_group.command(name="unload", aliases=("ul",))
     async def unload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
-        """
+        r"""
         Unload currently loaded extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all loaded extensions will be unloaded.
-        """  # noqa: W605
+        """
         if not extensions:
             await ctx.send_help(ctx.command)
             return
@@ -145,13 +145,13 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     @extensions_group.command(name="reload", aliases=("r", "rl"))
     async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
-        """
+        r"""
         Reload extensions given their fully qualified or unqualified names.
 
         If an extension fails to be reloaded, it will be rolled-back to the prior working state.
 
         If '\*' is given as the name, all currently loaded extensions will be reloaded.
-        """  # noqa: W605
+        """
         if not extensions:
             await ctx.send_help(ctx.command)
             return
