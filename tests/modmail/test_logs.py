@@ -44,7 +44,6 @@ def test_notice_level(log):
 
 
 @pytest.mark.dependency(depends=["create_logger"])
-@pytest.mark.skip()
 def test_trace_level(log):
     """Test trace logging level prints a trace response."""
     trace_test_phrase = "Getting in the weeds"

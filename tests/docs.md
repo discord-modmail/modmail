@@ -39,7 +39,6 @@ Test notice logging level prints a notice response.
 Test trace logging level prints a trace response.
 
 **Markers:**
-- skip
 - dependency  (depends=['create_logger'])
 # tests.modmail.addons.test_converters
 ##
@@ -47,7 +46,6 @@ Test trace logging level prints a trace response.
 Convert a user input into a Source.
 
 **Markers:**
-- xfail  (reason=Not implemented)
 - asyncio
 ### test_repo_regex
 Test the repo regex to ensure that it matches what it should.

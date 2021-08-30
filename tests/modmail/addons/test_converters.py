@@ -15,10 +15,10 @@ from modmail.addons.converters import (
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Not implemented")
 async def test_converter() -> None:
     """Convert a user input into a Source."""
-    addon = await AddonConverter().convert(None, "github")  # noqa: F841
+    with pytest.raises(NotImplementedError):
+        addon = await AddonConverter().convert(None, "github")  # noqa: F841
 
 
 # fmt: off
