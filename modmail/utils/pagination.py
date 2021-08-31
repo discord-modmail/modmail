@@ -75,13 +75,13 @@ class ButtonPaginator(ui.View, DpyPaginator):
             to the author of the source message. To override this, pass an empty list to `only_users`.
 
         """
-        self._index = 0
+        self.index = 0
         self._pages: List[str] = []
         self.prefix = prefix
         self.suffix = suffix
         self.max_size = max_size
         self.linesep = linesep
-        self._embed = embed or Embed()
+        self.embed = embed or Embed()
 
         # ensure that only_users are all users
         if only_users is not None:
@@ -172,14 +172,14 @@ class ButtonPaginator(ui.View, DpyPaginator):
             channel = source_message.channel
 
         paginator.modify_states()
-        paginator._embed.description = paginator.pages[paginator._index]
-        paginator._embed.set_footer(text=paginator.get_footer())
+        paginator.embed.description = paginator.pages[paginator.index]
+        paginator.embed.set_footer(text=paginator.get_footer())
         # if there's only one page, don't send the view
         if len(paginator.pages) < 2:
-            await channel.send(embeds=[paginator._embed])
+            await channel.send(embeds=[paginator.embed])
             return
         else:
-            msg: discord.Message = await channel.send(embeds=[paginator._embed], view=paginator)
+            msg: discord.Message = await channel.send(embeds=[paginator.embed], view=paginator)
 
         await paginator.wait()
         await msg.edit(view=None)
@@ -204,8 +204,8 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
     def get_footer(self) -> str:
         """Returns the footer text."""
-        self._embed.description = self._pages[self._index]
-        page_indicator = f"Page {self._index+1}/{len(self._pages)}"
+        self.embed.description = self._pages[self.index]
+        page_indicator = f"Page {self.index+1}/{len(self._pages)}"
         footer_txt = (
             f"{self.footer_text} ({page_indicator})" if self.footer_text is not None else page_indicator
         )
@@ -227,16 +227,17 @@ class ButtonPaginator(ui.View, DpyPaginator):
             "pag_jump_last": less_than_2_pages,
         }
 
-        if self._index == 0:
+        if self.index == 0:
             components["pag_jump_first"] = True
             components["pag_back"] = True
 
-        if self._index == len(self._pages) - 1:
+        if self.index == len(self._pages) - 1:
             components["pag_next"] = True
             components["pag_jump_last"] = True
 
         for child in self.children:
             if child.custom_id in components.keys():
+                # since its possible disabled is not an attribute, we need to get it with getattr
                 if getattr(child, "disabled", None) is not None:
                     child.disabled = components[child.custom_id]
 
@@ -244,31 +245,31 @@ class ButtonPaginator(ui.View, DpyPaginator):
         """Send new page to discord, after updating the view to have properly disabled buttons."""
         self.modify_states()
 
-        self._embed.set_footer(text=self.get_footer())
-        await interaction.message.edit(embed=self._embed, view=self)
+        self.embed.set_footer(text=self.get_footer())
+        await interaction.message.edit(embed=self.embed, view=self)
 
     @ui.button(label=JUMP_FIRST_LABEL, custom_id="pag_jump_first", style=ButtonStyle.primary)
     async def go_first(self, _: Button, interaction: Interaction) -> None:
         """Move the paginator to the first page."""
-        self._index = 0
+        self.index = 0
         await self.send_page(interaction)
 
     @ui.button(label=BACK_LABEL, custom_id="pag_back", style=ButtonStyle.primary)
     async def go_previous(self, _: Button, interaction: Interaction) -> None:
         """Move the paginator to the previous page."""
-        self._index -= 1
+        self.index -= 1
         await self.send_page(interaction)
 
     @ui.button(label=FORWARD_LABEL, custom_id="pag_next", style=ButtonStyle.primary)
     async def go_next(self, _: Button, interaction: Interaction) -> None:
         """Move the paginator to the next page."""
-        self._index += 1
+        self.index += 1
         await self.send_page(interaction)
 
     @ui.button(label=JUMP_LAST_LABEL, custom_id="pag_jump_last", style=ButtonStyle.primary)
     async def go_last(self, _: Button, interaction: Interaction) -> None:
         """Move the paginator to the last page."""
-        self._index = len(self._pages) - 1
+        self.index = len(self._pages) - 1
         await self.send_page(interaction)
 
     # NOTE: This method cannot be named `stop`, due to inheriting the method named stop from ui.View
