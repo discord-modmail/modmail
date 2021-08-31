@@ -53,7 +53,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
     def __init__(
         self,
-        contents: List[str],
+        contents: Union[List[str], str],
         /,
         source_message: Optional[discord.Message] = None,
         embed: Embed = None,
@@ -82,6 +82,10 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self.max_size = max_size
         self.linesep = linesep
         self.embed = embed or Embed()
+
+        # temporary to support strings as contents. This will be changed when we added wrapping.
+        if isinstance(contents, str):
+            contents = [contents]
 
         # ensure that only_users are all users
         if only_users is not None:
