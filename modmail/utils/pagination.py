@@ -174,7 +174,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
         paginator.modify_states()
         paginator.embed.description = paginator.pages[paginator.index]
-        paginator.embed.set_footer(text=paginator.get_footer())
+        paginator.update_footer()
         # if there's only one page, don't send the view
         if len(paginator.pages) < 2:
             await channel.send(embeds=[paginator.embed])
@@ -207,6 +207,10 @@ class ButtonPaginator(ui.View, DpyPaginator):
             content="You are not authorised to use this paginator.", ephemeral=True
         )
         return False
+
+    def update_footer(self) -> None:
+        """Update the footer with the new footer."""
+        self.embed.set_footer(text=self.get_footer())
 
     def get_footer(self) -> str:
         """Returns the footer text."""
@@ -255,7 +259,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         """Send new page to discord, after updating the view to have properly disabled buttons."""
         self.update_components()
 
-        self.embed.set_footer(text=self.get_footer())
+        self.update_footer()
         await interaction.message.edit(embed=self.embed, view=self)
 
     @ui.button(label=JUMP_FIRST_LABEL, custom_id="pag_jump_first", style=ButtonStyle.primary)
