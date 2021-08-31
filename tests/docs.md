@@ -67,3 +67,28 @@ Test creating an embed with extra parameters errors properly.
 
 **Markers:**
 - dependency  (depends_on=patch_embed)
+# tests.modmail.utils.test_pagination
+##
+### test_paginator_init
+Test that we can safely create a paginator.
+
+**Markers:**
+- asyncio
+### test_paginator_footer
+Test the paginator footer matches what is passed.
+
+**Markers:**
+- parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world'), ('There are no plugins installed.', None)])
+- asyncio
+### test_paginator_footer
+Test the paginator footer matches what is passed.
+
+**Markers:**
+- parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world'), ('There are no plugins installed.', None)])
+- asyncio
+### test_paginator_footer
+Test the paginator footer matches what is passed.
+
+**Markers:**
+- parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world'), ('There are no plugins installed.', None)])
+- asyncio

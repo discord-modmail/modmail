@@ -25,6 +25,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     """Plugin management commands."""
 
     type = "plugin"
+    module_name = "plugins"  # modmail/plugins
 
     def __init__(self, bot: ModmailBot) -> None:
         super().__init__(bot)
