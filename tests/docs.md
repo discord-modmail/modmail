@@ -78,11 +78,17 @@ Test that we can safely create a paginator.
 Test the paginator footer matches what is passed.
 
 **Markers:**
-- parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world')])
+- parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world'), ('There are no plugins installed.', None)])
 - asyncio
 ### test_paginator_footer
 Test the paginator footer matches what is passed.
 
 **Markers:**
-- parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world')])
+- parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world'), ('There are no plugins installed.', None)])
+- asyncio
+### test_paginator_footer
+Test the paginator footer matches what is passed.
+
+**Markers:**
+- parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world'), ('There are no plugins installed.', None)])
 - asyncio
