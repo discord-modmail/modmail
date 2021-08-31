@@ -140,6 +140,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         footer_text: str = None,
         only: Optional[discord.abc.User] = None,
         channel: discord.abc.Messageable = None,
+        show_jump_buttons_min_pages: int = 3,
         prefix: str = "",
         suffix: str = "",
         max_size: int = 4000,
@@ -178,8 +179,13 @@ class ButtonPaginator(ui.View, DpyPaginator):
         if len(paginator.pages) < 2:
             await channel.send(embeds=[paginator.embed])
             return
-        else:
-            msg: discord.Message = await channel.send(embeds=[paginator.embed], view=paginator)
+
+        if len(paginator.pages) < show_jump_buttons_min_pages or 3:
+            for item in paginator.children:
+                if getattr(item, "custom_id", None) in ["pag_jump_first", "pag_jump_last"]:
+                    paginator.remove_item(item)
+
+        msg: discord.Message = await channel.send(embeds=[paginator.embed], view=paginator)
 
         await paginator.wait()
         await msg.edit(view=None)
@@ -211,7 +217,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         )
         return footer_txt
 
-    def modify_states(self) -> None:
+    def update_components(self) -> None:
         """
         Disable specific components depending on paginator page and length.
 
@@ -219,31 +225,35 @@ class ButtonPaginator(ui.View, DpyPaginator):
         If the paginator is on the first page, the jump first/move back buttons will be disabled.
         if the paginator is on the last page, the jump last/move forward buttons will be disabled.
         """
-        less_than_2_pages = len(self._pages) <= 2
+        more_than_two_pages = len(self._pages) > 2
         components = {
-            "pag_jump_first": less_than_2_pages,
-            "pag_back": False,
-            "pag_next": False,
-            "pag_jump_last": less_than_2_pages,
+            "pag_jump_first": more_than_two_pages,
+            "pag_prev": True,
+            "pag_next": True,
+            "pag_jump_last": more_than_two_pages,
         }
 
         if self.index == 0:
-            components["pag_jump_first"] = True
-            components["pag_back"] = True
+            # first page, disable
+            logger.trace("Paginator is on the first page, disabling jump to first and previous buttons.")
+            components["pag_jump_first"] = False
+            components["pag_prev"] = False
 
-        if self.index == len(self._pages) - 1:
-            components["pag_next"] = True
-            components["pag_jump_last"] = True
+        elif self.index == len(self._pages) - 1:
+            logger.trace("Paginator is on the last page, disabling jump to last and next buttons.")
+            components["pag_next"] = False
+            components["pag_jump_last"] = False
 
         for child in self.children:
-            if child.custom_id in components.keys():
-                # since its possible disabled is not an attribute, we need to get it with getattr
+            # since its possible custom_id and disabled are not an attribute
+            # we need to get them with getattr
+            if getattr(child, "custom_id", None) in components.keys():
                 if getattr(child, "disabled", None) is not None:
-                    child.disabled = components[child.custom_id]
+                    child.disabled = not components[child.custom_id]
 
     async def send_page(self, interaction: Interaction) -> None:
         """Send new page to discord, after updating the view to have properly disabled buttons."""
-        self.modify_states()
+        self.update_components()
 
         self.embed.set_footer(text=self.get_footer())
         await interaction.message.edit(embed=self.embed, view=self)
@@ -254,7 +264,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self.index = 0
         await self.send_page(interaction)
 
-    @ui.button(label=BACK_LABEL, custom_id="pag_back", style=ButtonStyle.primary)
+    @ui.button(label=BACK_LABEL, custom_id="pag_prev", style=ButtonStyle.primary)
     async def go_previous(self, _: Button, interaction: Interaction) -> None:
         """Move the paginator to the previous page."""
         self.index -= 1
