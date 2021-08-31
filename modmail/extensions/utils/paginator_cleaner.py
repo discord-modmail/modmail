@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from typing import TYPE_CHECKING
@@ -12,17 +14,17 @@ if TYPE_CHECKING:
     from modmail.bot import ModmailBot
     from modmail.log import ModmailLogger
 
-logger: "ModmailLogger" = logging.getLogger(__name__)
+logger: ModmailLogger = logging.getLogger(__name__)
 
 
 class PaginatorCleaner(ModmailCog):
     """Handles paginators that were still active when the bot shut down."""
 
-    def __init__(self, bot: "ModmailBot"):
+    def __init__(self, bot: ModmailBot):
         self.bot = bot
 
     @ModmailCog.listener()
-    async def on_interaction(self, interaction: "Interaction") -> None:
+    async def on_interaction(self, interaction: Interaction) -> None:
         """
         Remove components from paginator messages if they fail.
 
@@ -51,6 +53,6 @@ class PaginatorCleaner(ModmailCog):
                 await interaction.message.edit(view=None)
 
 
-def setup(bot: "ModmailBot") -> None:
+def setup(bot: ModmailBot) -> None:
     """Add the paginator cleaner to the bot."""
     bot.add_cog(PaginatorCleaner(bot))
