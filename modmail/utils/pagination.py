@@ -122,7 +122,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self.clear()
         for line in contents:
             self.add_line(line)
-
+        self.close_page()
         # create the super so the children attributes are set
         super().__init__()
 

@@ -78,13 +78,11 @@ Test that we can safely create a paginator.
 Test the paginator footer matches what is passed.
 
 **Markers:**
-- asyncio
 - parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world')])
-- xfail (Currently broken.)
+- asyncio
 ### test_paginator_footer
 Test the paginator footer matches what is passed.
 
 **Markers:**
-- asyncio
 - parametrize (content, footer_text[(['5'], 'Snap, crackle, pop'), (['Earthly'], 'world')])
-- xfail (Currently broken.)
+- asyncio

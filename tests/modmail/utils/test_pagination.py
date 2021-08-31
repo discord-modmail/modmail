@@ -13,9 +13,8 @@ async def test_paginator_init():
     assert paginator.pages == content
 
 
-@pytest.mark.xfail("Currently broken.")
-@pytest.mark.parametrize("content, footer_text", [(["5"], "Snap, crackle, pop"), (["Earthly"], "world")])
 @pytest.mark.asyncio
+@pytest.mark.parametrize("content, footer_text", [(["5"], "Snap, crackle, pop"), (["Earthly"], "world")])
 async def test_paginator_footer(content, footer_text):
     """Test the paginator footer matches what is passed."""
     pag = ButtonPaginator(content, footer_text=footer_text)
