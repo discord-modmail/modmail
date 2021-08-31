@@ -183,7 +183,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
             await channel.send(embeds=[paginator.embed])
             return
 
-        if len(paginator.pages) < show_jump_buttons_min_pages or 3:
+        if len(paginator.pages) < (show_jump_buttons_min_pages or 3):
             for item in paginator.children:
                 if getattr(item, "custom_id", None) in ["pag_jump_first", "pag_jump_last"]:
                     paginator.remove_item(item)
