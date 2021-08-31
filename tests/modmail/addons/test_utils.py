@@ -15,7 +15,10 @@ from modmail.addons.utils import download_zip_from_source
 @pytest.mark.asyncio
 async def session() -> ClientSession:
     """Fixture function for a aiohttp.ClientSession."""
-    return ClientSession()
+    sess = ClientSession()
+    yield sess
+
+    await sess.close()
 
 
 @pytest.mark.parametrize(
