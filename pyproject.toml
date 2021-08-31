@@ -68,7 +68,7 @@ source_pkgs = ["modmail"]
 omit = ["modmail/plugins/**.*"]
 
 [tool.pytest.ini_options]
-addopts = "--cov"
+addopts = "--cov= "
 minversion = "6.0"
 testpaths = ["tests"]
 
