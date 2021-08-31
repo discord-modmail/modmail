@@ -86,22 +86,20 @@ class ButtonPaginator(ui.View, DpyPaginator):
         # ensure that only_users are all users
         if only_users is not None:
             if isinstance(only_users, list):
-                for user in only_users:
-                    if not isinstance(user, (discord.Object, discord.abc.User)):
-                        raise InvalidArgumentError(
-                            "only_users must be a list of discord.Object or discord.abc.User objects."
-                        )
+                if not all(isinstance(user, (discord.Object, discord.abc.User)) for user in only_users):
+                    raise InvalidArgumentError(
+                        "only_users must be a list of discord.Object or discord.abc.User objects."
+                    )
         elif source_message is not None:
             logger.debug("Only users not provided, using source message author.")
             only_users = [source_message.author]
 
         if only_roles is not None:
             if isinstance(only_roles, list):
-                for role in only_roles:
-                    if not isinstance(role, (discord.Object, discord.Role)):
-                        raise InvalidArgumentError(
-                            "only_roles must be a list of discord.Object or discord.Role objects."
-                        )
+                if not all(isinstance(role, (discord.Object, discord.Role)) for role in only_roles):
+                    raise InvalidArgumentError(
+                        "only_roles must be a list of discord.Object or discord.Role objects."
+                    )
 
         self.only_users = only_users
         self.only_roles = only_roles
@@ -196,10 +194,9 @@ class ButtonPaginator(ui.View, DpyPaginator):
         if self.only_roles is not None:
             logger.trace(f"All allowed roles: {self.only_roles}")
             user_roles = [role.id for role in interaction.user.roles]
-            for role in self.only_roles:
-                if role.id in user_roles:
-                    logger.debug("User is in allowed roles")
-                    return True
+            if any(role.id in user_roles for role in self.only_roles):
+                logger.debug("User is in allowed roles")
+                return True
         await interaction.response.send_message(
             content="You are not authorised to use this paginator.", ephemeral=True
         )
