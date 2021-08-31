@@ -225,7 +225,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         """
         Disable specific components depending on paginator page and length.
 
-        If the paginatot has less than two pages, the jump buttons will be disabled.
+        If the paginator has less than two pages, the jump buttons will be disabled.
         If the paginator is on the first page, the jump first/move back buttons will be disabled.
         if the paginator is on the last page, the jump last/move forward buttons will be disabled.
         """
