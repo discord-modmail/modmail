@@ -963,6 +963,19 @@ py = "*"
 pytest = ">=3.10"
 
 [[package]]
+name = "pytest-sugar"
+version = "0.9.4"
+description = "pytest-sugar is a plugin for pytest that changes the default look and feel of pytest (e.g. progressbar, show tests that fail instantly)."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+packaging = ">=14.1"
+pytest = ">=2.9"
+termcolor = ">=1.1.0"
+
+[[package]]
 name = "pytest-xdist"
 version = "2.3.0"
 description = "pytest xdist plugin for distributed testing and loop-on-failing modes"
@@ -1095,6 +1108,14 @@ colorama = ">=0.4.4,<0.5.0"
 mslex = ">=0.3.0,<0.4.0"
 psutil = ">=5.7.2,<6.0.0"
 toml = ">=0.10.0,<0.11.0"
+
+[[package]]
+name = "termcolor"
+version = "1.1.0"
+description = "ANSII Color formatting for output in terminal."
+category = "dev"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "testfixtures"
@@ -1882,6 +1903,9 @@ pytest-forked = [
     {file = "pytest-forked-1.3.0.tar.gz", hash = "sha256:6aa9ac7e00ad1a539c41bec6d21011332de671e938c7637378ec9710204e37ca"},
     {file = "pytest_forked-1.3.0-py2.py3-none-any.whl", hash = "sha256:dc4147784048e70ef5d437951728825a131b81714b398d5d52f17c7c144d8815"},
 ]
+pytest-sugar = [
+    {file = "pytest-sugar-0.9.4.tar.gz", hash = "sha256:b1b2186b0a72aada6859bea2a5764145e3aaa2c1cfbb23c3a19b5f7b697563d3"},
+]
 pytest-xdist = [
     {file = "pytest-xdist-2.3.0.tar.gz", hash = "sha256:e8ecde2f85d88fbcadb7d28cb33da0fa29bca5cf7d5967fa89fc0e97e5299ea5"},
     {file = "pytest_xdist-2.3.0-py3-none-any.whl", hash = "sha256:ed3d7da961070fce2a01818b51f6888327fb88df4379edeb6b9d990e789d9c8d"},
@@ -1995,6 +2019,9 @@ stevedore = [
 taskipy = [
     {file = "taskipy-1.8.1-py3-none-any.whl", hash = "sha256:2b98f499966e40175d1f1306a64587f49dfa41b90d0d86c8f28b067cc58d0a56"},
     {file = "taskipy-1.8.1.tar.gz", hash = "sha256:7a2404125817e45d80e13fa663cae35da6e8ba590230094e815633653e25f98f"},
+]
+termcolor = [
+    {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},
 ]
 testfixtures = [
     {file = "testfixtures-6.18.1-py2.py3-none-any.whl", hash = "sha256:486be7b01eb71326029811878a3317b7e7994324621c0ec633c8e24499d8d5b3"},
