@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 # Labels
-# NOTE: the characters are similar to what is printed, but not exact.
+# NOTE: the characters are similar to what is printed, but not exact. This is to limit encoding issues.
 JUMP_FIRST_LABEL = " \u276e\u276e "  # <<
 BACK_LABEL = "  \u276e  "  # <
 FORWARD_LABEL = "  \u276f  "  # >

@@ -49,7 +49,7 @@ class PaginatorManager(ModmailCog):
             await asyncio.sleep(2)
             if not interaction.response.is_done():
                 await interaction.response.send_message(content="This paginator has expired.", ephemeral=True)
-                await asyncio.sleep(0.1)  # sleep for 1 second so it isn't immediately removed
+                await asyncio.sleep(0.1)  # sleep for just a moment so we don't jar the user
                 await interaction.message.edit(view=None)
 
 
