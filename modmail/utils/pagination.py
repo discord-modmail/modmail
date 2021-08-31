@@ -172,9 +172,8 @@ class ButtonPaginator(ui.View, DpyPaginator):
         elif channel is None:
             channel = source_message.channel
 
-        paginator.modify_states()
+        paginator.update_states()
         paginator.embed.description = paginator.pages[paginator.index]
-        paginator.update_footer()
         # if there's only one page, don't send the view
         if len(paginator.pages) < 2:
             await channel.send(embeds=[paginator.embed])
@@ -208,10 +207,6 @@ class ButtonPaginator(ui.View, DpyPaginator):
         )
         return False
 
-    def update_footer(self) -> None:
-        """Update the footer with the new footer."""
-        self.embed.set_footer(text=self.get_footer())
-
     def get_footer(self) -> str:
         """Returns the footer text."""
         self.embed.description = self._pages[self.index]
@@ -221,7 +216,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         )
         return footer_txt
 
-    def update_components(self) -> None:
+    def update_states(self) -> None:
         """
         Disable specific components depending on paginator page and length.
 
@@ -229,6 +224,10 @@ class ButtonPaginator(ui.View, DpyPaginator):
         If the paginator is on the first page, the jump first/move back buttons will be disabled.
         if the paginator is on the last page, the jump last/move forward buttons will be disabled.
         """
+        # update the footer
+        self.embed.set_footer(text=self.get_footer())
+
+        # determine if the jump buttons should be enabled
         more_than_two_pages = len(self._pages) > 2
         components = {
             "pag_jump_first": more_than_two_pages,
@@ -238,12 +237,13 @@ class ButtonPaginator(ui.View, DpyPaginator):
         }
 
         if self.index == 0:
-            # first page, disable
+            # on the first page, disable buttons that would go to this page.
             logger.trace("Paginator is on the first page, disabling jump to first and previous buttons.")
             components["pag_jump_first"] = False
             components["pag_prev"] = False
 
         elif self.index == len(self._pages) - 1:
+            # on the last page, disable buttons that would go to this page.
             logger.trace("Paginator is on the last page, disabling jump to last and next buttons.")
             components["pag_next"] = False
             components["pag_jump_last"] = False
@@ -257,9 +257,8 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
     async def send_page(self, interaction: Interaction) -> None:
         """Send new page to discord, after updating the view to have properly disabled buttons."""
-        self.update_components()
+        self.update_states()
 
-        self.update_footer()
         await interaction.message.edit(embed=self.embed, view=self)
 
     @ui.button(label=JUMP_FIRST_LABEL, custom_id="pag_jump_first", style=ButtonStyle.primary)
