@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 logger: ModmailLogger = logging.getLogger(__name__)
 
 
-class PaginatorCleaner(ModmailCog):
+class PaginatorManager(ModmailCog):
     """Handles paginators that were still active when the bot shut down."""
 
     def __init__(self, bot: ModmailBot):
@@ -55,4 +55,4 @@ class PaginatorCleaner(ModmailCog):
 
 def setup(bot: ModmailBot) -> None:
     """Add the paginator cleaner to the bot."""
-    bot.add_cog(PaginatorCleaner(bot))
+    bot.add_cog(PaginatorManager(bot))
