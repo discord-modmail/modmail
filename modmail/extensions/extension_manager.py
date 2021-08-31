@@ -189,7 +189,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         log.debug(f"{ctx.author} requested a list of all {self.type}s. " "Returning a paginated list.")
 
         await ButtonPaginator.paginate(
-            lines or [f"There are no {self.type}s installed."], ctx.message, embed=embed
+            lines or f"There are no {self.type}s installed.", ctx.message, embed=embed
         )
 
     @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
