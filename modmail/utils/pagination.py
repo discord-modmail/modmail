@@ -274,6 +274,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self._index = len(self._pages) - 1
         await self.send_page(interaction)
 
+    # NOTE: This method cannot be named `stop`, due to inheriting the method named stop from ui.View
     @ui.button(emoji=STOP_PAGINATE_EMOJI, custom_id="pag_stop_paginate", style=ButtonStyle.grey)
     async def _stop(self, _: Button, interaction: Interaction) -> None:
         """Stop the paginator early."""
