@@ -2,6 +2,7 @@ from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
 
+
 __all__ = ["PluginCog", ModmailBot, ModmailLogger, BotModes, ExtMetadata]
 
 

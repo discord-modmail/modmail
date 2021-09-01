@@ -15,6 +15,7 @@ from discord.ext.commands import Paginator as DpyPaginator
 
 from modmail.utils.errors import InvalidArgumentError, MissingAttributeError
 
+
 if TYPE_CHECKING:
     from discord import Interaction
     from discord.ui import Button
