@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, NoReturn, Optional, Union
 
 if TYPE_CHECKING:
     import pathlib
@@ -66,7 +66,7 @@ class AddonSource:
         addon_directory: Optional[str]
         cache_file: Optional[Union[zipfile.Path, pathlib.Path]]
 
-    def __init__(self, zip_url: str, type: SourceTypeEnum) -> AddonSource:
+    def __init__(self, zip_url: str, type: SourceTypeEnum):
         """Initialize the AddonSource."""
         self.zip_url = zip_url
         if self.zip_url is not None:
@@ -118,7 +118,7 @@ class Addon:
         description: Optional[str]
         min_bot_version: str
 
-    def __init__(self):
+    def __init__(self) -> NoReturn:
         raise NotImplementedError("Inheriting classes need to implement their own init")
 
 
@@ -128,7 +128,7 @@ class Plugin(Addon):
     if TYPE_CHECKING:
         folder: Union[str, pathlib.Path, zipfile.Path]
 
-    def __init__(self, name: str, **kw) -> Plugin:
+    def __init__(self, name: str, **kw):
         self.name = name
         self.description = kw.get("description", None)
         self.folder = kw.get("folder", None)

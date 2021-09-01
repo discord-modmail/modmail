@@ -29,10 +29,11 @@ from modmail.utils.extensions import BOT_MODE, unqualify
 
 logger: ModmailLogger = logging.getLogger(__name__)
 
-VALID_ZIP_PLUGIN_DIRECTORIES = ["plugins", "Plugins"]
+
 BASE_PATH = pathlib.Path(plugins.__file__).parent.resolve()
 PLUGIN_MODULE = "modmail.plugins"
 PLUGINS: t.Dict[str, t.Tuple[bool, bool]] = dict()
+VALID_ZIP_PLUGIN_DIRECTORIES = ["plugins", "Plugins"]
 
 
 def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /) -> List[Plugin]:

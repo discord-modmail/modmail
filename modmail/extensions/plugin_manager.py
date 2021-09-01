@@ -43,7 +43,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     type = "plugin"
     module_name = "plugins"  # modmail/plugins
 
-    def __init__(self, bot: ModmailBot) -> None:
+    def __init__(self, bot: ModmailBot):
         super().__init__(bot)
         self.all_extensions = PLUGINS
         self.refresh_method = walk_plugins
