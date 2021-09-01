@@ -8,8 +8,8 @@ import typing
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+import atoml
 import discord
-import toml
 from discord.ext.commands import BadArgument
 from pydantic import BaseModel
 from pydantic import BaseSettings as PydanticBaseSettings
@@ -54,7 +54,9 @@ def toml_default_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]
     Here we happen to choose to use the `env_file_encoding` from Config
     when reading `config-default.toml`
     """
-    return dict(**toml.load(DEFAULT_CONFIG_PATH))
+    with open(DEFAULT_CONFIG_PATH) as f:
+
+        return atoml.loads(f.read()).value
 
 
 def toml_user_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]:
@@ -66,7 +68,8 @@ def toml_user_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]:
     when reading `config-default.toml`
     """
     if USER_CONFIG_PATH:
-        return dict(**toml.load(USER_CONFIG_PATH))
+        with open(USER_CONFIG_PATH) as f:
+            return atoml.loads(f.read()).value
     else:
         return dict()
 
