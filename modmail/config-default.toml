@@ -2,6 +2,8 @@
 prefix = "?"
 sqlalchemy_database_uri = "postgresql+asyncpg://jasonthedestroyer:ihavemnesia33@localhost/modmail"
 
+[colors]
+
 [dev]
 log_level = 25  # "NOTICE"
 

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- Interaction Paginator that uses discord buttons (#50)
 - docker-compose.yml (#13)
     - Running the bot after configuring the env vars is now as simple as `docker-compose up`
 - Automatic docker image creation: `ghcr.io/discord-modmail/modmail` (#19)

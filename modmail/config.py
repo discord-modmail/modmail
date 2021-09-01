@@ -106,6 +106,16 @@ class BotMode(BaseSettings):
     develop: bool = False
 
 
+class Colors(BaseSettings):
+    """
+    Default colors.
+
+    These should only be changed here to change the default colors.
+    """
+
+    embed_color: ColorBase = "0087BD"
+
+
 class DevConfig(BaseSettings):
     """
     Developer specific configuration.
@@ -119,6 +129,7 @@ class DevConfig(BaseSettings):
 class ModmailConfig(BaseSettings):
     bot: BotConfig
     dev: DevConfig
+    colors: Colors
 
 
 CONFIG = ModmailConfig()

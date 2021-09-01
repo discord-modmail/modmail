@@ -15,6 +15,7 @@ from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
+from modmail.utils.pagination import ButtonPaginator
 
 log: ModmailLogger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class ExtensionConverter(commands.Converter):
     """
     Fully qualify the name of an extension and ensure it exists.
 
-    The * value bypasses this when used with the an extension manger command.
+    The * value bypasses this when used with an extension manger command.
     """
 
     source_list = EXTENSIONS
@@ -84,6 +85,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
     """
 
     type = "extension"
+    module_name = "extensions"  # modmail/extensions
 
     def __init__(self, bot: ModmailBot):
         self.bot = bot
@@ -101,11 +103,11 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     @extensions_group.command(name="load", aliases=("l",))
     async def load_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
-        """
+        r"""
         Load extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all unloaded extensions will be loaded.
-        """  # noqa: W605
+        """
         if not extensions:
             await ctx.send_help(ctx.command)
             return
@@ -118,11 +120,11 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     @extensions_group.command(name="unload", aliases=("ul",))
     async def unload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
-        """
+        r"""
         Unload currently loaded extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all loaded extensions will be unloaded.
-        """  # noqa: W605
+        """
         if not extensions:
             await ctx.send_help(ctx.command)
             return
@@ -145,13 +147,13 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     @extensions_group.command(name="reload", aliases=("r", "rl"))
     async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
-        """
+        r"""
         Reload extensions given their fully qualified or unqualified names.
 
         If an extension fails to be reloaded, it will be rolled-back to the prior working state.
 
         If '\*' is given as the name, all currently loaded extensions will be reloaded.
-        """  # noqa: W605
+        """
         if not extensions:
             await ctx.send_help(ctx.command)
             return
@@ -179,14 +181,16 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         for category, extensions in sorted(categories.items()):
             # Treat each category as a single line by concatenating everything.
             # This ensures the paginator will not cut off a page in the middle of a category.
+            log.trace(f"Extensions in category {category}: {extensions}")
             category = category.replace("_", " ").title()
             extensions = "\n".join(sorted(extensions))
             lines.append(f"**{category}**\n{extensions}\n")
 
         log.debug(f"{ctx.author} requested a list of all {self.type}s. " "Returning a paginated list.")
 
-        # TODO: since we currently don't have a paginator.
-        await ctx.send("".join(lines) or f"There are no {self.type}s installed.")
+        await ButtonPaginator.paginate(
+            lines or f"There are no {self.type}s installed.", ctx.message, embed=embed
+        )
 
     @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def resync_extensions(self, ctx: Context) -> None:
@@ -222,7 +226,10 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 status = ":red_circle:"
 
             root, name = ext.rsplit(".", 1)
-            category = " - ".join(root.split("."))
+            if root.split(".", 1)[1] == self.module_name:
+                category = f"General {self.type}s"
+            else:
+                category = " - ".join(root.split(".")[2:])
             categories[category].append(f"{status}  {name}")
 
         return dict(categories)
