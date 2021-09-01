@@ -1,6 +1,6 @@
 import pytest
 
-from modmail.utils.dispatcher import Dispatcher
+from modmail.dispatcher import Dispatcher
 
 
 @pytest.fixture
