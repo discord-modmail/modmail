@@ -125,6 +125,14 @@ class Dispatcher:
             event_names = self.handlers.keys()
 
         for event_name in event_names:
+            if event_name not in self.handlers:
+                logger.exception(
+                    "Attempted to unregister handler %r from event name %s, which wasn't registered.",
+                    func,
+                    event_name,
+                )
+                continue
+
             if func in self.handlers[event_name]:
                 self.handlers[event_name].remove(func)
 
