@@ -103,6 +103,34 @@ async def test_register_unregister(dispatcher: Dispatcher):
 
 @pytest.mark.dependency(depends_on=["register_thread_events"])
 @pytest.mark.asyncio
+async def test_unregister_named(dispatcher: Dispatcher):
+    """Test that we can unregister from only one name."""
+    calls = 0
+
+    @dispatcher.register()
+    async def on_thread_create(*args):
+        nonlocal calls
+        calls += 1
+
+    await dispatcher.dispatch("thread_create", False)
+
+    assert calls == 1
+
+    dispatcher.unregister(on_thread_create, "thread_message")
+
+    await dispatcher.dispatch("thread_create", True)
+
+    assert calls == 2
+
+    dispatcher.unregister(on_thread_create, "thread_create")
+
+    await dispatcher.dispatch("thread_create", True)
+
+    assert calls == 2
+
+
+@pytest.mark.dependency(depends_on=["register_thread_events"])
+@pytest.mark.asyncio
 async def test_priority_order(dispatcher: Dispatcher):
     """Test priority ordering and blocking of further event dispatch works.."""
     calls = 0
@@ -149,3 +177,44 @@ async def test_bad_name_raises(dispatcher: Dispatcher):
         @dispatcher.register()
         async def bad_name(*args):
             pass
+
+
+@pytest.mark.asyncio
+async def test_unregister_priority(dispatcher: Dispatcher):
+    """Test that priority events are successfully unregistered."""
+    high_priority_calls = 0
+
+    @dispatcher.register("thread_create", priority=1)
+    async def high_priority_handler(*args):
+        nonlocal high_priority_calls
+        high_priority_calls += 1
+        return False
+
+    await dispatcher.dispatch("thread_create", False)
+
+    assert high_priority_calls == 1
+
+    dispatcher.unregister(high_priority_handler)
+
+    await dispatcher.dispatch("thread_create", False)
+
+    assert high_priority_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_bad_eventname_register_dispatch(dispatcher: Dispatcher):
+    """Test that even unregistered events dispatch properly."""
+    calls = 0
+
+    @dispatcher.register()
+    async def on_unnamed(*args):
+        nonlocal calls
+        calls += 1
+
+    await dispatcher.dispatch("unnamed", False)
+
+    assert calls == 1
+
+    await dispatcher.dispatch("asdf")
+
+    assert calls == 1
