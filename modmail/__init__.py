@@ -57,3 +57,8 @@ logging.getLogger("discord").setLevel(logging.WARNING)
 logging.getLogger("websockets").setLevel(logging.ERROR)
 # Set asyncio logging back to the default of INFO even if asyncio's debug mode is enabled.
 logging.getLogger("asyncio").setLevel(logging.INFO)
+
+# now that the logger is configured, we can import the bot for using as all and typing
+from modmail.bot import ModmailBot  # noqa: E402
+
+__all__ = [ModmailBot, ModmailLogger]
