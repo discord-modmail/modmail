@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import TYPE_CHECKING, Literal, NoReturn, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Literal, NoReturn, Optional, Union
 
 if TYPE_CHECKING:
     import pathlib
@@ -127,13 +127,28 @@ class Plugin(Addon):
 
     if TYPE_CHECKING:
         folder: Union[str, pathlib.Path, zipfile.Path]
+        extra_kwargs = Dict[str, Any]
 
-    def __init__(self, name: str, **kw):
+    def __init__(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        *,
+        min_bot_version: Optional[str] = None,
+        folder: Optional[str] = None,
+        enabled: bool = True,
+        **kw,
+    ):
         self.name = name
-        self.description = kw.get("description", None)
-        self.folder = kw.get("folder", None)
-        self.min_bot_version = kw.get("min_bot_version", None)
-        self.enabled = kw.get("enabled", True)
+        self.description = description
+        self.folder = folder or name
+        self.min_bot_version = min_bot_version
+        self.enabled = enabled
+
+        # store any extra kwargs here
+        # this is to ensure backwards compatiablilty with plugins that support older versions,
+        # but want to use newer toml options
+        self.extra_kwargs = kw
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Plugin {self.name!r} description={self.description!r} folder={self.folder!r}>"
