@@ -4,7 +4,14 @@ from modmail.models.base import Base
 
 
 class Emojis(Base):
-    """Database model representing a discord emoji."""
+    """
+    Database model representing a custom discord emoji.
+
+    * <id>: emoji ID for server emojis
+    * <name>: emoji name
+    * <url>: discord emoji URL
+    * <animated>: whether the emojis is animated or not
+    """
 
     id = Column(Integer, primary_key=True)
     name = Column(String)

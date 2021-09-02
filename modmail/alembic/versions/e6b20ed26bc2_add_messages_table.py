@@ -23,7 +23,6 @@ def upgrade():
         sa.Column("mirrored_id", sa.BigInteger(), nullable=False),
         sa.Column("author_id", sa.BigInteger(), nullable=False),
         sa.Column("content", sa.String(), nullable=False),
-        sa.Column("internal", sa.Boolean()),
         sa.PrimaryKeyConstraint("id"),
     )
 

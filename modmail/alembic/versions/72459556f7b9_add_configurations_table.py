@@ -18,11 +18,10 @@ depends_on = None
 def upgrade():
     op.create_table(
         "configurations",
-        sa.Column("server_id", sa.BigInteger(), nullable=False),
-        sa.Column("thread_id", sa.BigInteger(), nullable=True),
+        sa.Column("target_id", sa.BigInteger(), nullable=False),
         sa.Column("config_key", sa.String(), nullable=False),
         sa.Column("config_value", sa.String(), nullable=False),
-        sa.PrimaryKeyConstraint("server_id"),
+        sa.PrimaryKeyConstraint("target_id"),
     )
 
 
