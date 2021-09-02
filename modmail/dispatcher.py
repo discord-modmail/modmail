@@ -18,7 +18,7 @@ class Dispatcher:
     """
 
     # These are separate because it makes using the bisect module easier. See _register_handler.
-    blocking_handlers: Dict[str, List[Optional[CoroutineFunction]]]
+    blocking_handlers: Dict[str, List[CoroutineFunction]]
     blocking_priorities: Dict[str, List[int]]
     handlers: Dict[str, List[CoroutineFunction]]
 
