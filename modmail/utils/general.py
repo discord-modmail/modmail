@@ -9,7 +9,7 @@ def nonblocking(func: CoroutineFunction) -> CoroutineFunction:
     """Converts a coroutine into one that when awaited does not block."""
 
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs) -> None:
         """Start a coroutine without blocking and triggering exceptions properly."""
         task = asyncio.create_task(func(*args, **kwargs))
 
