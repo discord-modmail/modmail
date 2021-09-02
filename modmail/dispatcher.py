@@ -105,6 +105,9 @@ class Dispatcher:
 
         If priority is not provided the event is dispatched asynchronously after all blocking handlers,
          and the return result of the handler has no effect.
+
+        If you want priority and asynchronous dispatch, try using the `nonblocking` decorator from
+         `modmail.utils.general`.
         """
         if func:
             self._register_handler(event_name, priority, func)
