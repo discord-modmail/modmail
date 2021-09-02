@@ -169,7 +169,7 @@ CREATE DATABASE modmail WITH OWNER modmail;
 ```
 
 Finally, enter `/q` to exit psql.
-        
+
 Once the Database is started, you need run migrations to init tables and columns which can be ran through:
 
 <div class="termy">
@@ -213,7 +213,7 @@ $ poetry run alembic upgrade heads
 !!!note
         The entire file name is literally `.env`
 
-5. Open the file with any text editor and write the bot token and the database URL to the files in this format: 
+5. Open the file with any text editor and write the bot token and the database URL to the files in this format:
         * `TOKEN="my_token"`.
         * `SQLALCHEMY_DATABASE_URI=postgresql+asyncpg://modmail:modmail@localhost:5432/modmail`
 
