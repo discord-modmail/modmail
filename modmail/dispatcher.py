@@ -27,14 +27,16 @@ class Dispatcher:
         self.blocking_handlers = {}
         self.blocking_priorities = {}
 
-        self.register_event(*event_names)
+        self.register_events(*event_names)
 
-    def register_event(self, *event_names: str) -> None:
+    def register_events(self, *event_names: str) -> None:
         """
-        Registers an/some event type(s).
+        Registers the given arguments as event types.
 
-        If there's a problem/typo then registering handlers to unknown event types, or
-        calling handlers on an unknown event type will trigger a warning message.
+        This exists because if a user wants to dispatch or register a handler there is a  or
+        significant possibility of typos. If we make event types manually registered, then we can
+        fire a warning message in cases that are likely to be typos and make development
+        significantly easier.
         """
         for event_name in event_names:
             self.handlers[event_name] = []

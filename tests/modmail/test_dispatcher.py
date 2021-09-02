@@ -36,7 +36,7 @@ def make_mock_handler():
 @pytest.mark.dependency(name="register_thread_events")
 def test_register_thread_create_event(dispatcher: Dispatcher):
     """Ensure registering events functions at all."""
-    dispatcher.register_event("thread_create", "thread_close", "thread_message")
+    dispatcher.register_events("thread_create", "thread_close", "thread_message")
 
 
 @pytest.mark.dependency(depends_on=["register_thread_events"])
