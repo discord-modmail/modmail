@@ -932,17 +932,6 @@ python-versions = "*"
 pytest = ">=3.6.0"
 
 [[package]]
-name = "pytest-docs"
-version = "0.1.0"
-description = "Documentation tool for pytest"
-category = "dev"
-optional = false
-python-versions = ">=3.4"
-
-[package.dependencies]
-pytest = ">=3.5.0"
-
-[[package]]
 name = "pytest-forked"
 version = "1.3.0"
 description = "run tests in isolated forked subprocesses"
@@ -1882,10 +1871,6 @@ pytest-cov = [
 ]
 pytest-dependency = [
     {file = "pytest-dependency-0.5.1.tar.gz", hash = "sha256:c2a892906192663f85030a6ab91304e508e546cddfe557d692d61ec57a1d946b"},
-]
-pytest-docs = [
-    {file = "pytest-docs-0.1.0.tar.gz", hash = "sha256:0ffa61dafd3aca81bb8e64416207b599e5906fde2d6ad68e430975196eb397e0"},
-    {file = "pytest_docs-0.1.0-py3-none-any.whl", hash = "sha256:a7c37770dbc3e3279695639e5f73e21657c515b70c4c0d749745a397c5c599f5"},
 ]
 pytest-forked = [
     {file = "pytest-forked-1.3.0.tar.gz", hash = "sha256:6aa9ac7e00ad1a539c41bec6d21011332de671e938c7637378ec9710204e37ca"},
