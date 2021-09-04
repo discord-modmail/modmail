@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import zipfile
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from discord.ext import commands
 from discord.ext.commands import Context
@@ -140,28 +140,40 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                 file = zipfile.ZipFile(file.filename)
 
         # determine plugins in the archive
-        top_level_plugins, all_plugin_files = find_plugins_in_zip(file.filename)
+        plugins = find_plugins_in_zip(file.filename)
 
         # yield to any coroutines that need to run
+        # its not possible to do this with aiofiles, so when we export the zip,
+        # its important to yield right after
         await asyncio.sleep(0)
 
         # extract the drive
-        file.extractall(BASE_PATH / source.addon_directory, all_plugin_files)
+        all_files = []
+        for k, v in plugins.items():
+            all_files.append(k)
+            all_files.extend(v)
+        file.extractall(BASE_PATH / source.addon_directory, all_files)
 
-        # TODO: rewrite this as it only needs to (and should) scan the new directory
+        # TODO: rewrite this method as it only needs to (and should) scan the new directory
         self._resync_extensions()
 
-        temp_new_plugins = [x.strip("/").rsplit("/", 1)[1] for x in all_plugin_files]
-        new_plugins = []
-        for p in temp_new_plugins:
-            logger.debug(p)
+        # figure out all of the files
+        temp_new_plugin_files: List[str] = [p.strip("/").rsplit("/", 1)[1] for p in all_files]
+        new_plugin_files: List[str] = []
+        logger.debug(f"{temp_new_plugin_files = }")
+        for plug in temp_new_plugin_files:
+            logger.trace(f"{plug = }")
             try:
-                new_plugins.append(await PluginPathConverter().convert(None, p))
+                plug = await PluginPathConverter().convert(None, plug)
             except commands.BadArgument:
                 pass
+            else:
+                if plug in PLUGINS:
+                    new_plugin_files.append(plug)
 
-        self.batch_manage(Action.LOAD, *new_plugins)
-        await ctx.reply("Installed plugins: \n" + "\n".join(top_level_plugins))
+        logger.debug(f"{new_plugin_files = }")
+        self.batch_manage(Action.LOAD, *new_plugin_files)
+        await ctx.reply("Installed plugins: \n" + "\n".join(plugins.keys()))
 
     # TODO: Implement install/enable/disable/etc
 

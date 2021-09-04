@@ -14,9 +14,8 @@ import importlib.util
 import inspect
 import logging
 import pathlib
-import typing as t
 import zipfile
-from typing import List
+from typing import Dict, Iterator, List, Tuple, Union
 
 import atoml
 
@@ -29,11 +28,11 @@ from modmail.utils.extensions import BOT_MODE, unqualify
 
 logger: ModmailLogger = logging.getLogger(__name__)
 
+VALID_ZIP_PLUGIN_DIRECTORIES = ["plugins", "Plugins"]
 
 BASE_PATH = pathlib.Path(plugins.__file__).parent.resolve()
-PLUGIN_MODULE = "modmail.plugins"
-PLUGINS: t.Dict[str, t.Tuple[bool, bool]] = dict()
-VALID_ZIP_PLUGIN_DIRECTORIES = ["plugins", "Plugins"]
+
+PLUGINS: Dict[str, Tuple[bool, bool]] = dict()
 
 
 def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /) -> List[Plugin]:
@@ -52,45 +51,53 @@ def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /) -> List[Plug
     return found_plugins
 
 
-def find_plugins_in_zip(zip_path: t.Union[str, pathlib.Path]) -> t.Tuple[t.List[str], t.List[str]]:
+def find_plugins_in_zip(zip_path: Union[str, pathlib.Path]) -> Dict[str, List[str]]:
     """
     Find the plugins that are in a zip file.
 
     All plugins in a zip folder will be located at either `Plugins/` or `plugins/`
     """
-    archive_plugin_directory = None
     file = zipfile.ZipFile(zip_path)
-    for dir in VALID_ZIP_PLUGIN_DIRECTORIES:
-        dir = dir + "/"
-        if dir in file.namelist():
-            archive_plugin_directory = dir
+
+    # figure out which directory plugins are in. Both Plugins and plugins are supported.
+    # default is plugins.
+    archive_plugin_directory = None
+    for dir_ in VALID_ZIP_PLUGIN_DIRECTORIES:
+        dir_ = dir_ + "/"  # zipfile require `/` after the path if its a directory
+        if dir_ in file.namelist():
+            archive_plugin_directory = dir_
             break
+
     if archive_plugin_directory is None:
         raise NoPluginDirectoryError(f"No {' or '.join(VALID_ZIP_PLUGIN_DIRECTORIES)} directory exists.")
+
+    # convert archive_plugin_directory into a zip file object from the path it contains.
     archive_plugin_directory = zipfile.Path(file, at=archive_plugin_directory)
-    lil_pluggies = []
+
+    all_plugins: Dict[str, List[str]] = {}
+
     for path in archive_plugin_directory.iterdir():
         logger.debug(f"archive_plugin_directory: {path}")
         if path.is_dir():
-            lil_pluggies.append(archive_plugin_directory.name + "/" + path.name + "/")
+            plugin_name = archive_plugin_directory.name + "/" + path.name + "/"
+            all_plugins[plugin_name] = list()
 
-    logger.debug(f"Plugins detected: {lil_pluggies}")
-    all_lil_pluggies = lil_pluggies.copy()
+    logger.debug(f"Plugins detected: {all_plugins.keys()}")
     files = file.namelist()
-    for pluggy in all_lil_pluggies:
+    for pluggy in all_plugins.keys():
         for f in files:
-            if f == pluggy:
+            if f == pluggy:  # don't include files that are plugin directories
                 continue
             if f.startswith(pluggy):
-                all_lil_pluggies.append(f)
-                print(f)
-    logger.trace(f"lil_pluggies: {lil_pluggies}")
-    logger.trace(f"all_lil_pluggies: {all_lil_pluggies}")
+                all_plugins[pluggy].append(f)
+                logger.trace(f"{f = }")
+    logger.debug(f"{all_plugins.keys() = }")
+    logger.debug(f"{all_plugins.values() = }")
 
-    return lil_pluggies, all_lil_pluggies
+    return all_plugins
 
 
-def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
+def walk_plugins() -> Iterator[Tuple[str, bool]]:
     """Yield plugin names from the modmail.plugins subpackage."""
     # walk all files in the plugins folder
     # this is to ensure folder symlinks are supported,
@@ -104,7 +111,7 @@ def walk_plugins() -> t.Iterator[t.Tuple[str, bool]]:
         # calculate the module name, dervived from the relative path
         relative_path = pathlib.Path(path).relative_to(BASE_PATH)
         name = relative_path.__str__().rstrip(".py").replace("/", ".")
-        name = PLUGIN_MODULE + "." + name
+        name = plugins.__name__ + "." + name
         logger.trace(f"Module name: {name}")
 
         if unqualify(name.split(".")[-1]).startswith("_"):
