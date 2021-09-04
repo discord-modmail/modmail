@@ -30,7 +30,7 @@ logger: ModmailLogger = logging.getLogger(__name__)
 
 VALID_ZIP_PLUGIN_DIRECTORIES = ["plugins", "Plugins"]
 
-BASE_PATH = pathlib.Path(plugins.__file__).parent.resolve()
+BASE_PLUGIN_PATH = pathlib.Path(plugins.__file__).parent.resolve()
 
 PLUGINS: Dict[str, Tuple[bool, bool]] = dict()
 
@@ -104,12 +104,12 @@ def walk_plugins() -> Iterator[Tuple[str, bool]]:
     # which are important for ease of development.
     # NOTE: We are not using Pathlib's glob utility as it doesn't
     #   support following symlinks, see: https://bugs.python.org/issue33428
-    for path in glob.iglob(f"{BASE_PATH}/**/*.py", recursive=True):
+    for path in glob.iglob(f"{BASE_PLUGIN_PATH}/**/*.py", recursive=True):
 
         logger.trace(f"Path: {path}")
 
         # calculate the module name, dervived from the relative path
-        relative_path = pathlib.Path(path).relative_to(BASE_PATH)
+        relative_path = pathlib.Path(path).relative_to(BASE_PLUGIN_PATH)
         name = relative_path.__str__().rstrip(".py").replace("/", ".")
         name = plugins.__name__ + "." + name
         logger.trace(f"Module name: {name}")

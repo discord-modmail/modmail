@@ -12,7 +12,7 @@ import modmail.addons.utils as addon_utils
 from modmail import errors
 from modmail.addons.converters import SourceAndPluginConverter
 from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
-from modmail.addons.plugins import BASE_PATH, PLUGINS, find_plugins_in_zip, walk_plugins
+from modmail.addons.plugins import BASE_PLUGIN_PATH, PLUGINS, find_plugins_in_zip, walk_plugins
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
 from modmail.utils.cogs import BotModes, ExtMetadata
 
@@ -152,7 +152,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         for k, v in plugins.items():
             all_files.append(k)
             all_files.extend(v)
-        file.extractall(BASE_PATH / source.addon_directory, all_files)
+        file.extractall(BASE_PLUGIN_PATH / source.addon_directory, all_files)
 
         # TODO: rewrite this method as it only needs to (and should) scan the new directory
         self._resync_extensions()

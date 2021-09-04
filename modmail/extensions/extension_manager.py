@@ -20,8 +20,6 @@ from modmail.utils.pagination import ButtonPaginator
 log: ModmailLogger = logging.getLogger(__name__)
 
 
-BASE_PATH_LEN = __name__.count(".")
-
 EXT_METADATA = ExtMetadata(load_if_mode=BotModes.DEVELOP, no_unload=True)
 
 
