@@ -4,7 +4,19 @@ class AddonError(Exception):
     pass
 
 
-class NoPluginDirectoryError(AddonError):
+class PluginError(AddonError):
+    """General Plugin error."""
+
+    pass
+
+
+class NoPluginDirectoryError(PluginError):
     """No plugin directory exists."""
+
+    pass
+
+
+class PluginNotFoundError(PluginError):
+    """Plugins are not found and can therefore not be actioned on."""
 
     pass

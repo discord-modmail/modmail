@@ -63,7 +63,6 @@ class AddonSource:
         domain: Optional[str]
         path: Optional[str]
 
-        addon_directory: Optional[str]
         cache_file: Optional[Union[zipfile.Path, pathlib.Path]]
 
     def __init__(self, zip_url: str, type: SourceTypeEnum):

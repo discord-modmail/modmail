@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import zipfile
+import shutil
 from typing import TYPE_CHECKING, List
 
 from discord.ext import commands
@@ -11,8 +11,9 @@ from discord.ext.commands import Context
 import modmail.addons.utils as addon_utils
 from modmail import errors
 from modmail.addons.converters import SourceAndPluginConverter
+from modmail.addons.errors import PluginNotFoundError
 from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
-from modmail.addons.plugins import BASE_PLUGIN_PATH, PLUGINS, find_plugins_in_zip, walk_plugins
+from modmail.addons.plugins import BASE_PLUGIN_PATH, PLUGINS, find_plugins_in_dir, walk_plugins
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
 from modmail.utils.cogs import BotModes, ExtMetadata
 
@@ -114,68 +115,74 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     @plugins_group.command(name="install", aliases=("",))
     async def install_plugins(self, ctx: Context, *, source_and_plugin: SourceAndPluginConverter) -> None:
         """Install plugins from provided repo."""
+        # this could take a while
+        await ctx.trigger_typing()
+
+        # create variables for the user input, typehint them, then assign them from the converter tuple
         plugin: Plugin
         source: AddonSource
         plugin, source = source_and_plugin
+
         if source.source_type is SourceTypeEnum.LOCAL:
             # TODO: check the path of a local plugin
             await ctx.send("This plugin is a local plugin, and likely can be loaded with the load command.")
             return
         logger.debug(f"Received command to download plugin {plugin.name} from {source.zip_url}")
         try:
-            file = await addon_utils.download_zip_from_source(source, self.bot.http_session)
+            directory = await addon_utils.download_and_unpack_source(source, self.bot.http_session)
         except errors.HTTPError:
             await ctx.send(f"Downloading {source.zip_url} did not give a 200 response code.")
             return
-        else:
-            file = zipfile.ZipFile(file.filename)
-            await ctx.send(f"Downloaded {file.filename}")
 
-        temp_direct_children = [p for p in zipfile.Path(file).iterdir()]
-        if len(temp_direct_children) == 1:
-            folder = temp_direct_children[0]
-            if folder.is_dir():
-                addon_utils.move_zip_contents_up_a_level(file.filename, temp_direct_children)
-                file.close()
-                file = zipfile.ZipFile(file.filename)
+        source.cache_file = directory
 
         # determine plugins in the archive
-        plugins = find_plugins_in_zip(file.filename)
+        plugins = find_plugins_in_dir(directory)
 
         # yield to any coroutines that need to run
         # its not possible to do this with aiofiles, so when we export the zip,
         # its important to yield right after
         await asyncio.sleep(0)
 
-        # extract the drive
-        all_files = []
-        for k, v in plugins.items():
-            all_files.append(k)
-            all_files.extend(v)
-        file.extractall(BASE_PLUGIN_PATH / source.addon_directory, all_files)
+        # copy the requested plugin over to the new folder
+        plugin_path = None
+        for p in plugins.keys():
+            if p.name == plugin.folder:
+                plugin_path = p
+                try:
+                    shutil.copytree(p, BASE_PLUGIN_PATH / p.name, dirs_exist_ok=True)
+                except shutil.FileExistsError:
+                    await ctx.send(
+                        "Plugin already seems to be installed. "
+                        "This could be caused by the plugin already existing, "
+                        "or a plugin of the same name existing."
+                    )
+                    return
+                break
+
+        if plugin_path is None:
+            raise PluginNotFoundError(f"Could not find plugin {plugin}")
+        logger.trace(f"{BASE_PLUGIN_PATH = }")
 
         # TODO: rewrite this method as it only needs to (and should) scan the new directory
         self._resync_extensions()
-
-        # figure out all of the files
-        temp_new_plugin_files: List[str] = [p.strip("/").rsplit("/", 1)[1] for p in all_files]
-        new_plugin_files: List[str] = []
-        logger.debug(f"{temp_new_plugin_files = }")
-        for plug in temp_new_plugin_files:
+        files_to_load: List[str] = []
+        for plug in plugins[plugin_path]:
             logger.trace(f"{plug = }")
             try:
-                plug = await PluginPathConverter().convert(None, plug)
+                plug = await PluginPathConverter().convert(None, plug.name.rstrip(".py"))
             except commands.BadArgument:
                 pass
             else:
                 if plug in PLUGINS:
-                    new_plugin_files.append(plug)
+                    files_to_load.append(plug)
 
-        logger.debug(f"{new_plugin_files = }")
-        self.batch_manage(Action.LOAD, *new_plugin_files)
-        await ctx.reply("Installed plugins: \n" + "\n".join(plugins.keys()))
+        logger.debug(f"{files_to_load = }")
+        self.batch_manage(Action.LOAD, *files_to_load)
 
-    # TODO: Implement install/enable/disable/etc
+        await ctx.reply(f"Installed plugin {plugin_path.name}.")
+
+    # TODO: Implement enable/disable/etc
 
     # This cannot be static (must have a __func__ attribute).
     async def cog_check(self, ctx: Context) -> bool:

@@ -13,9 +13,9 @@ import importlib
 import importlib.util
 import inspect
 import logging
+import os
 import pathlib
-import zipfile
-from typing import Dict, Iterator, List, Tuple, Union
+from typing import Dict, Iterator, List, Tuple
 
 import atoml
 
@@ -51,46 +51,59 @@ def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /) -> List[Plug
     return found_plugins
 
 
-def find_plugins_in_zip(zip_path: Union[str, pathlib.Path]) -> Dict[str, List[str]]:
+def find_plugins_in_dir(addon_repo_path: pathlib.Path) -> Dict[pathlib.Path, List[pathlib.Path]]:
     """
-    Find the plugins that are in a zip file.
+    Find the plugins that are in a directory.
 
     All plugins in a zip folder will be located at either `Plugins/` or `plugins/`
-    """
-    file = zipfile.ZipFile(zip_path)
 
+    Returns a dict containing all of the plugin folders as keys
+    and the values as lists of the files within those folders.
+    """
+    temp_direct_children = [p for p in addon_repo_path.iterdir()]
+    if len(temp_direct_children) == 1:
+        folder = temp_direct_children[0]
+        if folder.is_dir():
+            addon_repo_path = addon_repo_path / folder
+    del temp_direct_children
     # figure out which directory plugins are in. Both Plugins and plugins are supported.
     # default is plugins.
-    archive_plugin_directory = None
-    for dir_ in VALID_ZIP_PLUGIN_DIRECTORIES:
-        dir_ = dir_ + "/"  # zipfile require `/` after the path if its a directory
-        if dir_ in file.namelist():
-            archive_plugin_directory = dir_
+    plugin_directory = None
+    direct_children = [p for p in addon_repo_path.iterdir()]
+    logger.debug(f"{direct_children = }")
+    for path_ in direct_children:
+        if path_.name.rsplit("/", 1)[-1] in VALID_ZIP_PLUGIN_DIRECTORIES:
+            plugin_directory = path_
             break
 
-    if archive_plugin_directory is None:
+    if plugin_directory is None:
+        logger.debug(f"{direct_children = }")
         raise NoPluginDirectoryError(f"No {' or '.join(VALID_ZIP_PLUGIN_DIRECTORIES)} directory exists.")
 
-    # convert archive_plugin_directory into a zip file object from the path it contains.
-    archive_plugin_directory = zipfile.Path(file, at=archive_plugin_directory)
+    plugin_directory = addon_repo_path / plugin_directory
 
-    all_plugins: Dict[str, List[str]] = {}
+    all_plugins: Dict[pathlib.Path, List[pathlib.Path]] = {}
 
-    for path in archive_plugin_directory.iterdir():
-        logger.debug(f"archive_plugin_directory: {path}")
+    for path in plugin_directory.iterdir():
+        logger.debug(f"plugin_directory: {path}")
         if path.is_dir():
-            plugin_name = archive_plugin_directory.name + "/" + path.name + "/"
-            all_plugins[plugin_name] = list()
+            all_plugins[path] = list()
 
-    logger.debug(f"Plugins detected: {all_plugins.keys()}")
-    files = file.namelist()
-    for pluggy in all_plugins.keys():
-        for f in files:
-            if f == pluggy:  # don't include files that are plugin directories
-                continue
-            if f.startswith(pluggy):
-                all_plugins[pluggy].append(f)
-                logger.trace(f"{f = }")
+    logger.debug(f"Plugins detected: {[p.name for p in all_plugins.keys()]}")
+
+    for plugin_path in all_plugins.keys():
+        logger.trace(f"{plugin_path =}")
+        for dirpath, dirnames, filenames in os.walk(plugin_path):
+            logger.trace(f"{dirpath =}, {dirnames =}, {filenames =}")
+            for list_ in dirnames, filenames:
+                logger.trace(f"{list_ =}")
+                for file in list_:
+                    logger.trace(f"{file =}")
+                    if file == dirpath:  # don't include files that are plugin directories
+                        continue
+
+                    all_plugins[plugin_path].append(pathlib.Path(file))
+
     logger.debug(f"{all_plugins.keys() = }")
     logger.debug(f"{all_plugins.values() = }")
 
@@ -106,15 +119,15 @@ def walk_plugins() -> Iterator[Tuple[str, bool]]:
     #   support following symlinks, see: https://bugs.python.org/issue33428
     for path in glob.iglob(f"{BASE_PLUGIN_PATH}/**/*.py", recursive=True):
 
-        logger.trace(f"Path: {path}")
+        logger.trace(f"{path =}")
 
         # calculate the module name, dervived from the relative path
         relative_path = pathlib.Path(path).relative_to(BASE_PLUGIN_PATH)
-        name = relative_path.__str__().rstrip(".py").replace("/", ".")
-        name = plugins.__name__ + "." + name
-        logger.trace(f"Module name: {name}")
+        module_name = relative_path.__str__().rstrip(".py").replace("/", ".")
+        module_name = plugins.__name__ + "." + module_name
+        logger.trace(f"{module_name =}")
 
-        if unqualify(name.split(".")[-1]).startswith("_"):
+        if unqualify(module_name.split(".")[-1]).startswith("_"):
             # Ignore module/package names starting with an underscore.
             continue
 
@@ -125,19 +138,19 @@ def walk_plugins() -> Iterator[Tuple[str, bool]]:
             # load the plugins using importlib
             # this needs to be done like this, due to the fact that
             # its possible a plugin will not have an __init__.py file
-            spec = importlib.util.spec_from_file_location(name, path)
+            spec = importlib.util.spec_from_file_location(module_name, path)
             imported = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(imported)
         except Exception:
             logger.error(
-                f"Failed to import {name}. As a result, this plugin is not considered installed.",
+                f"Failed to import {module_name}. As a result, this plugin is not considered installed.",
                 exc_info=True,
             )
             continue
 
         if not inspect.isfunction(getattr(imported, "setup", None)):
             # If it lacks a setup function, it's not a plugin. This is enforced by dpy.
-            logger.trace(f"{name} does not have a setup function. Skipping.")
+            logger.trace(f"{module_name} does not have a setup function. Skipping.")
             continue
 
         ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)
