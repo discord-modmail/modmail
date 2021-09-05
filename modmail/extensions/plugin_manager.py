@@ -147,7 +147,8 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         # copy the requested plugin over to the new folder
         for p in plugins.keys():
-            if p.name == plugin.name:
+            # check if user-provided plugin matches either plugin name or folder name
+            if plugin.name in (p.name, p.folder_name):
                 try:
                     shutil.copytree(p.folder_path, BASE_PLUGIN_PATH / p.folder_path.name, dirs_exist_ok=True)
                 except FileExistsError:
