@@ -190,7 +190,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         if ctx.guild is None:
             return await self.bot.is_owner(ctx.author)
         else:
-            return ctx.author.guild_permissions.administrator or await self.bot.is_owner(ctx.author)
+            return await self.bot.is_owner(ctx.author)
 
 
 # HACK: Delete the commands from ExtensionManager that PluginManager has inherited
