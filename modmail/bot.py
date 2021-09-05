@@ -16,6 +16,7 @@ from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
 
+
 REQUIRED_INTENTS = Intents(
     guilds=True,
     messages=True,

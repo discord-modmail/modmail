@@ -6,6 +6,7 @@ import coloredlogs
 
 from modmail.log import ModmailLogger
 
+
 logging.TRACE = 5
 logging.NOTICE = 25
 logging.addLevelName(logging.TRACE, "TRACE")

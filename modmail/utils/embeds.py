@@ -5,6 +5,7 @@ from discord.embeds import EmptyEmbed
 
 from modmail.config import CONFIG
 
+
 DEFAULT_COLOR = int(CONFIG.colors.embed_color.as_hex().lstrip("#"), 16)
 
 original_init = discord.Embed.__init__

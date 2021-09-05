@@ -12,6 +12,7 @@ from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import BOT_MODES, BotModes, ExtMetadata
 
+
 log: ModmailLogger = logging.getLogger(__name__)
 
 EXT_METADATA = ExtMetadata
