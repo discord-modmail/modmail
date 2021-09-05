@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 import pytest
+from discord.ext.commands.errors import BadArgument
 
 from modmail.addons.converters import (
     REPO_REGEX,
@@ -206,7 +207,11 @@ def test_zip_regex(entry: str, url: str, domain: str, path: str, addon: str) -> 
             "@local earth",
             "earth", SourceTypeEnum.LOCAL
         ),
-        pytest.param("the world exists.", None, None, marks=pytest.mark.xfail),
+        pytest.param(
+            "the world exists.",
+            None, None,
+            marks=pytest.mark.raises(exception=BadArgument)
+        ),
     ],
 )
 @pytest.mark.dependency(depends_on=["repo_regex", "zip_regex"])
