@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from modmail.bot import ModmailBot
     from modmail.log import ModmailLogger
 
-EXT_METADATA = ExtMetadata(load_if_mode=BotModes.PRODUCTION)
+EXT_METADATA = ExtMetadata(load_if_mode=BotModes.PRODUCTION, no_unload=True)
 
 logger: ModmailLogger = logging.getLogger(__name__)
 
