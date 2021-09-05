@@ -6,6 +6,7 @@ import discord
 
 from modmail.utils.threads.embeds import ThreadEmbed
 
+
 if TYPE_CHECKING:
     from modmail.log import ModmailLogger
 logger: "ModmailLogger" = logging.getLogger(__name__)

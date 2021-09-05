@@ -3,6 +3,7 @@ from typing import Optional
 
 from dateutil.relativedelta import relativedelta
 
+
 _DURATION_REGEX = re.compile(
     r"((?P<years>\d+?) ?(years|year|Y|y) ?)?"
     r"((?P<months>\d+?) ?(months|month|m) ?)?"

@@ -6,6 +6,7 @@ from modmail.extensions.extension_manager import ExtensionConverter, ExtensionMa
 from modmail.utils.cogs import BotModes, ExtMetadata
 from modmail.utils.plugins import PLUGINS, walk_plugins
 
+
 EXT_METADATA = ExtMetadata(load_if_mode=BotModes.PRODUCTION)
 
 
@@ -13,8 +14,8 @@ class PluginConverter(ExtensionConverter):
     """
     Fully qualify the name of a plugin and ensure it exists.
 
-    The * value bypasses this when used with the a plugin manger command.
-    """  # noqa: W605
+    The * value bypasses this when used with a plugin manager command.
+    """
 
     source_list = PLUGINS
     type = "plugin"
@@ -25,6 +26,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     """Plugin management commands."""
 
     type = "plugin"
+    module_name = "plugins"  # modmail/plugins
 
     def __init__(self, bot: ModmailBot) -> None:
         super().__init__(bot)
@@ -47,31 +49,31 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
     @plugins_group.command(name="load", aliases=("l",))
     async def load_plugin(self, ctx: Context, *plugins: PluginConverter) -> None:
-        """
+        r"""
         Load plugins given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all unloaded plugins will be loaded.
-        """  # noqa: W605
+        """
         await self.load_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="unload", aliases=("ul",))
     async def unload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
-        """
+        r"""
         Unload currently loaded plugins given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all loaded plugins will be unloaded.
-        """  # noqa: W605
+        """
         await self.unload_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="reload", aliases=("r", "rl"))
     async def reload_plugins(self, ctx: Context, *plugins: PluginConverter) -> None:
-        """
+        r"""
         Reload plugins given their fully qualified or unqualified names.
 
         If an plugin fails to be reloaded, it will be rolled-back to the prior working state.
 
         If '\*' is given as the name, all currently loaded plugins will be reloaded.
-        """  # noqa: W605
+        """
         await self.reload_extensions.callback(self, ctx, *plugins)
 
     @plugins_group.command(name="list", aliases=("all", "ls"))

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import signal
 import typing as t
+from typing import Any
 
 import arrow
 import discord
@@ -15,6 +16,7 @@ from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
 from modmail.utils.threads import Ticket
+
 
 REQUIRED_INTENTS = Intents(
     guilds=True,
@@ -119,7 +121,7 @@ class ModmailBot(commands.Bot):
         except NotImplementedError:
             pass
 
-        def stop_loop_on_completion(f) -> None:  # noqa: ANN001
+        def stop_loop_on_completion(f: Any) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(self.start(*args, **kwargs), loop=loop)

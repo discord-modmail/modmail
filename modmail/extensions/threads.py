@@ -13,6 +13,7 @@ from modmail.utils.threads import ThreadEmbed, Ticket, is_modmail_thread
 from modmail.utils.threads.errors import ThreadAlreadyExistsError, ThreadNotFoundError
 from modmail.utils.users import check_can_dm_user
 
+
 if TYPE_CHECKING:
     from modmail.bot import ModmailBot
     from modmail.log import ModmailLogger
