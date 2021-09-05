@@ -145,29 +145,28 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await asyncio.sleep(0)
 
         # copy the requested plugin over to the new folder
-        plugin_path = None
         for p in plugins.keys():
-            if p.name == plugin.folder:
-                plugin_path = p
+            if p.name == plugin.name:
                 try:
-                    shutil.copytree(p, BASE_PLUGIN_PATH / p.name, dirs_exist_ok=True)
-                except shutil.FileExistsError:
+                    shutil.copytree(p.folder_path, BASE_PLUGIN_PATH / p.folder_path.name, dirs_exist_ok=True)
+                except FileExistsError:
                     await ctx.send(
                         "Plugin already seems to be installed. "
                         "This could be caused by the plugin already existing, "
                         "or a plugin of the same name existing."
                     )
                     return
+                plugin = p
                 break
 
-        if plugin_path is None:
+        if plugin.folder_path is None:
             raise PluginNotFoundError(f"Could not find plugin {plugin}")
         logger.trace(f"{BASE_PLUGIN_PATH = }")
 
         # TODO: rewrite this method as it only needs to (and should) scan the new directory
         self._resync_extensions()
         files_to_load: List[str] = []
-        for plug in plugins[plugin_path]:
+        for plug in plugins[plugin]:
             logger.trace(f"{plug = }")
             try:
                 plug = await PluginPathConverter().convert(None, plug.name.rstrip(".py"))
@@ -180,7 +179,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         logger.debug(f"{files_to_load = }")
         self.batch_manage(Action.LOAD, *files_to_load)
 
-        await ctx.reply(f"Installed plugin {plugin_path.name}.")
+        await ctx.reply(f"Installed plugin {plugin.name}.")
 
     # TODO: Implement enable/disable/etc
 

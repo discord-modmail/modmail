@@ -35,6 +35,6 @@ def test_parse_plugin_toml_from_string(
     print(plug.__repr__())
     assert isinstance(plug, Plugin)
     assert plug.name == name
-    assert plug.folder == folder
+    assert plug.folder_name == folder
     assert plug.description == description
     assert plug.min_bot_version == min_bot_version

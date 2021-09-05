@@ -4,6 +4,8 @@ import re
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, Literal, NoReturn, Optional, Union
 
+from modmail.utils import MISSING
+
 if TYPE_CHECKING:
     import pathlib
     import zipfile
@@ -125,7 +127,8 @@ class Plugin(Addon):
     """An addon which is a plugin."""
 
     if TYPE_CHECKING:
-        folder: Union[str, pathlib.Path, zipfile.Path]
+        folder_name: Optional[str]
+        folder_path: Optional[pathlib.Path]
         extra_kwargs = Dict[str, Any]
 
     def __init__(
@@ -134,13 +137,21 @@ class Plugin(Addon):
         description: Optional[str] = None,
         *,
         min_bot_version: Optional[str] = None,
-        folder: Optional[str] = None,
+        folder: Optional[str] = MISSING,
+        folder_path: Optional[pathlib.Path] = None,
         enabled: bool = True,
         **kw,
     ):
         self.name = name
         self.description = description
-        self.folder = folder or name
+        if folder is MISSING:
+            if folder_path is not None:
+                self.folder_name = folder or folder_path.name or name
+            else:
+                self.folder_name = folder or name
+        else:
+            self.folder_name = folder
+        self.folder_path = folder_path
         self.min_bot_version = min_bot_version
         self.enabled = enabled
 
@@ -150,4 +161,4 @@ class Plugin(Addon):
         self.extra_kwargs = kw
 
     def __repr__(self) -> str:  # pragma: no cover
-        return f"<Plugin {self.name!r} description={self.description!r} folder={self.folder!r}>"
+        return f"<Plugin {self.name!r} description={self.description!r} folder_path={self.folder_path!r}>"

@@ -20,7 +20,7 @@ from typing import Dict, Iterator, List, Tuple
 import atoml
 
 from modmail import plugins
-from modmail.addons.errors import NoPluginDirectoryError
+from modmail.addons.errors import NoPluginDirectoryError, NoPluginTomlFoundError
 from modmail.addons.models import Plugin
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata
@@ -34,28 +34,38 @@ BASE_PLUGIN_PATH = pathlib.Path(plugins.__file__).parent.resolve()
 
 PLUGINS: Dict[str, Tuple[bool, bool]] = dict()
 
+PLUGIN_TOML = "plugin.toml"
+
 
 def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /) -> List[Plugin]:
     """Parses a plugin toml, given the string loaded in."""
     doc = atoml.parse(unparsed_plugin_toml_str)
     found_plugins: List[Plugin] = []
     for plug_entry in doc["plugins"]:
+
         found_plugins.append(
             Plugin(
                 plug_entry["name"],
-                folder=plug_entry["folder"],
-                description=plug_entry["description"],
-                min_bot_version=plug_entry["min_bot_version"],
+                folder=plug_entry.get("folder"),
+                description=plug_entry.get("description"),
+                min_bot_version=plug_entry.get("min_bot_version"),
             )
         )
     return found_plugins
 
 
-def find_plugins_in_dir(addon_repo_path: pathlib.Path) -> Dict[pathlib.Path, List[pathlib.Path]]:
+def find_plugins_in_dir(
+    addon_repo_path: pathlib.Path,
+    *,
+    parse_toml: bool = True,
+    no_toml_exist_ok: bool = True,
+) -> Dict[Plugin, List[pathlib.Path]]:
     """
     Find the plugins that are in a directory.
 
     All plugins in a zip folder will be located at either `Plugins/` or `plugins/`
+
+    If parse_toml is true, if the plugin.toml file is found, it will be parsed.
 
     Returns a dict containing all of the plugin folders as keys
     and the values as lists of the files within those folders.
@@ -82,18 +92,41 @@ def find_plugins_in_dir(addon_repo_path: pathlib.Path) -> Dict[pathlib.Path, Lis
 
     plugin_directory = addon_repo_path / plugin_directory
 
-    all_plugins: Dict[pathlib.Path, List[pathlib.Path]] = {}
+    all_plugins: Dict[Plugin, List[pathlib.Path]] = {}
 
+    toml_plugins: List[Plugin] = []
+    if parse_toml:
+        toml_path = plugin_directory / PLUGIN_TOML
+        if toml_path.exists():
+            # parse the toml
+            with open(toml_path) as toml_file:
+                toml_plugins = parse_plugin_toml_from_string(toml_file.read())
+        elif no_toml_exist_ok:
+            # toml does not exist but the caller does not care
+            pass
+        else:
+            raise NoPluginTomlFoundError(toml_path, "does not exist")
+
+    logger.debug(f"{toml_plugins =}")
+    toml_plugin_names = [p.folder_name for p in toml_plugins]
     for path in plugin_directory.iterdir():
         logger.debug(f"plugin_directory: {path}")
         if path.is_dir():
-            all_plugins[path] = list()
+            # use an existing toml plugin object
+            if path.name in toml_plugin_names:
+                for p in toml_plugins:
+                    if p.folder_name == path.name:
+                        p.folder_path = path
+                        all_plugins[p] = list()
+            else:
+                temp_plugin = Plugin(path.name, folder_path=path)
+                all_plugins[temp_plugin] = list()
 
     logger.debug(f"Plugins detected: {[p.name for p in all_plugins.keys()]}")
 
-    for plugin_path in all_plugins.keys():
-        logger.trace(f"{plugin_path =}")
-        for dirpath, dirnames, filenames in os.walk(plugin_path):
+    for plugin_ in all_plugins.keys():
+        logger.trace(f"{plugin_.folder_path =}")
+        for dirpath, dirnames, filenames in os.walk(plugin_.folder_path):
             logger.trace(f"{dirpath =}, {dirnames =}, {filenames =}")
             for list_ in dirnames, filenames:
                 logger.trace(f"{list_ =}")
@@ -102,7 +135,7 @@ def find_plugins_in_dir(addon_repo_path: pathlib.Path) -> Dict[pathlib.Path, Lis
                     if file == dirpath:  # don't include files that are plugin directories
                         continue
 
-                    all_plugins[plugin_path].append(pathlib.Path(file))
+                    all_plugins[plugin_].append(pathlib.Path(file))
 
     logger.debug(f"{all_plugins.keys() = }")
     logger.debug(f"{all_plugins.values() = }")

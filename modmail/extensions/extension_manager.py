@@ -305,6 +305,8 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         if isinstance(error, commands.BadArgument):
             await ctx.send(str(error), allowed_mentions=AllowedMentions.none())
             error.handled = True
+        else:
+            raise error
 
 
 def setup(bot: ModmailBot) -> None:
