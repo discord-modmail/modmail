@@ -165,8 +165,8 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             raise PluginNotFoundError(f"Could not find plugin {plugin}")
         logger.trace(f"{BASE_PLUGIN_PATH = }")
 
-        # TODO: rewrite this method as it only needs to (and should) scan the new directory
-        self._resync_extensions()
+        PLUGINS.update(walk_plugins(BASE_PLUGIN_PATH / p.folder_path.name))
+
         files_to_load: List[str] = []
         for plug in plugins[plugin]:
             logger.trace(f"{plug = }")

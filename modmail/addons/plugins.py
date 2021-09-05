@@ -144,14 +144,14 @@ def find_plugins_in_dir(
     return all_plugins
 
 
-def walk_plugins() -> Iterator[Tuple[str, bool]]:
+def walk_plugins(detection_path: pathlib.Path = BASE_PLUGIN_PATH) -> Iterator[Tuple[str, bool]]:
     """Yield plugin names from the modmail.plugins subpackage."""
     # walk all files in the plugins folder
     # this is to ensure folder symlinks are supported,
     # which are important for ease of development.
     # NOTE: We are not using Pathlib's glob utility as it doesn't
     #   support following symlinks, see: https://bugs.python.org/issue33428
-    for path in glob.iglob(f"{BASE_PLUGIN_PATH}/**/*.py", recursive=True):
+    for path in glob.iglob(f"{detection_path}/**/*.py", recursive=True):
 
         logger.trace(f"{path =}")
 
