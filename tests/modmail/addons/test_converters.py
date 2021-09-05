@@ -41,6 +41,10 @@ async def test_converter() -> None:
             "onerandomusername", "repo", "planet", "master", "github",
         ),
         (
+            "github onerandomusername/repo planet @bad-toml",
+            "onerandomusername", "repo", "planet", "bad-toml", "github",
+        ),
+        (
             "gitlab onerandomusername/repo planet @main",
             "onerandomusername", "repo", "planet", "main", "gitlab",
         ),

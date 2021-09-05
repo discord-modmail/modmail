@@ -23,7 +23,7 @@ REPO_REGEX: re.Pattern = re.compile(
     # gitlab allows 255 characters in the username, and 255 max in a project path
     # see https://gitlab.com/gitlab-org/gitlab/-/issues/197976 for more details
     r"(?P<user>[a-zA-Z0-9][a-zA-Z0-9\-]{0,254})\/(?P<repo>[\w\-\.]{1,100}) "
-    r"(?P<addon>[^@\s]+)(?: \@(?P<reflike>[\w\.\s]*))?$"
+    r"(?P<addon>[^@]+[^\s@])(?: \@(?P<reflike>[\w\.\-\S]*))?"
 )
 
 logger: ModmailLogger = logging.getLogger(__name__)
