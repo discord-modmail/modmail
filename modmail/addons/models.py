@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, Literal, NoReturn, Optional, Union
 
 from modmail.utils import MISSING
 
+
 if TYPE_CHECKING:
     import pathlib
     import zipfile

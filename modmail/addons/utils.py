@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from modmail.addons.models import SourceTypeEnum
 from modmail.errors import HTTPError
 
+
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 

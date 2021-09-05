@@ -5,6 +5,7 @@ import pytest
 from modmail.addons.models import Plugin
 from modmail.addons.plugins import parse_plugin_toml_from_string
 
+
 VALID_PLUGIN_TOML = """
 [[plugins]]
 name = "Planet"

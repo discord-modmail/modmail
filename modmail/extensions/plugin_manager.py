@@ -17,6 +17,7 @@ from modmail.addons.plugins import BASE_PLUGIN_PATH, PLUGINS, find_plugins_in_di
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
 from modmail.utils.cogs import BotModes, ExtMetadata
 
+
 if TYPE_CHECKING:
     from modmail.bot import ModmailBot
     from modmail.log import ModmailLogger

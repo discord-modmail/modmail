@@ -6,6 +6,7 @@ import pytest
 
 from modmail.log import ModmailLogger
 
+
 """
 Test custom logging levels
 """

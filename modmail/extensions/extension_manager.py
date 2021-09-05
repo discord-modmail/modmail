@@ -17,6 +17,7 @@ from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
 from modmail.utils.pagination import ButtonPaginator
 
+
 log: ModmailLogger = logging.getLogger(__name__)
 
 

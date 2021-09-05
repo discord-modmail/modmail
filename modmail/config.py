@@ -18,6 +18,7 @@ from pydantic.color import Color as ColorBase
 from pydantic.env_settings import SettingsSourceCallable
 from pydantic.types import conint
 
+
 log = logging.getLogger(__name__)
 
 CONFIG_PATHS: list = [

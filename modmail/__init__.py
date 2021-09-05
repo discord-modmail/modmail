@@ -6,6 +6,7 @@ import coloredlogs
 
 from modmail.log import ModmailLogger
 
+
 logging.TRACE = 5
 logging.NOTICE = 25
 logging.addLevelName(logging.TRACE, "TRACE")
@@ -60,5 +61,6 @@ logging.getLogger("asyncio").setLevel(logging.INFO)
 
 # now that the logger is configured, we can import the bot for using as all and typing
 from modmail.bot import ModmailBot  # noqa: E402
+
 
 __all__ = [ModmailBot, ModmailLogger]

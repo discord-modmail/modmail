@@ -8,6 +8,7 @@ from discord import InteractionType
 
 from modmail.utils.cogs import ModmailCog
 
+
 if TYPE_CHECKING:
     from discord import Interaction
 

@@ -8,6 +8,7 @@ from aiohttp import ClientSession
 from modmail.addons.models import AddonSource, SourceTypeEnum
 from modmail.addons.utils import download_zip_from_source
 
+
 # https://github.com/discord-modmail/modmail/archive/main.zip
 
 

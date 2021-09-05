@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
 
+
 __all__ = ["PluginCog", BotModes, ExtMetadata]
 
 

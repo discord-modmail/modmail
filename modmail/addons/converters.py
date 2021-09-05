@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from modmail.addons.models import Addon, AddonSource, Plugin, SourceTypeEnum
 
+
 if TYPE_CHECKING:
     from discord.ext.commands import Context
 
