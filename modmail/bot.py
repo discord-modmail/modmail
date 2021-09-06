@@ -1,8 +1,7 @@
 import asyncio
 import logging
 import signal
-import typing as t
-from typing import Any
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import arrow
 import discord
@@ -15,6 +14,12 @@ from modmail.addons.plugins import PLUGINS, walk_plugins
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
+
+
+if TYPE_CHECKING:
+    import pathlib
+
+    from modmail.addons.models import Plugin
 
 
 REQUIRED_INTENTS = Intents(
@@ -38,8 +43,11 @@ class ModmailBot(commands.Bot):
 
     def __init__(self, **kwargs):
         self.config = CONFIG
-        self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
-        self.http_session: t.Optional[ClientSession] = None
+        self.start_time: Optional[arrow.Arrow] = None  # arrow.utcnow()
+        self.http_session: Optional[ClientSession] = None
+
+        # keys: plugins, list values: all plugin files
+        self.installed_plugins: Dict["Plugin", List["pathlib.Path"]] = {}
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")

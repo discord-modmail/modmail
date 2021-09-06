@@ -179,6 +179,8 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         logger.debug(f"{files_to_load = }")
         self.batch_manage(Action.LOAD, *files_to_load)
 
+        self.bot.installed_plugins[plugin] = files_to_load
+
         await ctx.reply(f"Installed plugin {plugin.name}.")
 
     # TODO: Implement enable/disable/etc

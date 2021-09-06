@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, Literal, NoReturn, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, NoReturn, Optional, Union
 
 from modmail.utils import MISSING
 
@@ -123,14 +123,18 @@ class Addon:
     def __init__(self) -> NoReturn:
         raise NotImplementedError("Inheriting classes need to implement their own init")
 
+    def __hash__(self):
+        return hash(self.name)
+
 
 class Plugin(Addon):
     """An addon which is a plugin."""
 
     if TYPE_CHECKING:
-        folder_name: Optional[str]
+        folder_name: str
         folder_path: Optional[pathlib.Path]
         extra_kwargs = Dict[str, Any]
+        extension_files = List[pathlib.Path]
 
     def __init__(
         self,
@@ -163,3 +167,9 @@ class Plugin(Addon):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Plugin {self.name!r} description={self.description!r} folder_path={self.folder_path!r}>"
+
+    def __hash__(self):
+        return hash(self.folder_name)
+
+    def __eq__(self, other: Any):
+        return hash(self) == hash(other)
