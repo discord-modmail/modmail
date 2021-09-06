@@ -4,9 +4,9 @@
 !/.gitignore
 
 # ignore the local folder, but not the readme
-local/**
-!local/
-!local/README.md
+/@local/**
+!/@local/
+!/@local/README.md
 
 # ensure __init__.py is uploaded so `plugins` is considered a module
 !/__init__.py
