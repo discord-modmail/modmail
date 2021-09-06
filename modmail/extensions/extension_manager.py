@@ -13,7 +13,7 @@ from discord.ext.commands import Context
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
+from modmail.utils.cogs import BotModeEnum, ExtMetadata, ModmailCog
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
 from modmail.utils.pagination import ButtonPaginator
 
@@ -21,7 +21,7 @@ from modmail.utils.pagination import ButtonPaginator
 log: ModmailLogger = logging.getLogger(__name__)
 
 
-EXT_METADATA = ExtMetadata(load_if_mode=BotModes.DEVELOP, no_unload=True)
+EXT_METADATA = ExtMetadata(load_if_mode=BotModeEnum.DEVELOP, no_unload=True)
 
 
 class Action(Enum):

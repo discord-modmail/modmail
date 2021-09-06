@@ -15,14 +15,14 @@ from modmail.addons.errors import PluginNotFoundError
 from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
 from modmail.addons.plugins import BASE_PLUGIN_PATH, PLUGINS, find_plugins_in_dir, walk_plugins
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
-from modmail.utils.cogs import BotModes, ExtMetadata
+from modmail.utils.cogs import BotModeEnum, ExtMetadata
 
 
 if TYPE_CHECKING:
     from modmail.bot import ModmailBot
     from modmail.log import ModmailLogger
 
-EXT_METADATA = ExtMetadata(load_if_mode=BotModes.PRODUCTION, no_unload=True)
+EXT_METADATA = ExtMetadata(load_if_mode=BotModeEnum.PRODUCTION, no_unload=True)
 
 logger: ModmailLogger = logging.getLogger(__name__)
 

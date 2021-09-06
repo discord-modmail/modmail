@@ -10,7 +10,7 @@ import typing as t
 from modmail import extensions
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BOT_MODES, BotModes, ExtMetadata
+from modmail.utils.cogs import BOT_MODES, BotModeEnum, ExtMetadata
 
 
 log: ModmailLogger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ def determine_bot_mode() -> int:
     The configuration system uses true/false values, so we need to turn them into an integer for bitwise.
     """
     bot_mode = 0
-    for mode in BotModes:
+    for mode in BotModeEnum:
         if getattr(CONFIG.dev.mode, unqualify(str(mode)).lower(), True):
             bot_mode += mode.value
     return bot_mode

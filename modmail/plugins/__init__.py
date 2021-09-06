@@ -1,1 +1,1 @@
-from .helpers import BotModes, ExtMetadata, PluginCog
+from .helpers import BotModeEnum, ExtMetadata, PluginCog
