@@ -108,11 +108,6 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """Refreshes the list of plugins from disk, but do not unload any currently active."""
         await self.resync_extensions.callback(self, ctx)
 
-    @plugins_group.command("convert", hidden=True)
-    async def plugin_convert_test(self, ctx: Context, *, plugin: SourceAndPluginConverter) -> None:
-        """Convert a plugin and given its source information."""
-        await ctx.send(f"```py\n{plugin.__repr__()}```")
-
     @plugins_group.command(name="install", aliases=("",))
     async def install_plugins(self, ctx: Context, *, source_and_plugin: SourceAndPluginConverter) -> None:
         """Install plugins from provided repo."""
