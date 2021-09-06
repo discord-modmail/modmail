@@ -16,6 +16,7 @@ from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
 from modmail.addons.plugins import BASE_PLUGIN_PATH, PLUGINS, find_plugins_in_dir, walk_plugins
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
 from modmail.utils.cogs import BotModeEnum, ExtMetadata
+from modmail.utils.extensions import BOT_MODE
 
 
 if TYPE_CHECKING:
@@ -25,6 +26,8 @@ if TYPE_CHECKING:
 EXT_METADATA = ExtMetadata(load_if_mode=BotModeEnum.PRODUCTION, no_unload=True)
 
 logger: ModmailLogger = logging.getLogger(__name__)
+
+PLUGIN_DEV_ENABLED = BOT_MODE & BotModeEnum.PLUGIN_DEV
 
 
 class PluginPathConverter(ExtensionConverter):
@@ -64,7 +67,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """Install, uninstall, disable, update, and enable installed plugins."""
         await ctx.send_help(ctx.command)
 
-    @plugins_group.command(name="load", aliases=("l",))
+    @plugins_group.command(name="load", aliases=("l",), enabled=PLUGIN_DEV_ENABLED)
     async def load_plugin(self, ctx: Context, *plugins: PluginPathConverter) -> None:
         r"""
         Load plugins given their fully qualified or unqualified names.
@@ -73,7 +76,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.load_extensions.callback(self, ctx, *plugins)
 
-    @plugins_group.command(name="unload", aliases=("ul",))
+    @plugins_group.command(name="unload", aliases=("ul",), enabled=PLUGIN_DEV_ENABLED)
     async def unload_plugins(self, ctx: Context, *plugins: PluginPathConverter) -> None:
         r"""
         Unload currently loaded plugins given their fully qualified or unqualified names.
@@ -82,7 +85,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.unload_extensions.callback(self, ctx, *plugins)
 
-    @plugins_group.command(name="reload", aliases=("r", "rl"))
+    @plugins_group.command(name="reload", aliases=("r", "rl"), enabled=PLUGIN_DEV_ENABLED)
     async def reload_plugins(self, ctx: Context, *plugins: PluginPathConverter) -> None:
         r"""
         Reload plugins given their fully qualified or unqualified names.
@@ -103,7 +106,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.list_extensions.callback(self, ctx)
 
-    @plugins_group.command(name="refresh", aliases=("rewalk", "rescan"))
+    @plugins_group.command(name="refresh", aliases=("rewalk", "rescan"), enabled=PLUGIN_DEV_ENABLED)
     async def resync_plugins(self, ctx: Context) -> None:
         """Refreshes the list of plugins from disk, but do not unload any currently active."""
         await self.resync_extensions.callback(self, ctx)

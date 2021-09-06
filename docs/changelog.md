@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Running the bot is still the same method, but it loads extensions and plugins now.
     - `bot.start()` can also be used if already in a running event loop. Keep in mind using it will require
         handling loop errors, as run() does this automatically.
+- Disabled some plugin management commands if PLUGIN_DEV mode is not set (#69)
 
 ### Internal
 
