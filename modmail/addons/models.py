@@ -27,6 +27,7 @@ class GitHost:
     base_api_url: str
     repo_api_url: str
     zip_archive_api_url: str
+    zip_archive_api_url_with_ref: str
 
 
 class Github(GitHost):
@@ -36,6 +37,7 @@ class Github(GitHost):
     base_api_url = "https://api.github.com"
     repo_api_url = f"{base_api_url}/repos/{{user}}/{{repo}}"
     zip_archive_api_url = f"{repo_api_url}/zipball"
+    zip_archive_api_url_with_ref = f"{zip_archive_api_url}/{{ref}}"
 
 
 class Gitlab(GitHost):
@@ -44,6 +46,7 @@ class Gitlab(GitHost):
     base_api_url = "https://gitlab.com/api/v4"
     repo_api_url = f"{base_api_url}/projects/{{user}}%2F{{repo}}"
     zip_archive_api_url = f"{repo_api_url}/repository/archive.zip"
+    zip_archive_api_url_with_ref = f"{zip_archive_api_url}?sha={{ref}}"
 
 
 Host = Literal["github", "gitlab"]
@@ -86,12 +89,15 @@ class AddonSource:
     def from_repo(cls, user: str, repo: str, reflike: str = None, githost: Host = "github") -> AddonSource:
         """Create an AddonSource from a repo."""
         if githost == "github":
-            Host = Github  # noqa: N806
+            Host = Github()  # noqa: N806
         elif githost == "gitlab":
-            Host = Gitlab  # noqa: N806
+            Host = Gitlab()  # noqa: N806
         else:
             raise TypeError(f"{githost} is not a valid host.")
-        zip_url = Host.zip_archive_api_url.format(user=user, repo=repo)
+        if reflike is not None:
+            zip_url = Host.zip_archive_api_url_with_ref.format(user=user, repo=repo, ref=reflike)
+        else:
+            zip_url = Host.zip_archive_api_url.format(user=user, repo=repo)
 
         source = cls(zip_url, SourceTypeEnum.REPO)
         source.repo = repo
