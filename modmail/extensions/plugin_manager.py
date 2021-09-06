@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Dict, List
 
 from discord.ext import commands
 from discord.ext.commands import Context
@@ -30,7 +30,7 @@ logger: ModmailLogger = logging.getLogger(__name__)
 PLUGIN_DEV_ENABLED = BOT_MODE & BotModeEnum.PLUGIN_DEV
 
 
-class PluginPathConverter(ExtensionConverter):
+class PluginDevPathConverter(ExtensionConverter):
     """
     Fully qualify the name of a plugin and ensure it exists.
 
@@ -40,6 +40,39 @@ class PluginPathConverter(ExtensionConverter):
     source_list = PLUGINS
     type = "plugin"
     NO_UNLOAD = None
+
+
+class PluginConverter(commands.Converter):
+    """Convert a plugin name into a full plugin with path and related args."""
+
+    async def convert(self, ctx: Context, argument: str) -> List[str]:
+        """Converts a plugin into a full plugin with a path and all other attributes."""
+        loaded_plugs: Dict[Plugin, List[str]] = ctx.bot.installed_plugins
+
+        for plug in loaded_plugs:
+            if argument in (plug.name, plug.folder_name):
+                return plug
+
+        raise commands.BadArgument(f"{argument} is not in list of installed plugins.")
+
+
+class PluginFilesConverter(commands.Converter):
+    """
+    Convert a name of a plugin into a full plugin.
+
+    In this case Plugins are group of extensions, as if they have multiple files in their directory,
+    they will be treated as one plugin for the sake of managing.
+    """
+
+    async def convert(self, ctx: Context, argument: str) -> List[str]:
+        """Converts a provided plugin into a list of its paths."""
+        loaded_plugs: Dict[Plugin, List[str]] = ctx.bot.installed_plugins
+
+        for plug in loaded_plugs:
+            if argument in (plug.name, plug.folder_name):
+                return loaded_plugs[plug]
+
+        raise commands.BadArgument(f"{argument} is not an installed plugin.")
 
 
 class PluginManager(ExtensionManager, name="Plugin Manager"):
@@ -75,7 +108,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await ctx.send_help(ctx.command)
 
     @plugin_dev_group.command(name="load", aliases=("l",))
-    async def load_plugin(self, ctx: Context, *plugins: PluginPathConverter) -> None:
+    async def load_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
         Load plugins given their fully qualified or unqualified names.
 
@@ -84,7 +117,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await self.load_extensions.callback(self, ctx, *plugins)
 
     @plugin_dev_group.command(name="unload", aliases=("ul",))
-    async def unload_plugins(self, ctx: Context, *plugins: PluginPathConverter) -> None:
+    async def unload_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
         Unload currently loaded plugins given their fully qualified or unqualified names.
 
@@ -93,7 +126,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await self.unload_extensions.callback(self, ctx, *plugins)
 
     @plugin_dev_group.command(name="reload", aliases=("r", "rl"))
-    async def reload_plugins(self, ctx: Context, *plugins: PluginPathConverter) -> None:
+    async def reload_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
         Reload plugins given their fully qualified or unqualified names.
 
@@ -133,7 +166,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             # TODO: check the path of a local plugin
             await ctx.send("This plugin is a local plugin, and likely can be loaded with the load command.")
             return
-        logger.debug(f"Received command to download plugin {plugin.name} from {source.zip_url}")
+        logger.debug(f"Received command to download plugin {plugin.name} from https://{source.zip_url}")
         try:
             directory = await addon_utils.download_and_unpack_source(source, self.bot.http_session)
         except errors.HTTPError:
@@ -154,8 +187,9 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         for p in plugins.keys():
             # check if user-provided plugin matches either plugin name or folder name
             if plugin.name in (p.name, p.folder_name):
+                install_path = BASE_PLUGIN_PATH / p.folder_path.name
                 try:
-                    shutil.copytree(p.folder_path, BASE_PLUGIN_PATH / p.folder_path.name, dirs_exist_ok=True)
+                    shutil.copytree(p.folder_path, install_path, dirs_exist_ok=True)
                 except FileExistsError:
                     await ctx.send(
                         "Plugin already seems to be installed. "
@@ -163,6 +197,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                         "or a plugin of the same name existing."
                     )
                     return
+                p.installed_path = install_path
                 plugin = p
                 break
 
@@ -176,7 +211,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         for plug in plugins[plugin]:
             logger.trace(f"{plug = }")
             try:
-                plug = await PluginPathConverter().convert(None, plug.name.rstrip(".py"))
+                plug = await PluginDevPathConverter().convert(None, plug.name.rstrip(".py"))
             except commands.BadArgument:
                 pass
             else:
@@ -189,6 +224,41 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         self.bot.installed_plugins[plugin] = files_to_load
 
         await ctx.reply(f"Installed plugin {plugin.name}.")
+
+    @plugins_group.command(name="uninstall", aliases=("rm",))
+    async def uninstall_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
+        """Uninstall a provided plugin, given the name of the plugin."""
+        plugin: Plugin = plugin
+
+        # plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
+        await self.disable_plugin.callback(self, ctx, plugin=plugin)
+
+        shutil.rmtree(plugin.installed_path)
+
+        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
+        for file_ in plugin_files:
+            del PLUGINS[file_]
+        del self.bot.installed_plugins[plugin]
+
+        await ctx.send(plugin.installed_path)
+
+    @plugins_group.command(name="enable")
+    async def enable_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
+        """Enable a provided plugin, given the name or folder of the plugin."""
+        plugin: Plugin = plugin
+
+        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
+
+        await self.load_plugins.callback(self, ctx, *plugin_files)
+
+    @plugins_group.command(name="disable")
+    async def disable_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
+        """Disable a provided plugin, given the name or folder of the plugin."""
+        plugin: Plugin = plugin
+
+        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
+
+        await self.unload_plugins.callback(self, ctx, *plugin_files)
 
     # TODO: Implement enable/disable/etc
 

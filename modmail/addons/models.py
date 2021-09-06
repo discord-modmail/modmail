@@ -139,8 +139,9 @@ class Plugin(Addon):
     if TYPE_CHECKING:
         folder_name: str
         folder_path: Optional[pathlib.Path]
-        extra_kwargs = Dict[str, Any]
-        extension_files = List[pathlib.Path]
+        extra_kwargs: Dict[str, Any]
+        installed_path: Optional[pathlib.Path]
+        extension_files: List[pathlib.Path]
 
     def __init__(
         self,

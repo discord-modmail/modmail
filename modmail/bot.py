@@ -17,8 +17,6 @@ from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 
 
 if TYPE_CHECKING:
-    import pathlib
-
     from modmail.addons.models import Plugin
 
 
@@ -47,7 +45,7 @@ class ModmailBot(commands.Bot):
         self.http_session: Optional[ClientSession] = None
 
         # keys: plugins, list values: all plugin files
-        self.installed_plugins: Dict["Plugin", List["pathlib.Path"]] = {}
+        self.installed_plugins: Dict["Plugin", List[str]] = {}
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
