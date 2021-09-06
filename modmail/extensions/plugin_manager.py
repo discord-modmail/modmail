@@ -67,7 +67,14 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """Install, uninstall, disable, update, and enable installed plugins."""
         await ctx.send_help(ctx.command)
 
-    @plugins_group.command(name="load", aliases=("l",), enabled=PLUGIN_DEV_ENABLED)
+    @plugins_group.group(
+        "dev", aliases=("developer", "d"), invoke_without_command=True, enabled=PLUGIN_DEV_ENABLED
+    )
+    async def plugin_dev_group(self, ctx: Context) -> None:
+        """Manage plugin files directly, rather than whole plugin objects."""
+        await ctx.send_help(ctx.command)
+
+    @plugin_dev_group.command(name="load", aliases=("l",))
     async def load_plugin(self, ctx: Context, *plugins: PluginPathConverter) -> None:
         r"""
         Load plugins given their fully qualified or unqualified names.
@@ -76,7 +83,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.load_extensions.callback(self, ctx, *plugins)
 
-    @plugins_group.command(name="unload", aliases=("ul",), enabled=PLUGIN_DEV_ENABLED)
+    @plugin_dev_group.command(name="unload", aliases=("ul",))
     async def unload_plugins(self, ctx: Context, *plugins: PluginPathConverter) -> None:
         r"""
         Unload currently loaded plugins given their fully qualified or unqualified names.
@@ -85,7 +92,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.unload_extensions.callback(self, ctx, *plugins)
 
-    @plugins_group.command(name="reload", aliases=("r", "rl"), enabled=PLUGIN_DEV_ENABLED)
+    @plugin_dev_group.command(name="reload", aliases=("r", "rl"))
     async def reload_plugins(self, ctx: Context, *plugins: PluginPathConverter) -> None:
         r"""
         Reload plugins given their fully qualified or unqualified names.
@@ -106,7 +113,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.list_extensions.callback(self, ctx)
 
-    @plugins_group.command(name="refresh", aliases=("rewalk", "rescan"), enabled=PLUGIN_DEV_ENABLED)
+    @plugin_dev_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def resync_plugins(self, ctx: Context) -> None:
         """Refreshes the list of plugins from disk, but do not unload any currently active."""
         await self.resync_extensions.callback(self, ctx)
