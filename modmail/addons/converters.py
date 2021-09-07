@@ -49,7 +49,7 @@ class SourceAndPluginConverter(AddonConverter):
         if match is not None:
             logger.debug("Matched as a local file, creating a Plugin without a source url.")
             source = AddonSource(None, SourceTypeEnum.LOCAL)
-            return Plugin(name=match.group("addon")), source
+            return Plugin(match.group("addon")), source
         match = ZIP_REGEX.fullmatch(argument)
         if match is not None:
             logger.debug("Matched as a zip, creating a Plugin from zip.")

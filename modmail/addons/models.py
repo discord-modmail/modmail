@@ -4,8 +4,6 @@ import re
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, NoReturn, Optional, Union
 
-from modmail.utils import MISSING
-
 
 if TYPE_CHECKING:
     import pathlib
@@ -145,24 +143,21 @@ class Plugin(Addon):
 
     def __init__(
         self,
-        name: str,
+        folder: str,
         description: Optional[str] = None,
         *,
         min_bot_version: Optional[str] = None,
-        folder: Optional[str] = MISSING,
+        name: Optional[str] = None,
         folder_path: Optional[pathlib.Path] = None,
         local: bool = False,
         **kw,
     ):
-        self.name = name
+        self.folder_name = folder
         self.description = description
-        if folder is MISSING:
-            if folder_path is not None:
-                self.folder_name = folder or folder_path.name or name
-            else:
-                self.folder_name = folder or name
+        if name is None:
+            self.name = self.folder_name
         else:
-            self.folder_name = folder
+            self.name = name
         self.folder_path = folder_path
         self.min_bot_version = min_bot_version
         self.local = local
@@ -173,7 +168,10 @@ class Plugin(Addon):
         self.extra_kwargs = kw
 
     def __repr__(self) -> str:  # pragma: no cover
-        return f"<Plugin {self.name!r} description={self.description!r} folder_path={self.folder_path!r}>"
+        return (
+            f"<Plugin {self.name!r} description={self.description!r} "
+            f"folder_name={self.folder_name!r} folder_path={self.folder_path!r}>"
+        )
 
     def __hash__(self):
         return hash(self.folder_name)

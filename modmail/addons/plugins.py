@@ -46,8 +46,8 @@ def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /) -> List[Plug
 
         found_plugins.append(
             Plugin(
-                plug_entry["name"],
-                folder=plug_entry.get("folder"),
+                plug_entry["folder"],
+                name=plug_entry.get("name"),
                 description=plug_entry.get("description"),
                 min_bot_version=plug_entry.get("min_bot_version"),
             )

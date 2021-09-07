@@ -72,9 +72,9 @@ def test_addonsource_from_zip(url: str) -> None:
 class TestPlugin:
     """Test the Plugin class creation."""
 
-    @pytest.mark.parametrize("name", [("earth"), ("mona-lisa")])
-    def test_plugin_init(self, name: str) -> None:
+    @pytest.mark.parametrize("folder", [("earth"), ("mona-lisa")])
+    def test_plugin_init(self, folder: str) -> None:
         """Create a plugin model, and ensure it has the right properties."""
-        plugin = Plugin(name)
+        plugin = Plugin(folder)
         assert isinstance(plugin, Plugin)
-        assert plugin.name == name
+        assert plugin.folder_name == folder
