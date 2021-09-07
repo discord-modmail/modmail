@@ -87,8 +87,8 @@ class BaseSettings(PydanticBaseSettings):
 
 
 class BotConfig(BaseSettings):
-    prefix: Optional[str] = "?"
-    token: str
+    prefix: str = "?"
+    token: str = ""
     sqlalchemy_database_uri: Optional[str] = None
 
     class Config:
