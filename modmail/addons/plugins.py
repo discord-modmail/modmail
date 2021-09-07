@@ -174,10 +174,6 @@ def find_local_plugins(
                     if p.folder_name == path.name:
                         p.folder_path = path
                         all_plugins[p] = list()
-            else:
-                if path.name != "__pycache__":
-                    temp_plugin = Plugin(path.name, folder_path=path)
-                    all_plugins[temp_plugin] = list()
 
     logger.debug(f"Local plugins detected: {[p.name for p in all_plugins.keys()]}")
 
