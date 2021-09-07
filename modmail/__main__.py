@@ -5,6 +5,7 @@ from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils.embeds import patch_embed
 
+
 try:
     # noinspection PyUnresolvedReferences
     from colorama import init

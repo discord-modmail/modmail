@@ -21,6 +21,7 @@ from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata
 from modmail.utils.extensions import BOT_MODE, unqualify
 
+
 log: ModmailLogger = logging.getLogger(__name__)
 
 

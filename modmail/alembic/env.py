@@ -8,12 +8,14 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
+
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_parent_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, parent_parent_dir)
 
 from modmail.config import CONFIG  # noqa: I201, E402
 from modmail.models.base import Base  # noqa: I201, E402
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -6,6 +6,7 @@ from modmail.extensions.extension_manager import ExtensionConverter, ExtensionMa
 from modmail.utils.cogs import BotModes, ExtMetadata
 from modmail.utils.plugins import PLUGINS, walk_plugins
 
+
 EXT_METADATA = ExtMetadata(load_if_mode=BotModes.PRODUCTION)
 
 
