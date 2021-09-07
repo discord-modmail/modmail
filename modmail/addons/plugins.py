@@ -144,7 +144,70 @@ def find_plugins_in_dir(
     return all_plugins
 
 
-def walk_plugins(detection_path: pathlib.Path = BASE_PLUGIN_PATH) -> Iterator[Tuple[str, bool]]:
+def find_local_plugins(
+    detection_path: pathlib.Path = BASE_PLUGIN_PATH, /  # noqa: W504
+) -> Dict[Plugin, List[pathlib.Path]]:
+    """
+    Walks the local path, and determines which files are local plugins.
+
+    Yields a list of plugins,
+    """
+    all_plugins: Dict[Plugin, List[pathlib.Path]] = {}
+
+    toml_plugins: List[Plugin] = []
+    toml_path = detection_path / "local.toml"
+    if toml_path.exists():
+        # parse the toml
+        with open(toml_path) as toml_file:
+            toml_plugins = parse_plugin_toml_from_string(toml_file.read())
+    else:
+        raise NoPluginTomlFoundError(toml_path, "does not exist")
+
+    logger.debug(f"{toml_plugins =}")
+    toml_plugin_names = [p.folder_name for p in toml_plugins]
+    for path in detection_path.iterdir():
+        logger.debug(f"detection_path / path: {path}")
+        if path.is_dir():
+            # use an existing toml plugin object
+            if path.name in toml_plugin_names:
+                for p in toml_plugins:
+                    if p.folder_name == path.name:
+                        p.folder_path = path
+                        all_plugins[p] = list()
+            else:
+                if path.name != "__pycache__":
+                    temp_plugin = Plugin(path.name, folder_path=path)
+                    all_plugins[temp_plugin] = list()
+
+    logger.debug(f"Local plugins detected: {[p.name for p in all_plugins.keys()]}")
+
+    for plugin_ in all_plugins.keys():
+        logger.trace(f"{plugin_.folder_path =}")
+        plugin_.local = True  # take this as an opportunity to configure local to True on all plugins
+        for dirpath, dirnames, filenames in os.walk(plugin_.folder_path):
+            logger.trace(f"{dirpath =}, {dirnames =}, {filenames =}")
+            for list_ in dirnames, filenames:
+                logger.trace(f"{list_ =}")
+                for file in list_:
+                    logger.trace(f"{file =}")
+                    if file == dirpath:  # don't include files that are plugin directories
+                        continue
+                    if "__pycache__" in file or "__pycache__" in dirpath:
+                        continue
+
+                    relative_path = pathlib.Path(dirpath + "/" + file).relative_to(BASE_PLUGIN_PATH)
+                    module_name = relative_path.__str__().rstrip(".py").replace("/", ".")
+                    module_name = plugins.__name__ + "." + module_name
+
+                    all_plugins[plugin_].append(module_name)
+
+    logger.debug(f"{all_plugins.keys() = }")
+    logger.debug(f"{all_plugins.values() = }")
+
+    return all_plugins
+
+
+def walk_plugin_files(detection_path: pathlib.Path = BASE_PLUGIN_PATH) -> Iterator[Tuple[str, bool]]:
     """Yield plugin names from the modmail.plugins subpackage."""
     # walk all files in the plugins folder
     # this is to ensure folder symlinks are supported,

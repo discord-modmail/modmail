@@ -3,8 +3,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
-from typing import TYPE_CHECKING, Dict, List
+from collections import defaultdict
+from typing import TYPE_CHECKING, Dict, List, Mapping
 
+from discord import Colour, Embed
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -13,10 +15,11 @@ from modmail import errors
 from modmail.addons.converters import SourceAndPluginConverter
 from modmail.addons.errors import PluginNotFoundError
 from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
-from modmail.addons.plugins import BASE_PLUGIN_PATH, PLUGINS, find_plugins_in_dir, walk_plugins
+from modmail.addons.plugins import BASE_PLUGIN_PATH, PLUGINS, find_plugins_in_dir, walk_plugin_files
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
 from modmail.utils.cogs import BotModeEnum, ExtMetadata
 from modmail.utils.extensions import BOT_MODE
+from modmail.utils.pagination import ButtonPaginator
 
 
 if TYPE_CHECKING:
@@ -84,7 +87,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     def __init__(self, bot: ModmailBot):
         super().__init__(bot)
         self.all_extensions = PLUGINS
-        self.refresh_method = walk_plugins
+        self.refresh_method = walk_plugin_files
 
     def get_black_listed_extensions(self) -> list:
         """
@@ -136,13 +139,13 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.reload_extensions.callback(self, ctx, *plugins)
 
-    @plugins_group.command(name="list", aliases=("all", "ls"))
-    async def list_plugins(self, ctx: Context) -> None:
+    @plugin_dev_group.command(name="list", aliases=("all", "ls"))
+    async def dev_list_plugins(self, ctx: Context) -> None:
         """
-        Get a list of all plugins, including their loaded status.
+        Get a list of all plugin files, including their loaded status.
 
-        Red indicates that the plugin is unloaded.
-        Green indicates that the plugin is currently loaded.
+        Red indicates that the plugin file is unloaded.
+        Green indicates that the plugin file is currently loaded.
         """
         await self.list_extensions.callback(self, ctx)
 
@@ -205,7 +208,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             raise PluginNotFoundError(f"Could not find plugin {plugin}")
         logger.trace(f"{BASE_PLUGIN_PATH = }")
 
-        PLUGINS.update(walk_plugins(BASE_PLUGIN_PATH / p.folder_path.name))
+        PLUGINS.update(walk_plugin_files(BASE_PLUGIN_PATH / p.folder_path.name))
 
         files_to_load: List[str] = []
         for plug in plugins[plugin]:
@@ -260,7 +263,55 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         await self.unload_plugins.callback(self, ctx, *plugin_files)
 
-    # TODO: Implement enable/disable/etc
+    def group_plugin_statuses(self) -> Mapping[str, str]:
+        """Return a mapping of plugin names and statuses to their module."""
+        plugins = defaultdict(str)
+
+        for plug, files in self.bot.installed_plugins.items():
+            plug_status = []
+            for ext in files:
+                if ext in self.bot.extensions:
+                    status = True
+                else:
+                    status = False
+                plug_status.append(status)
+
+            if all(plug_status):
+                status = ":green_circle:"
+            elif any(plug_status):
+                status = ":yellow_circle:"
+            else:
+                status = ":red_circle:"
+
+            plugins[plug.name] = status
+
+        return dict(plugins)
+
+    @plugins_group.command(name="list", aliases=("all", "ls"))
+    async def list_plugins(self, ctx: Context) -> None:
+        """
+        Get a list of all plugins, including their loaded status.
+
+        Green indicates that the extension is fully loaded.
+        Yellow indicates that the plugin is partially loaded.
+        Red indicates that the plugin is fully unloaded.
+        """
+        embed = Embed(colour=Colour.blurple())
+        embed.set_author(
+            name=f"{self.type.capitalize()} List",
+        )
+
+        lines = []
+        plugin_statuses = self.group_plugin_statuses()
+        for plugin_name, status in sorted(plugin_statuses.items()):
+            # plugin_name = plugin_name.replace("_", " ").title()
+            lines.append(f"{status}  **{plugin_name}**")
+
+        logger.debug(f"{ctx.author} requested a list of all {self.type}s. " "Returning a paginated list.")
+
+        await ButtonPaginator.paginate(
+            lines or f"There are no {self.type}s installed.", ctx.message, embed=embed
+        )
 
     # This cannot be static (must have a __func__ attribute).
     async def cog_check(self, ctx: Context) -> bool:

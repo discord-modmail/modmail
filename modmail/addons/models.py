@@ -151,7 +151,7 @@ class Plugin(Addon):
         min_bot_version: Optional[str] = None,
         folder: Optional[str] = MISSING,
         folder_path: Optional[pathlib.Path] = None,
-        enabled: bool = True,
+        local: bool = False,
         **kw,
     ):
         self.name = name
@@ -165,7 +165,7 @@ class Plugin(Addon):
             self.folder_name = folder
         self.folder_path = folder_path
         self.min_bot_version = min_bot_version
-        self.enabled = enabled
+        self.local = local
 
         # store any extra kwargs here
         # this is to ensure backwards compatiablilty with plugins that support older versions,

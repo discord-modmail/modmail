@@ -10,7 +10,8 @@ from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
 
-from modmail.addons.plugins import PLUGINS, walk_plugins
+from modmail.addons.errors import NoPluginTomlFoundError
+from modmail.addons.plugins import PLUGINS, find_local_plugins, walk_plugin_files
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
@@ -186,8 +187,7 @@ class ModmailBot(commands.Bot):
 
     def load_plugins(self) -> None:
         """Load all enabled plugins."""
-        PLUGINS.update(walk_plugins())
-
+        PLUGINS.update(walk_plugin_files())
         for plugin, should_load in PLUGINS.items():
             if should_load:
                 self.logger.debug(f"Loading plugin {plugin}")
@@ -197,6 +197,13 @@ class ModmailBot(commands.Bot):
                     self.load_extension(plugin)
                 except Exception:
                     self.logger.error("Failed to load plugin {0}".format(plugin), exc_info=True)
+
+        try:
+            plugins = find_local_plugins()
+        except NoPluginTomlFoundError:
+            pass
+        else:
+            self.installed_plugins.update(plugins)
 
     def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         """
