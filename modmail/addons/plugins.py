@@ -37,22 +37,67 @@ PLUGINS: Dict[str, Tuple[bool, bool]] = dict()
 
 PLUGIN_TOML = "plugin.toml"
 
+LOCAL_PLUGIN_TOML = BASE_PLUGIN_PATH / "local.toml"
 
-def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /) -> List[Plugin]:
+
+def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /, local: bool = False) -> List[Plugin]:
     """Parses a plugin toml, given the string loaded in."""
     doc = atoml.parse(unparsed_plugin_toml_str)
     found_plugins: List[Plugin] = []
     for plug_entry in doc["plugins"]:
-
+        if local:
+            enabled = plug_entry.get("enabled", True)
+        else:
+            enabled = None
         found_plugins.append(
             Plugin(
                 plug_entry.get("directory") or plug_entry["folder"],
                 name=plug_entry.get("name"),
                 description=plug_entry.get("description"),
                 min_bot_version=plug_entry.get("min_bot_version"),
+                enabled=enabled,
             )
         )
     return found_plugins
+
+
+def update_local_toml_enable_or_disable(plugin: Plugin, /) -> None:
+    """
+    Updates the local toml so local plugins stay disabled or enabled.
+
+    This is the local implementation for disabling and enabling to actually disable and enable plugins.
+    Non local plugins are saved in the database.
+    """
+    if not LOCAL_PLUGIN_TOML.exists():
+        raise NoPluginTomlFoundError
+
+    with LOCAL_PLUGIN_TOML.open("r") as f:
+        doc = atoml.loads(f.read())
+    plugs = doc["plugins"]
+
+    plug_found = False
+    for plug_entry in plugs:
+        folder_name = plug_entry.get("directory") or plug_entry["folder"]
+        if folder_name == plugin.folder_name:
+            plug_entry["enabled"] = plugin.enabled
+            plug_found = True
+            break
+
+    if not plug_found:
+        # need to write a new entry
+        logger.trace(f"Local plugin toml does not contain an entry for {plugin}")
+
+        plugin_table = atoml.table()
+        if plugin.name != plugin.folder_name:
+            plugin_table.add("name", atoml.item(plugin.name))
+
+        plugin_table.add("directory", atoml.item(plugin.folder_name))
+        plug_entry["enabled"] = plugin.enabled
+        plugs.append(plugin_table)
+        print(plugs)
+
+    with open(LOCAL_PLUGIN_TOML, "w") as f:
+        f.write(doc.as_string())
 
 
 def find_plugins_in_dir(
@@ -146,20 +191,20 @@ def find_plugins_in_dir(
 
 def find_local_plugins(
     detection_path: pathlib.Path = BASE_PLUGIN_PATH, /  # noqa: W504
-) -> Dict[Plugin, List[pathlib.Path]]:
+) -> Dict[Plugin, List[str]]:
     """
     Walks the local path, and determines which files are local plugins.
 
     Yields a list of plugins,
     """
-    all_plugins: Dict[Plugin, List[pathlib.Path]] = {}
+    all_plugins: Dict[Plugin, List[str]] = {}
 
     toml_plugins: List[Plugin] = []
-    toml_path = detection_path / "local.toml"
+    toml_path = LOCAL_PLUGIN_TOML
     if toml_path.exists():
         # parse the toml
         with open(toml_path) as toml_file:
-            toml_plugins = parse_plugin_toml_from_string(toml_file.read())
+            toml_plugins = parse_plugin_toml_from_string(toml_file.read(), local=True)
     else:
         raise NoPluginTomlFoundError(toml_path, "does not exist")
 
@@ -182,20 +227,17 @@ def find_local_plugins(
         plugin_.local = True  # take this as an opportunity to configure local to True on all plugins
         for dirpath, dirnames, filenames in os.walk(plugin_.folder_path):
             logger.trace(f"{dirpath =}, {dirnames =}, {filenames =}")
-            for list_ in dirnames, filenames:
+            for list_ in dirnames, [dirpath]:
                 logger.trace(f"{list_ =}")
-                for file in list_:
-                    logger.trace(f"{file =}")
-                    if file == dirpath:  # don't include files that are plugin directories
-                        continue
-                    if "__pycache__" in file or "__pycache__" in dirpath:
+                for dir_ in list_:
+                    logger.trace(f"{dir_ =}")
+
+                    if "__pycache__" in dir_ or "__pycache__" in dirpath:
                         continue
 
-                    relative_path = pathlib.Path(dirpath + "/" + file).relative_to(BASE_PLUGIN_PATH)
-                    module_name = relative_path.__str__().rstrip(".py").replace("/", ".")
-                    module_name = plugins.__name__ + "." + module_name
+                    modules = [x for x, y in walk_plugin_files(dirpath)]
 
-                    all_plugins[plugin_].append(module_name)
+                    all_plugins[plugin_].extend(modules)
 
     logger.debug(f"{all_plugins.keys() = }")
     logger.debug(f"{all_plugins.values() = }")
@@ -259,4 +301,4 @@ def walk_plugin_files(detection_path: pathlib.Path = BASE_PLUGIN_PATH) -> Iterat
         )
 
         # Presume Production Mode/Metadata defaults if metadata var does not exist.
-        yield imported.__name__, ExtMetadata.load_if_mode
+        yield imported.__name__, bool(ExtMetadata.load_if_mode)

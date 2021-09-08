@@ -31,11 +31,11 @@ BOT_MODES = BotModeEnum
 class ExtMetadata:
     """Ext metadata class to determine if extension should load at runtime depending on bot configuration."""
 
-    load_if_mode: int = BotModeEnum.PRODUCTION
+    load_if_mode: BotModeEnum = BotModeEnum.PRODUCTION
     # this is to determine if the cog is allowed to be unloaded.
     no_unload: bool = False
 
-    def __init__(self, load_if_mode: int = BotModeEnum.PRODUCTION, no_unload: bool = False) -> "ExtMetadata":
+    def __init__(self, load_if_mode: BotModeEnum = BotModeEnum.PRODUCTION, no_unload: bool = False):
         self.load_if_mode = load_if_mode
         self.no_unload = no_unload
 

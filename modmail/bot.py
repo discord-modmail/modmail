@@ -188,8 +188,22 @@ class ModmailBot(commands.Bot):
     def load_plugins(self) -> None:
         """Load all enabled plugins."""
         PLUGINS.update(walk_plugin_files())
+        try:
+            plugins = find_local_plugins()
+        except NoPluginTomlFoundError:
+            dont_load_at_start = []
+        else:
+            self.installed_plugins.update(plugins)
+
+            dont_load_at_start = []
+            for plug, modules in self.installed_plugins.items():
+                if plug.enabled:
+                    continue
+                self.logger.debug(f"Not loading {plug.__str__()} on start since it's not enabled.")
+                dont_load_at_start.extend(modules)
+
         for plugin, should_load in PLUGINS.items():
-            if should_load:
+            if should_load and plugin not in dont_load_at_start:
                 self.logger.debug(f"Loading plugin {plugin}")
                 try:
                     # since we're loading user generated content,
@@ -197,13 +211,8 @@ class ModmailBot(commands.Bot):
                     self.load_extension(plugin)
                 except Exception:
                     self.logger.error("Failed to load plugin {0}".format(plugin), exc_info=True)
-
-        try:
-            plugins = find_local_plugins()
-        except NoPluginTomlFoundError:
-            pass
-        else:
-            self.installed_plugins.update(plugins)
+            else:
+                self.logger.debug(f"SKIPPED loading plugin {plugin}")
 
     def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         """

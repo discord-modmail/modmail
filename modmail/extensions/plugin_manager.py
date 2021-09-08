@@ -15,7 +15,13 @@ from modmail import errors
 from modmail.addons.converters import SourceAndPluginConverter
 from modmail.addons.errors import PluginNotFoundError
 from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
-from modmail.addons.plugins import BASE_PLUGIN_PATH, PLUGINS, find_plugins_in_dir, walk_plugin_files
+from modmail.addons.plugins import (
+    BASE_PLUGIN_PATH,
+    PLUGINS,
+    find_plugins_in_dir,
+    update_local_toml_enable_or_disable,
+    walk_plugin_files,
+)
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
 from modmail.utils.cogs import BotModeEnum, ExtMetadata
 from modmail.utils.extensions import BOT_MODE
@@ -249,8 +255,12 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     async def enable_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
         """Enable a provided plugin, given the name or folder of the plugin."""
         plugin: Plugin = plugin
+        plugin.enabled = True
 
         plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
+
+        if plugin.local:
+            update_local_toml_enable_or_disable(plugin)
 
         await self.load_plugins.callback(self, ctx, *plugin_files)
 
@@ -258,8 +268,12 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     async def disable_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
         """Disable a provided plugin, given the name or folder of the plugin."""
         plugin: Plugin = plugin
+        plugin.enabled = False
 
         plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
+
+        if plugin.local:
+            update_local_toml_enable_or_disable(plugin)
 
         await self.unload_plugins.callback(self, ctx, *plugin_files)
 

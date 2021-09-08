@@ -68,7 +68,7 @@ def walk_extensions() -> t.Iterator[t.Tuple[str, t.Tuple[bool, bool]]]:
         ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)
         if ext_metadata is not None:
             # check if this cog is dev only or plugin dev only
-            load_cog = bool(int(ext_metadata.load_if_mode) & BOT_MODE)
+            load_cog = bool(ext_metadata.load_if_mode.value & BOT_MODE)
             log.trace(f"Load cog {module.name!r}?: {load_cog}")
             no_unload = ext_metadata.no_unload
             yield module.name, (load_cog, no_unload)

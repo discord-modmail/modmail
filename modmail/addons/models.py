@@ -150,6 +150,7 @@ class Plugin(Addon):
         name: Optional[str] = None,
         folder_path: Optional[pathlib.Path] = None,
         local: bool = False,
+        enabled: bool = True,
         **kw,
     ):
         self.folder_name = folder
@@ -161,13 +162,17 @@ class Plugin(Addon):
         self.folder_path = folder_path
         self.min_bot_version = min_bot_version
         self.local = local
+        self.enabled = enabled
 
         # store any extra kwargs here
         # this is to ensure backwards compatiablilty with plugins that support older versions,
         # but want to use newer toml options
         self.extra_kwargs = kw
 
-    def __repr__(self) -> str:  # pragma: no cover
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):  # pragma: no cover
         return (
             f"<Plugin {self.name!r} description={self.description!r} "
             f"folder_name={self.folder_name!r} folder_path={self.folder_path!r}>"
