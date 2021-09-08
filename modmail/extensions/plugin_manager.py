@@ -6,14 +6,16 @@ import shutil
 from collections import defaultdict
 from typing import TYPE_CHECKING, Dict, List, Mapping
 
+from atoml.exceptions import ParseError
 from discord import Colour, Embed
+from discord.abc import Messageable
 from discord.ext import commands
 from discord.ext.commands import Context
 
 import modmail.addons.utils as addon_utils
 from modmail import errors
 from modmail.addons.converters import SourceAndPluginConverter
-from modmail.addons.errors import PluginNotFoundError
+from modmail.addons.errors import NoPluginTomlFoundError
 from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
 from modmail.addons.plugins import (
     BASE_PLUGIN_PATH,
@@ -22,10 +24,11 @@ from modmail.addons.plugins import (
     update_local_toml_enable_or_disable,
     walk_plugin_files,
 )
-from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager
+from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager, StatusEmojis
 from modmail.utils.cogs import BotModeEnum, ExtMetadata
 from modmail.utils.extensions import BOT_MODE
 from modmail.utils.pagination import ButtonPaginator
+from modmail.utils.responses import Response
 
 
 if TYPE_CHECKING:
@@ -54,7 +57,7 @@ class PluginDevPathConverter(ExtensionConverter):
 class PluginConverter(commands.Converter):
     """Convert a plugin name into a full plugin with path and related args."""
 
-    async def convert(self, ctx: Context, argument: str) -> List[str]:
+    async def convert(self, ctx: Context, argument: str) -> Plugin:
         """Converts a plugin into a full plugin with a path and all other attributes."""
         loaded_plugs: Dict[Plugin, List[str]] = ctx.bot.installed_plugins
 
@@ -110,7 +113,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         await ctx.send_help(ctx.command)
 
     @plugins_group.group(
-        "dev", aliases=("developer", "d"), invoke_without_command=True, enabled=PLUGIN_DEV_ENABLED
+        "dev", aliases=("developer",), invoke_without_command=True, enabled=PLUGIN_DEV_ENABLED
     )
     async def plugin_dev_group(self, ctx: Context) -> None:
         """Manage plugin files directly, rather than whole plugin objects."""
@@ -125,7 +128,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.load_extensions.callback(self, ctx, *plugins)
 
-    @plugin_dev_group.command(name="unload", aliases=("ul",))
+    @plugin_dev_group.command(name="unload", aliases=("u", "ul"))
     async def unload_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
         Unload currently loaded plugins given their fully qualified or unqualified names.
@@ -155,15 +158,17 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.list_extensions.callback(self, ctx)
 
-    @plugin_dev_group.command(name="refresh", aliases=("rewalk", "rescan"))
+    @plugin_dev_group.command(name="refresh", aliases=("rewalk", "rescan", "resync"))
     async def resync_plugins(self, ctx: Context) -> None:
         """Refreshes the list of plugins from disk, but do not unload any currently active."""
         await self.resync_extensions.callback(self, ctx)
 
-    @plugins_group.command(name="install", aliases=("",))
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=True)
+    @plugins_group.command(name="install", aliases=("add",))
     async def install_plugins(self, ctx: Context, *, source_and_plugin: SourceAndPluginConverter) -> None:
         """Install plugins from provided repo."""
         # this could take a while
+        # I'm aware this should be a context manager, but do not want to indent almost the entire command
         await ctx.trigger_typing()
 
         # create variables for the user input, typehint them, then assign them from the converter tuple
@@ -173,13 +178,19 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         if source.source_type is SourceTypeEnum.LOCAL:
             # TODO: check the path of a local plugin
-            await ctx.send("This plugin is a local plugin, and likely can be loaded with the load command.")
+            await Response.send_negatory(
+                ctx,
+                "This plugin seems to be a local plugin, and therefore can probably be "
+                "loaded with the load command, if it isn't loaded already.",
+            )
             return
         logger.debug(f"Received command to download plugin {plugin.name} from https://{source.zip_url}")
         try:
             directory = await addon_utils.download_and_unpack_source(source, self.bot.http_session)
         except errors.HTTPError:
-            await ctx.send(f"Downloading {source.zip_url} did not give a 200 response code.")
+            await Response.send_negatory(
+                ctx, f"Downloading {source.zip_url} did not give a 200 response code."
+            )
             return
 
         source.cache_file = directory
@@ -200,10 +211,11 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                 try:
                     shutil.copytree(p.folder_path, install_path, dirs_exist_ok=True)
                 except FileExistsError:
-                    await ctx.send(
+                    await Response.send_negatory(
+                        ctx,
                         "Plugin already seems to be installed. "
                         "This could be caused by the plugin already existing, "
-                        "or a plugin of the same name existing."
+                        "or a plugin of the same name existing.",
                     )
                     return
                 p.installed_path = install_path
@@ -211,7 +223,8 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                 break
 
         if plugin.folder_path is None:
-            raise PluginNotFoundError(f"Could not find plugin {plugin}")
+            await Response.send_negatory(ctx, f"Could not find plugin {plugin}")
+            return
         logger.trace(f"{BASE_PLUGIN_PATH = }")
 
         PLUGINS.update(walk_plugin_files(BASE_PLUGIN_PATH / p.folder_path.name))
@@ -232,15 +245,25 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         self.bot.installed_plugins[plugin] = files_to_load
 
-        await ctx.reply(f"Installed plugin {plugin.name}.")
+        await Response.send_positive(ctx, f"Installed plugin {plugin}.")
 
     @plugins_group.command(name="uninstall", aliases=("rm",))
     async def uninstall_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
         """Uninstall a provided plugin, given the name of the plugin."""
         plugin: Plugin = plugin
 
-        # plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
-        await self.disable_plugin.callback(self, ctx, plugin=plugin)
+        if plugin.local:
+            await Response.send_negatory(
+                ctx, "You may not uninstall a local plugin.\nUse the disable command to stop using it."
+            )
+            return
+
+        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
+
+        _, err = self.batch_manage(Action.UNLOAD, *plugin_files, is_plugin=True, suppress_already_error=True)
+        if err:
+            await Response.send_negatory(ctx, "There was a problem unloading the plugin from the bot.")
+            return
 
         shutil.rmtree(plugin.installed_path)
 
@@ -249,33 +272,49 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             del PLUGINS[file_]
         del self.bot.installed_plugins[plugin]
 
-        await ctx.send(plugin.installed_path)
+        await Response.send_positive(ctx, f"Successfully uninstalled plugin {plugin}")
+
+    async def _enable_or_disable_plugin(
+        self,
+        ctx: Messageable,
+        plugin: Plugin,
+        action: Action,
+        enable: bool,
+    ) -> None:
+        """Enables or disables a provided plugin."""
+        verb = action.name.lower()
+        if plugin.enabled == enable:
+            await Response.send_negatory(ctx, f"Plugin {plugin!s} is already {verb}d.")
+            return
+
+        plugin.enabled = enable
+
+        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
+
+        if plugin.local:
+            try:
+                update_local_toml_enable_or_disable(plugin)
+            except (NoPluginTomlFoundError, ParseError) as e:
+                plugin.enabled = not plugin.enabled  # reverse the state
+                await Response.send_negatory(ctx, e.args[0])
+
+        msg, err = self.batch_manage(Action.LOAD, *plugin_files, is_plugin=True, suppress_already_error=True)
+        if err:
+            await Response.send_negatory(
+                ctx, "Er, something went wrong.\n" f":x: {plugin!s} was unable to be {verb}d properly!"
+            )
+        else:
+            await Response.send_positive(ctx, f":thumbsup: Plugin {plugin!s} successfully {verb}d.")
 
     @plugins_group.command(name="enable")
     async def enable_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
         """Enable a provided plugin, given the name or folder of the plugin."""
-        plugin: Plugin = plugin
-        plugin.enabled = True
-
-        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
-
-        if plugin.local:
-            update_local_toml_enable_or_disable(plugin)
-
-        await self.load_plugins.callback(self, ctx, *plugin_files)
+        await self._enable_or_disable_plugin(ctx, plugin, Action.ENABLE, True)
 
     @plugins_group.command(name="disable")
     async def disable_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
         """Disable a provided plugin, given the name or folder of the plugin."""
-        plugin: Plugin = plugin
-        plugin.enabled = False
-
-        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
-
-        if plugin.local:
-            update_local_toml_enable_or_disable(plugin)
-
-        await self.unload_plugins.callback(self, ctx, *plugin_files)
+        await self._enable_or_disable_plugin(ctx, plugin, Action.DISABLE, False)
 
     def group_plugin_statuses(self) -> Mapping[str, str]:
         """Return a mapping of plugin names and statuses to their module."""
@@ -291,11 +330,14 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                 plug_status.append(status)
 
             if all(plug_status):
-                status = ":green_circle:"
+                status = StatusEmojis.fully_loaded
             elif any(plug_status):
-                status = ":yellow_circle:"
+                status = StatusEmojis.partially_loaded
             else:
-                status = ":red_circle:"
+                if plug.enabled:
+                    status = StatusEmojis.unloaded
+                else:
+                    status = StatusEmojis.disabled
 
             plugins[plug.name] = status
 

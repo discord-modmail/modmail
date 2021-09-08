@@ -69,7 +69,10 @@ def update_local_toml_enable_or_disable(plugin: Plugin, /) -> None:
     Non local plugins are saved in the database.
     """
     if not LOCAL_PLUGIN_TOML.exists():
-        raise NoPluginTomlFoundError
+        raise NoPluginTomlFoundError(
+            f"The required file at {LOCAL_PLUGIN_TOML!s} does not exist to deal with local plugins.\n"
+            "You may need to create it."
+        )
 
     with LOCAL_PLUGIN_TOML.open("r") as f:
         doc = atoml.loads(f.read())

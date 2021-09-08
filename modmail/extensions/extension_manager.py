@@ -3,11 +3,11 @@
 # MIT License 2021 Python Discord
 import functools
 import logging
-import typing as t
 from collections import defaultdict
 from enum import Enum
+from typing import Mapping, Optional, Tuple
 
-from discord import AllowedMentions, Colour, Embed
+from discord import Colour, Embed
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -16,12 +16,22 @@ from modmail.log import ModmailLogger
 from modmail.utils.cogs import BotModeEnum, ExtMetadata, ModmailCog
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
 from modmail.utils.pagination import ButtonPaginator
+from modmail.utils.responses import Response
 
 
 log: ModmailLogger = logging.getLogger(__name__)
 
 
 EXT_METADATA = ExtMetadata(load_if_mode=BotModeEnum.DEVELOP, no_unload=True)
+
+
+class StatusEmojis:
+    """Status emojis for extension statuses."""
+
+    fully_loaded: str = ":green_circle:"
+    partially_loaded: str = ":yellow_circle:"
+    unloaded: str = ":red_circle:"
+    disabled: str = ":brown_circle:"
 
 
 class Action(Enum):
@@ -31,6 +41,10 @@ class Action(Enum):
     LOAD = functools.partial(ModmailBot.load_extension)
     UNLOAD = functools.partial(ModmailBot.unload_extension)
     RELOAD = functools.partial(ModmailBot.reload_extension)
+
+    # for plugins
+    ENABLE = functools.partial(ModmailBot.load_extension)
+    DISABLE = functools.partial(ModmailBot.unload_extension)
 
 
 class ExtensionConverter(commands.Converter):
@@ -114,8 +128,8 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         if "*" in extensions:
             extensions = sorted(ext for ext in self.all_extensions if ext not in self.bot.extensions.keys())
 
-        msg = self.batch_manage(Action.LOAD, *extensions)
-        await ctx.send(msg)
+        msg, is_error = self.batch_manage(Action.LOAD, *extensions)
+        await Response.send_response(ctx, msg, not is_error)
 
     @extensions_group.command(name="unload", aliases=("ul",))
     async def unload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
@@ -132,7 +146,9 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         if blacklisted:
             bl_msg = "\n".join(blacklisted)
-            await ctx.send(f":x: The following {self.type}(s) may not be unloaded:```\n{bl_msg}```")
+            await Response.send_negatory(
+                ctx, f":x: The following {self.type}(s) may not be unloaded:```\n{bl_msg}```"
+            )
             return
 
         if "*" in extensions:
@@ -142,7 +158,8 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 if ext not in (self.get_black_listed_extensions())
             )
 
-        await ctx.send(self.batch_manage(Action.UNLOAD, *extensions))
+        msg, is_error = self.batch_manage(Action.UNLOAD, *extensions)
+        await Response.send_response(ctx, msg, not is_error)
 
     @extensions_group.command(name="reload", aliases=("r", "rl"))
     async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
@@ -160,7 +177,8 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         if "*" in extensions:
             extensions = self.bot.extensions.keys() & self.all_extensions.keys()
 
-        await ctx.send(self.batch_manage(Action.RELOAD, *extensions))
+        msg, is_error = self.batch_manage(Action.RELOAD, *extensions)
+        await Response.send_response(ctx, msg, not is_error)
 
     @extensions_group.command(name="list", aliases=("all", "ls"))
     async def list_extensions(self, ctx: Context) -> None:
@@ -216,17 +234,17 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         Typical use case is in the event that the existing extensions have changed while the bot is running.
         """
         self._resync_extensions()
-        await ctx.send(f":ok_hand: Refreshed list of {self.type}s.")
+        await Response.send_positive(ctx, f":ok_hand: Refreshed list of {self.type}s.")
 
-    def group_extension_statuses(self) -> t.Mapping[str, str]:
+    def group_extension_statuses(self) -> Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""
         categories = defaultdict(list)
 
         for ext in self.all_extensions:
             if ext in self.bot.extensions:
-                status = ":green_circle:"
+                status = StatusEmojis.fully_loaded
             else:
-                status = ":red_circle:"
+                status = StatusEmojis.unloaded
 
             root, name = ext.rsplit(".", 1)
             if root.split(".", 1)[1] == self.module_name:
@@ -237,21 +255,26 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         return dict(categories)
 
-    def batch_manage(self, action: Action, *extensions: str) -> str:
+    def batch_manage(
+        self,
+        action: Action,
+        *extensions: str,
+        **kw,
+    ) -> Tuple[str, bool]:
         """
         Apply an action to multiple extensions and return a message with the results.
 
-        If only one extension is given, it is deferred to `manage()`.
+        Any extra kwargs are passed to `manage()` which handles all passed modules.
         """
         if len(extensions) == 1:
-            msg, _ = self.manage(action, extensions[0])
-            return msg
+            msg, failures = self.manage(action, extensions[0], **kw)
+            return msg, bool(failures)
 
         verb = action.name.lower()
         failures = {}
 
         for extension in sorted(extensions):
-            _, error = self.manage(action, extension)
+            _, error = self.manage(action, extension, **kw)
             if error:
                 failures[extension] = error
 
@@ -264,21 +287,34 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         log.debug(f"Batch {verb}ed {self.type}s.")
 
-        return msg
+        return msg, bool(failures)
 
-    def manage(self, action: Action, ext: str) -> t.Tuple[str, t.Optional[str]]:
+    def manage(
+        self,
+        action: Action,
+        ext: str,
+        *,
+        is_plugin: bool = False,
+        suppress_already_error: bool = False,
+    ) -> Tuple[str, Optional[str]]:
         """Apply an action to an extension and return the status message and any error message."""
         verb = action.name.lower()
         error_msg = None
-
+        msg = None
+        not_quite = False
         try:
             action.value(self.bot, ext)
         except (commands.ExtensionAlreadyLoaded, commands.ExtensionNotLoaded):
-            if action is Action.RELOAD:
+            if suppress_already_error:
+                pass
+            elif action is Action.RELOAD:
                 # When reloading, have a special error.
                 msg = f":x: {self.type.capitalize()} `{ext}` is not loaded, so it was not {verb}ed."
+                not_quite = True
+
             else:
                 msg = f":x: {self.type.capitalize()} `{ext}` is already {verb}ed."
+                not_quite = True
         except Exception as e:
             if hasattr(e, "original"):
                 # If original exception is present, then utilize it
@@ -288,11 +324,12 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
             error_msg = f"{e.__class__.__name__}: {e}"
             msg = f":x: Failed to {verb} {self.type} `{ext}`:\n```\n{error_msg}```"
-        else:
+
+        if msg is None:
             msg = f":thumbsup: {self.type.capitalize()} successfully {verb}ed: `{ext}`."
 
         log.debug(error_msg or msg)
-        return msg, error_msg
+        return msg, error_msg or not_quite
 
     # This cannot be static (must have a __func__ attribute).
     async def cog_check(self, ctx: Context) -> bool:
@@ -304,7 +341,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
     async def cog_command_error(self, ctx: Context, error: Exception) -> None:
         """Handle BadArgument errors locally to prevent the help command from showing."""
         if isinstance(error, commands.BadArgument):
-            await ctx.send(str(error), allowed_mentions=AllowedMentions.none())
+            await Response.send_negatory(ctx, str(error))
             error.handled = True
         else:
             raise error
