@@ -375,8 +375,6 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         This trigger only handles thread archiving.
         """
-        logger.trace(f"{before.archiver_id= }")
-        logger.trace(f"{after.archiver_id= }")
         # we only care about edits that archive the thread
         if before.archived != after.archived and not after.archived:
             return
@@ -390,7 +388,13 @@ class TicketsCog(ModmailCog, name="Threads"):
         # ignore the bot closing threads
         # NOTE: archiver_id is always gonna be None.
         # HACK: Grab an item from the audit log to get this user.
-        if self.bot.user.id == after.archiver_id:
+        archiver = None
+        async for event in after.guild.audit_logs(limit=3, action=discord.AuditLogAction.thread_update):
+            if event.target.id == after.id and not event.before.archived and event.after.archived:
+                archiver = event.user
+                break
+
+        if self.bot.user == archiver:
             logger.trace("Received a thread archive event which I caused.")
             return
 
@@ -400,12 +404,6 @@ class TicketsCog(ModmailCog, name="Threads"):
         except KeyError:
             logger.debug("Closing a ticket, somehow checks passed but the thread was already closed...")
             return
-
-        archiver = None
-        if after.archiver_id:
-            archiver = after.guild.get_member(after.archiver_id) or await after.guild.fetch_member(
-                after.archiver_id
-            )
 
         await self._close_thread(ticket, archiver)
 
