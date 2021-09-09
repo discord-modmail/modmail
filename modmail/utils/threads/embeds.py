@@ -43,7 +43,9 @@ class ThreadEmbed:
             return Embed(author=user, description=content)
         return Embed(author=message.author, description=message.content)
 
-    def create_message_embed_to_user(self, message: Message, contents: str, author: User = None) -> Embed:
+    def create_message_embed_to_user(
+        self, message: Message, contents: str, author: User = None, **kwargs
+    ) -> Embed:
         """Given information, return an embed to be sent to the user."""
         if author is None:
             author = message.author

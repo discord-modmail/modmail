@@ -1,3 +1,5 @@
+import asyncio
+import datetime
 import logging
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -18,17 +20,21 @@ if TYPE_CHECKING:
     from modmail.bot import ModmailBot
     from modmail.log import ModmailLogger
 
-
 EXT_METADATA = ExtMetadata()
 
 
-BASE_JUMP_URL = "https://discord.com/channels/"
+BASE_JUMP_URL = "https://discord.com/channels"
 USER_NOT_ABLE_TO_BE_DMED_MESSAGE = (
     "**{0}** is not able to be dmed! This is because they have either blocked the bot, "
     "or they are only accepting direct messages from friends.\n"
     "It is also possible that they are not in the same server as the bot. "
 )
 ON_SUCCESS_EMOJI = "\u2705"  # ✅
+
+# This will be part of configuration later, so its stored in globals for now
+ENABLE_DM_TO_GUILD_TYPING = False  # Library bug prevents this form working right now
+ENABLE_GUILD_TO_DM_TYPING = False
+
 logger: "ModmailLogger" = logging.getLogger(__name__)
 
 
@@ -42,6 +48,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             discord.TextChannel, discord.PartialMessageable
         ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
         self.embed_creator = ThreadEmbed()
+        self.thread_create_delete_lock = asyncio.Lock()
 
     async def init_relay_channel(self) -> None:
         """Fetch the relay channel."""
@@ -80,7 +87,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             thread = self.get_ticket(recipient.id).thread
             await ctx.send(
                 f"A thread already exists with {recipient.mention} ({recipient.id})."
-                f"You can find it here: <{BASE_JUMP_URL}{thread.guild.id}/{thread.id}>",
+                f"You can find it here: <{BASE_JUMP_URL}/{thread.guild.id}/{thread.id}>",
                 allowed_mentions=discord.AllowedMentions(users=False),
             )
             return
@@ -126,15 +133,20 @@ class TicketsCog(ModmailCog, name="Threads"):
         if recipient is None:
             recipient = initial_message.author
 
-        if check_for_existing_thread and recipient.id in self.bot.tickets.keys():
-            raise ThreadAlreadyExistsError(recipient.id)
+        # lock this next session, since we're checking if a thread already exists here
+        # we want to ensure that anything entering this section can get validated.
+        async with self.thread_create_delete_lock:
+            if check_for_existing_thread and recipient.id in self.bot.tickets.keys():
+                raise ThreadAlreadyExistsError(recipient.id)
 
-        thread_channel = await self._start_discord_thread(initial_message, recipient)
-        ticket = Ticket(recipient, thread_channel)
+            thread_channel = await self._start_discord_thread(initial_message, recipient)
+            ticket = Ticket(recipient, thread_channel)
 
-        # add the ticket as both the recipient and the thread ids so they can be retrieved from both sides.
-        self.bot.tickets[recipient.id] = ticket
-        self.bot.tickets[thread_channel.id] = ticket
+            # add the ticket as both the recipient and the thread ids so
+            # the tickets can be retrieved from both users or threads.
+            self.bot.tickets[recipient.id] = ticket
+            self.bot.tickets[thread_channel.id] = ticket
+
         return ticket
 
     async def _start_discord_thread(
@@ -235,30 +247,71 @@ class TicketsCog(ModmailCog, name="Threads"):
         await message.delete()
         await ctx.message.add_reaction(ON_SUCCESS_EMOJI)
 
+    async def _close_thread(
+        self,
+        ticket: Ticket,
+        closer: Optional[Union[discord.User, discord.Member]] = None,
+        time: Optional[datetime.datetime] = None,
+        discord_thread_already_archived: bool = False,
+        notify_user: bool = True,
+    ) -> None:
+        """
+        Close the current thread after `after` time from now.
+
+        Note: This method destroys the Ticket object.
+        """
+        if closer is not None:
+            thread_close_embed = discord.Embed(
+                title="Thread Closed",
+                description=f"{closer.mention} has closed this Modmail thread.",
+                timestamp=Arrow.utcnow().datetime,
+            )
+        else:
+            thread_close_embed = discord.Embed(
+                title="Thread Closed",
+                description="This thread has been closed.",
+                timestamp=Arrow.utcnow().datetime,
+            )
+
+        async with self.thread_create_delete_lock:
+            # clean up variables
+            if not discord_thread_already_archived:
+                await ticket.thread.send(embed=thread_close_embed)
+            if notify_user:
+                # user may have dms closed
+                try:
+                    await ticket.recipient.send(embed=thread_close_embed)
+                except discord.HTTPException:
+                    logger.debug(f"{ticket.recipient} is unable to be dmed. Skipping.")
+                    pass
+
+            try:
+                del self.bot.tickets[ticket.thread.id]
+                del self.bot.tickets[ticket.recipient.id]
+            except KeyError:
+                logger.warning("Ticket not found in tickets dict when attempting removal.")
+            # ensure we get rid of the ticket messages, as this can be an extremely large dict
+            del ticket.messages
+
+        await ticket.thread.edit(archived=True, locked=False)
+
+        if closer is not None:
+            logger.debug(f"{closer!s} has closed thread {ticket.thread!s}.")
+        else:
+            logger.debug(f"{ticket.thread!s} has been closed. A user was not provided.")
+
     @is_modmail_thread()
     @commands.group(invoke_without_command=True)
     async def close(self, ctx: Context, *, _: Duration = None) -> None:
         """Close the current thread after `after` time from now."""
         # TODO: Implement after duration
-        thread_close_embed = discord.Embed(
-            title="Thread Closed",
-            description=f"{ctx.author.mention} has closed this Modmail thread.",
-            timestamp=ctx.message.created_at,
-        )
-
-        # clean up variables
-        await ctx.send(embed=thread_close_embed)
-        ticket = self.bot.tickets[ctx.channel.id]
         try:
-            del self.bot.tickets[ticket.thread.id]
-            del self.bot.tickets[ticket.recipient.id]
+            ticket = self.bot.tickets[ctx.channel.id]
         except KeyError:
-            logger.warning("Ticket not found in tickets dict when attempting removal.")
-        # ensure we get rid of the ticket messages, as this can be an extremely large dict
-        del ticket.messages
-        del ticket
-        await ctx.channel.edit(archived=True, locked=False)
-        logger.debug(f"{ctx.author} has closed thread {ctx.channel.id}.")
+            await ctx.send("Error: this thread is not in the list of tickets.")
+            return
+
+        await self._close_thread(ticket, ctx.author)
 
     @ModmailCog.listener(name="on_message")
     async def on_message(self, message: discord.Message) -> None:
@@ -293,7 +346,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # only work in dms or a thread channel
 
-        if isinstance(channel, discord.Thread):
+        if ENABLE_GUILD_TO_DM_TYPING and isinstance(channel, discord.Thread):
             try:
                 ticket = self.bot.tickets[channel.id]
             except KeyError:
@@ -303,7 +356,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # ! Due to a library bug this tree will never be run
         # it can be tracked here: https://github.com/Rapptz/discord.py/issues/7432
-        elif isinstance(channel, discord.DMChannel):
+        elif ENABLE_DM_TO_GUILD_TYPING and isinstance(channel, discord.DMChannel):
             try:
                 ticket = self.bot.tickets[user.id]
             except KeyError:
@@ -314,6 +367,47 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         else:
             return
+
+    @ModmailCog.listener("on_thread_update")
+    async def on_thread_archive(self, before: discord.Thread, after: discord.Thread) -> None:
+        """
+        Archives a thread after a preset time of it being automatically archived.
+
+        This trigger only handles thread archiving.
+        """
+        logger.trace(f"{before.archiver_id= }")
+        logger.trace(f"{after.archiver_id= }")
+        # we only care about edits that archive the thread
+        if before.archived != after.archived and not after.archived:
+            return
+
+        # channel must have the parent of the relay channel
+        # while this should never change, I'm using before in case for some reason
+        # threads get the support to change their parent channel, which would be great.
+        if before.parent_id != self.relay_channel.id:
+            return
+
+        # ignore the bot closing threads
+        # NOTE: archiver_id is always gonna be None.
+        # HACK: Grab an item from the audit log to get this user.
+        if self.bot.user.id == after.archiver_id:
+            logger.trace("Received a thread archive event which I caused.")
+            return
+
+        # checks passed, closing the ticket
+        try:
+            ticket = self.bot.tickets[after.id]
+        except KeyError:
+            logger.debug("Closing a ticket, somehow checks passed but the thread was already closed...")
+            return
+
+        archiver = None
+        if after.archiver_id:
+            archiver = after.guild.get_member(after.archiver_id) or await after.guild.fetch_member(
+                after.archiver_id
+            )
+
+        await self._close_thread(ticket, archiver)
 
 
 def setup(bot: "ModmailBot") -> None:
