@@ -54,7 +54,6 @@ class ThreadEmbed:
     def create_message_embed_to_guild(self, message: Message, **kwargs) -> Embed:
         """Given information, return an embed object to be sent to the server."""
         return Embed(
-            title=f"{message.author.name}#{message.author.discriminator}({message.author.id})",
             description=str(f"{message.content}"),
             author=message.author,
             timestamp=message.created_at,
