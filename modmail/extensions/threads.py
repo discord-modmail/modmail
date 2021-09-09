@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional, Union
 
 import discord
 from arrow import Arrow
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import Context
 from discord.utils import escape_markdown
 
@@ -35,6 +35,7 @@ ON_SUCCESS_EMOJI = "\u2705"  # ✅
 ENABLE_DM_TO_GUILD_TYPING = False  # Library bug prevents this form working right now
 ENABLE_GUILD_TO_DM_TYPING = False
 
+USE_AUDIT_LOGS = True
 logger: "ModmailLogger" = logging.getLogger(__name__)
 
 
@@ -50,9 +51,25 @@ class TicketsCog(ModmailCog, name="Threads"):
         self.embed_creator = ThreadEmbed()
         self.thread_create_delete_lock = asyncio.Lock()
 
+        self.use_audit_logs: bool = USE_AUDIT_LOGS
+        self.fetch_necessary_values.start()
+
     async def init_relay_channel(self) -> None:
         """Fetch the relay channel."""
         self.relay_channel = await self.bot.fetch_channel(self.bot.config.thread.relay_channel_id)
+
+    @tasks.loop(count=1)
+    async def fetch_necessary_values(self) -> None:
+        """Fetch the audit log permission."""
+        self.relay_channel: discord.TextChannel = await self.bot.fetch_channel(self.relay_channel.id)
+        self.relay_channel.guild = await self.bot.fetch_guild(self.relay_channel.guild.id)
+        me = await self.relay_channel.guild.fetch_member(self.bot.user.id)
+        self.use_audit_logs = USE_AUDIT_LOGS & me.guild_permissions.view_audit_log
+        logger.debug("Fetched relay channel and use_audit_log perms")
+
+    def cog_unload(self) -> None:
+        """Cancel any tasks that may be running on unload."""
+        self.fetch_necessary_values.cancel()
 
     def get_ticket(self, id: int, /) -> Ticket:
         """Fetch a ticket from the tickets dict."""
@@ -67,7 +84,7 @@ class TicketsCog(ModmailCog, name="Threads"):
     # a designated server to handle threads and a server where the community resides,
     # so its possible that the user isn't in the server where this command is run.
     @commands.command()
-    async def contact(self, ctx: Context, recipient: commands.UserConverter) -> None:
+    async def contact(self, ctx: Context, recipient: Union[discord.User, discord.Member]) -> None:
         """
         Open a new ticket with a provided recipient.
 
@@ -76,6 +93,9 @@ class TicketsCog(ModmailCog, name="Threads"):
         If the user is not able to be dmed, a message will be sent to the channel.
         """
         if recipient.bot:
+            if recipient == self.bot.user:
+                await ctx.send("I'm perfect, you can't open a ticket with me.")
+                return
             await ctx.send("You can't open a ticket with a bot.")
             return
 
@@ -254,6 +274,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         time: Optional[datetime.datetime] = None,
         discord_thread_already_archived: bool = False,
         notify_user: bool = True,
+        automatically_archived: bool = False,
     ) -> None:
         """
         Close the current thread after `after` time from now.
@@ -340,7 +361,6 @@ class TicketsCog(ModmailCog, name="Threads"):
         _: Arrow,
     ) -> None:
         """Relay typing events to the thread channel."""
-        logger.trace(f"Received typing event for {user} in channel {channel}.")
         if user.id == self.bot.user.id:
             return
 
@@ -352,6 +372,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             except KeyError:
                 # Thread doesn't exist, so there's nowhere to relay the typing event.
                 return
+            logger.debug(f"Relaying typing event from {user!s} in {channel!s} to {ticket.recipient!s}.")
             await ticket.recipient.trigger_typing()
 
         # ! Due to a library bug this tree will never be run
@@ -363,6 +384,8 @@ class TicketsCog(ModmailCog, name="Threads"):
                 # User doesn't have a ticket, so no where to relay the event.
                 return
             else:
+                logger.debug(f"Relaying typing event from {user!s} in {channel!s} to {ticket.recipient!s}.")
+
                 await ticket.thread.trigger_typing()
 
         else:
@@ -389,23 +412,46 @@ class TicketsCog(ModmailCog, name="Threads"):
         # NOTE: archiver_id is always gonna be None.
         # HACK: Grab an item from the audit log to get this user.
         archiver = None
-        async for event in after.guild.audit_logs(limit=3, action=discord.AuditLogAction.thread_update):
-            if event.target.id == after.id and not event.before.archived and event.after.archived:
-                archiver = event.user
-                break
+        automatically_archived = False
+        if self.use_audit_logs:
+            async for event in after.guild.audit_logs(limit=4, action=discord.AuditLogAction.thread_update):
+                if (
+                    event.target.id == after.id
+                    and not getattr(event.before, "archived", None)
+                    and getattr(event.after, "archived", None)
+                ):
+                    archiver = event.user
+                    break
 
-        if self.bot.user == archiver:
-            logger.trace("Received a thread archive event which I caused.")
-            return
+            if archiver is None:
+                automatically_archived = True
+            elif self.bot.user == archiver:
+                logger.trace("Received a thread archive event which was caused by me. Skipping actions.")
+                return
+        else:
+            # check the last message id
+            now = Arrow.utcnow().datetime
+            last_message_time = discord.Object(after.last_message_id).created_at
+            print()
+            if before.auto_archive_duration <= (now - last_message_time).total_seconds():
+                # thread was automatically archived, probably.
+                automatically_archived = True
 
         # checks passed, closing the ticket
         try:
             ticket = self.bot.tickets[after.id]
         except KeyError:
-            logger.debug("Closing a ticket, somehow checks passed but the thread was already closed...")
+            logger.debug(
+                "While closing a ticket, somehow checks passed but the thread did not exist... "
+                "This is likely due to missing audit log permissions."
+            )
             return
 
-        await self._close_thread(ticket, archiver)
+        await self._close_thread(
+            ticket,
+            archiver,
+            automatically_archived=automatically_archived,
+        )
 
 
 def setup(bot: "ModmailBot") -> None:
