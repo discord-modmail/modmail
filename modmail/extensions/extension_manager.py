@@ -13,10 +13,10 @@ from discord.ext.commands import Context
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
+from modmail.utils import responses
 from modmail.utils.cogs import BotModeEnum, ExtMetadata, ModmailCog
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
 from modmail.utils.pagination import ButtonPaginator
-from modmail.utils.responses import Response
 
 
 log: ModmailLogger = logging.getLogger(__name__)
@@ -129,7 +129,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             extensions = sorted(ext for ext in self.all_extensions if ext not in self.bot.extensions.keys())
 
         msg, is_error = self.batch_manage(Action.LOAD, *extensions)
-        await Response.send_response(ctx, msg, not is_error)
+        await responses.send_response(ctx, msg, not is_error)
 
     @extensions_group.command(name="unload", aliases=("ul",))
     async def unload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
@@ -146,7 +146,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         if blacklisted:
             bl_msg = "\n".join(blacklisted)
-            await Response.send_negatory(
+            await responses.send_negatory_response(
                 ctx, f":x: The following {self.type}(s) may not be unloaded:```\n{bl_msg}```"
             )
             return
@@ -159,7 +159,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             )
 
         msg, is_error = self.batch_manage(Action.UNLOAD, *extensions)
-        await Response.send_response(ctx, msg, not is_error)
+        await responses.send_response(ctx, msg, not is_error)
 
     @extensions_group.command(name="reload", aliases=("r", "rl"))
     async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
@@ -178,7 +178,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             extensions = self.bot.extensions.keys() & self.all_extensions.keys()
 
         msg, is_error = self.batch_manage(Action.RELOAD, *extensions)
-        await Response.send_response(ctx, msg, not is_error)
+        await responses.send_response(ctx, msg, not is_error)
 
     @extensions_group.command(name="list", aliases=("all", "ls"))
     async def list_extensions(self, ctx: Context) -> None:
@@ -234,7 +234,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         Typical use case is in the event that the existing extensions have changed while the bot is running.
         """
         self._resync_extensions()
-        await Response.send_positive(ctx, f":ok_hand: Refreshed list of {self.type}s.")
+        await responses.send_positive_response(ctx, f":ok_hand: Refreshed list of {self.type}s.")
 
     def group_extension_statuses(self) -> Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""
@@ -341,7 +341,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
     async def cog_command_error(self, ctx: Context, error: Exception) -> None:
         """Handle BadArgument errors locally to prevent the help command from showing."""
         if isinstance(error, commands.BadArgument):
-            await Response.send_negatory(ctx, str(error))
+            await responses.send_negatory_response(ctx, str(error))
             error.handled = True
         else:
             raise error

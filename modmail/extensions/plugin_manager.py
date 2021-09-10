@@ -25,10 +25,10 @@ from modmail.addons.plugins import (
     walk_plugin_files,
 )
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager, StatusEmojis
+from modmail.utils import responses
 from modmail.utils.cogs import BotModeEnum, ExtMetadata
 from modmail.utils.extensions import BOT_MODE
 from modmail.utils.pagination import ButtonPaginator
-from modmail.utils.responses import Response
 
 
 if TYPE_CHECKING:
@@ -178,7 +178,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         if source.source_type is SourceTypeEnum.LOCAL:
             # TODO: check the path of a local plugin
-            await Response.send_negatory(
+            await responses.send_negatory_response(
                 ctx,
                 "This plugin seems to be a local plugin, and therefore can probably be "
                 "loaded with the load command, if it isn't loaded already.",
@@ -188,7 +188,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         try:
             directory = await addon_utils.download_and_unpack_source(source, self.bot.http_session)
         except errors.HTTPError:
-            await Response.send_negatory(
+            await responses.send_negatory_response(
                 ctx, f"Downloading {source.zip_url} did not give a 200 response code."
             )
             return
@@ -211,7 +211,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                 try:
                     shutil.copytree(p.folder_path, install_path, dirs_exist_ok=True)
                 except FileExistsError:
-                    await Response.send_negatory(
+                    await responses.send_negatory_response(
                         ctx,
                         "Plugin already seems to be installed. "
                         "This could be caused by the plugin already existing, "
@@ -223,7 +223,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                 break
 
         if plugin.folder_path is None:
-            await Response.send_negatory(ctx, f"Could not find plugin {plugin}")
+            await responses.send_negatory_response(ctx, f"Could not find plugin {plugin}")
             return
         logger.trace(f"{BASE_PLUGIN_PATH = }")
 
@@ -245,7 +245,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         self.bot.installed_plugins[plugin] = files_to_load
 
-        await Response.send_positive(ctx, f"Installed plugin {plugin}.")
+        await responses.send_positive_response(ctx, f"Installed plugin {plugin}.")
 
     @plugins_group.command(name="uninstall", aliases=("rm",))
     async def uninstall_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
@@ -253,7 +253,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         plugin: Plugin = plugin
 
         if plugin.local:
-            await Response.send_negatory(
+            await responses.send_negatory_response(
                 ctx, "You may not uninstall a local plugin.\nUse the disable command to stop using it."
             )
             return
@@ -262,7 +262,9 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         _, err = self.batch_manage(Action.UNLOAD, *plugin_files, is_plugin=True, suppress_already_error=True)
         if err:
-            await Response.send_negatory(ctx, "There was a problem unloading the plugin from the bot.")
+            await responses.send_negatory_response(
+                ctx, "There was a problem unloading the plugin from the bot."
+            )
             return
 
         shutil.rmtree(plugin.installed_path)
@@ -272,7 +274,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             del PLUGINS[file_]
         del self.bot.installed_plugins[plugin]
 
-        await Response.send_positive(ctx, f"Successfully uninstalled plugin {plugin}")
+        await responses.send_positive_response(ctx, f"Successfully uninstalled plugin {plugin}")
 
     async def _enable_or_disable_plugin(
         self,
@@ -284,7 +286,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """Enables or disables a provided plugin."""
         verb = action.name.lower()
         if plugin.enabled == enable:
-            await Response.send_negatory(ctx, f"Plugin {plugin!s} is already {verb}d.")
+            await responses.send_negatory_response(ctx, f"Plugin {plugin!s} is already {verb}d.")
             return
 
         plugin.enabled = enable
@@ -296,15 +298,15 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                 update_local_toml_enable_or_disable(plugin)
             except (NoPluginTomlFoundError, ParseError) as e:
                 plugin.enabled = not plugin.enabled  # reverse the state
-                await Response.send_negatory(ctx, e.args[0])
+                await responses.send_negatory_response(ctx, e.args[0])
 
         msg, err = self.batch_manage(Action.LOAD, *plugin_files, is_plugin=True, suppress_already_error=True)
         if err:
-            await Response.send_negatory(
+            await responses.send_negatory_response(
                 ctx, "Er, something went wrong.\n" f":x: {plugin!s} was unable to be {verb}d properly!"
             )
         else:
-            await Response.send_positive(ctx, f":thumbsup: Plugin {plugin!s} successfully {verb}d.")
+            await responses.send_positive_response(ctx, f":thumbsup: Plugin {plugin!s} successfully {verb}d.")
 
     @plugins_group.command(name="enable")
     async def enable_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
