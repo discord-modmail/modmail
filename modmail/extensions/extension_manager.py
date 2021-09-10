@@ -32,6 +32,7 @@ class StatusEmojis:
     partially_loaded: str = ":yellow_circle:"
     unloaded: str = ":red_circle:"
     disabled: str = ":brown_circle:"
+    unknown: str = ":black_circle:"
 
 
 class Action(Enum):

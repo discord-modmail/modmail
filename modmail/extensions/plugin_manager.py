@@ -331,7 +331,9 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                     status = False
                 plug_status.append(status)
 
-            if all(plug_status):
+            if len(plug_status) == 0:
+                status = StatusEmojis.unknown
+            elif all(plug_status):
                 status = StatusEmojis.fully_loaded
             elif any(plug_status):
                 status = StatusEmojis.partially_loaded
