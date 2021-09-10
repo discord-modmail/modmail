@@ -24,7 +24,7 @@ __all__ = (
 
 _UNSET = object()
 
-logger: ModmailLogger = logging.getLogger()
+logger: ModmailLogger = logging.getLogger(__name__)
 
 
 default_success_color = discord.Colour.green()
