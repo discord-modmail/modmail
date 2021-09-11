@@ -72,9 +72,16 @@ class PluginConverter(commands.Converter):
         """Converts a plugin into a full plugin with a path and all other attributes."""
         loaded_plugs: Set[Plugin] = PLUGINS
 
+        # its possible to have a plugin with the same name as a folder of a plugin
+        # folder names are the priority
+        secondary_names = dict()
         for plug in loaded_plugs:
-            if argument in (plug.name, plug.folder_name):
+            if argument == plug.name:
                 return plug
+            secondary_names[plug.folder_name] = plug
+
+        if argument in secondary_names:
+            return secondary_names[argument]
 
         # Determine close plugins
         # Using a set to prevent duplicates
