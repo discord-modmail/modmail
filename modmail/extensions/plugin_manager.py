@@ -4,13 +4,14 @@ import asyncio
 import logging
 import shutil
 from collections import defaultdict
-from typing import TYPE_CHECKING, Mapping, Set
+from typing import TYPE_CHECKING, Dict, Mapping, Set
 
 from atoml.exceptions import ParseError
 from discord import Colour, Embed
 from discord.abc import Messageable
 from discord.ext import commands
 from discord.ext.commands import Context
+from rapidfuzz import fuzz, process
 
 import modmail.addons.utils as addon_utils
 from modmail import errors
@@ -69,13 +70,52 @@ class PluginConverter(commands.Converter):
 
     async def convert(self, ctx: Context, argument: str) -> Plugin:
         """Converts a plugin into a full plugin with a path and all other attributes."""
-        loaded_plugs: Set[Plugin] = ctx.bot.installed_plugins
+        loaded_plugs: Set[Plugin] = PLUGINS
 
         for plug in loaded_plugs:
             if argument in (plug.name, plug.folder_name):
                 return plug
 
-        raise commands.BadArgument(f"{argument} is not in list of installed plugins.")
+        # Determine close plugins
+        # Using a set to prevent duplicates
+        # all_possible_args: Set[str] = set()
+        arg_mapping: Dict[str, Plugin] = dict()
+        for plug in loaded_plugs:
+            for name in plug.name, plug.folder_name:
+                # all_possible_args.add(name)
+                arg_mapping[name] = plug
+
+        result = process.extract(
+            argument,
+            arg_mapping.keys(),
+            scorer=fuzz.ratio,
+            score_cutoff=86,
+        )
+        logger.debug(f"{result = }")
+
+        if not len(result):
+            raise commands.BadArgument(f"`{argument}` is not in list of installed plugins.")
+
+        all_fully_matched_plugins: Set[Plugin] = set()
+        all_partially_matched_plugins: Dict[Plugin, float] = dict()
+        for res in result:
+            all_partially_matched_plugins[arg_mapping[res[0]]] = res[1]
+
+            if res[1] == 100:
+                all_fully_matched_plugins.add(arg_mapping[res[0]])
+
+        if len(all_fully_matched_plugins) != 1:
+            suggested = ""
+            for plug, percent in all_partially_matched_plugins.items():
+                suggested += f"`{plug.name}` ({round(percent)}%)\n"
+            raise commands.BadArgument(
+                f"`{argument}` is not in list of installed plugins."
+                f"\n\n**Suggested plugins**:\n{suggested}"
+                if len(suggested)
+                else ""
+            )
+
+        return await self.convert(ctx, all_fully_matched_plugins.pop().name)
 
 
 class PluginManager(ExtensionManager, name="Plugin Manager"):
