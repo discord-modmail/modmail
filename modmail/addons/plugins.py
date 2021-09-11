@@ -15,7 +15,8 @@ import inspect
 import logging
 import os
 import pathlib
-from typing import Dict, Iterator, List, Tuple
+from collections.abc import Generator, MutableSet
+from typing import Dict, List, Tuple
 
 import atoml
 
@@ -24,7 +25,7 @@ from modmail.addons.errors import NoPluginDirectoryError, NoPluginTomlFoundError
 from modmail.addons.models import Plugin
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ExtMetadata
-from modmail.utils.extensions import BOT_MODE, unqualify
+from modmail.utils.extensions import ModuleName, unqualify
 
 
 logger: ModmailLogger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ VALID_ZIP_PLUGIN_DIRECTORIES = ["plugins", "Plugins"]
 
 BASE_PLUGIN_PATH = pathlib.Path(plugins.__file__).parent.resolve()
 
-PLUGINS: Dict[str, Tuple[bool, bool]] = dict()
+PLUGINS: MutableSet[Plugin] = set()
 
 PLUGIN_TOML = "plugin.toml"
 
@@ -194,13 +195,13 @@ def find_plugins_in_dir(
 
 def find_local_plugins(
     detection_path: pathlib.Path = BASE_PLUGIN_PATH, /  # noqa: W504
-) -> Dict[Plugin, List[str]]:
+) -> Generator[Plugin, None, None]:
     """
     Walks the local path, and determines which files are local plugins.
 
     Yields a list of plugins,
     """
-    all_plugins: Dict[Plugin, List[str]] = {}
+    all_plugins: MutableSet[Plugin] = set()
 
     toml_plugins: List[Plugin] = []
     toml_path = LOCAL_PLUGIN_TOML
@@ -221,11 +222,11 @@ def find_local_plugins(
                 for p in toml_plugins:
                     if p.folder_name == path.name:
                         p.folder_path = path
-                        all_plugins[p] = list()
+                        all_plugins.add(p)
 
-    logger.debug(f"Local plugins detected: {[p.name for p in all_plugins.keys()]}")
+    logger.debug(f"Local plugins detected: {[p.name for p in all_plugins]}")
 
-    for plugin_ in all_plugins.keys():
+    for plugin_ in all_plugins:
         logger.trace(f"{plugin_.folder_path =}")
         plugin_.local = True  # take this as an opportunity to configure local to True on all plugins
         for dirpath, dirnames, filenames in os.walk(plugin_.folder_path):
@@ -238,17 +239,16 @@ def find_local_plugins(
                     if "__pycache__" in dir_ or "__pycache__" in dirpath:
                         continue
 
-                    modules = [x for x, y in walk_plugin_files(dirpath)]
+                    plugin_.modules = {}
+                    plugin_.modules.update(walk_plugin_files(dirpath))
+                    yield plugin_
 
-                    all_plugins[plugin_].extend(modules)
-
-    logger.debug(f"{all_plugins.keys() = }")
-    logger.debug(f"{all_plugins.values() = }")
-
-    return all_plugins
+    logger.debug(f"{all_plugins = }")
 
 
-def walk_plugin_files(detection_path: pathlib.Path = BASE_PLUGIN_PATH) -> Iterator[Tuple[str, bool]]:
+def walk_plugin_files(
+    detection_path: pathlib.Path = BASE_PLUGIN_PATH,
+) -> Generator[Tuple[ModuleName, ExtMetadata], None, None]:
     """Yield plugin names from the modmail.plugins subpackage."""
     # walk all files in the plugins folder
     # this is to ensure folder symlinks are supported,
@@ -293,15 +293,29 @@ def walk_plugin_files(detection_path: pathlib.Path = BASE_PLUGIN_PATH) -> Iterat
 
         ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)
         if ext_metadata is not None:
-            # check if this plugin is dev only or plugin dev only
-            load_cog = bool(int(ext_metadata.load_if_mode) & BOT_MODE)
-            logger.trace(f"Load plugin {imported.__name__!r}?: {load_cog}")
-            yield imported.__name__, load_cog
+            if not isinstance(ext_metadata, ExtMetadata):
+                if ext_metadata == ExtMetadata:
+                    logger.info(
+                        f"{imported.__name__!r} seems to have passed the ExtMetadata class directly to "
+                        "EXT_METADATA. Using defaults."
+                    )
+                else:
+                    logger.error(
+                        f"Plugin extension {imported.__name__!r} contains an invalid EXT_METADATA variable. "
+                        "Loading with metadata defaults. Please report this bug to the developers."
+                    )
+                yield imported.__name__, ExtMetadata()
+                continue
+
+            logger.debug(f"{imported.__name__!r} contains a EXT_METADATA variable. Loading it.")
+
+            yield imported.__name__, ext_metadata
             continue
 
-        logger.info(
-            f"Plugin {imported.__name__!r} is missing a EXT_METADATA variable. Assuming its a normal plugin."
+        logger.notice(
+            f"Plugin extension {imported.__name__!r} is missing an EXT_METADATA variable. "
+            "Assuming its a normal plugin extension."
         )
 
         # Presume Production Mode/Metadata defaults if metadata var does not exist.
-        yield imported.__name__, bool(ExtMetadata.load_if_mode)
+        yield imported.__name__, ExtMetadata()

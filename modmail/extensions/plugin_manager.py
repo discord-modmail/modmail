@@ -4,7 +4,7 @@ import asyncio
 import logging
 import shutil
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, List, Mapping
+from typing import TYPE_CHECKING, Dict, List, Mapping, MutableSet
 
 from atoml.exceptions import ParseError
 from discord import Colour, Embed
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from modmail.bot import ModmailBot
     from modmail.log import ModmailLogger
 
-EXT_METADATA = ExtMetadata(load_if_mode=BotModeEnum.PRODUCTION, no_unload=True)
+EXT_METADATA = ExtMetadata(no_unload=True)
 
 logger: ModmailLogger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class PluginConverter(commands.Converter):
 
     async def convert(self, ctx: Context, argument: str) -> Plugin:
         """Converts a plugin into a full plugin with a path and all other attributes."""
-        loaded_plugs: Dict[Plugin, List[str]] = ctx.bot.installed_plugins
+        loaded_plugs: MutableSet[Plugin] = ctx.bot.installed_plugins
 
         for plug in loaded_plugs:
             if argument in (plug.name, plug.folder_name):

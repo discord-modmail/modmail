@@ -18,8 +18,9 @@ log: ModmailLogger = logging.getLogger(__name__)
 EXT_METADATA = ExtMetadata
 
 ModuleName = NewType("ModuleName", str)
+ModuleDict = Dict[ModuleName, ExtMetadata]
 
-EXTENSIONS: Dict[ModuleName, ExtMetadata] = dict()
+EXTENSIONS: ModuleDict = dict()
 NO_UNLOAD: List[ModuleName] = list()
 
 

@@ -5,7 +5,7 @@ import functools
 import logging
 from collections import defaultdict
 from enum import Enum
-from typing import Dict, Mapping, Optional, Tuple
+from typing import Mapping, Optional, Tuple
 
 from discord import Colour, Embed
 from discord.ext import commands
@@ -15,7 +15,7 @@ from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils import responses
 from modmail.utils.cogs import BotModeEnum, ExtMetadata, ModmailCog
-from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, ModuleName, unqualify, walk_extensions
+from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, ModuleDict, unqualify, walk_extensions
 from modmail.utils.pagination import ButtonPaginator
 
 
@@ -215,7 +215,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         log.debug(f"Refreshing list of {self.type}s.")
 
         # make sure the new walk contains all currently loaded extensions, so they can be unloaded
-        all_exts: Dict[ModuleName, ExtMetadata] = {}
+        all_exts: ModuleDict = {}
         for name, metadata in self.all_extensions.items():
             if name in self.bot.extensions:
                 all_exts[name] = metadata

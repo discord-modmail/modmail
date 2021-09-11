@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     import pathlib
     import zipfile
 
+    from modmail.utils.extensions import ModuleDict
+
 
 class SourceTypeEnum(Enum):
     """Which source an addon is from."""
@@ -140,6 +142,7 @@ class Plugin(Addon):
         extra_kwargs: Dict[str, Any]
         installed_path: Optional[pathlib.Path]
         extension_files: List[pathlib.Path]
+        modules: ModuleDict
 
     def __init__(
         self,

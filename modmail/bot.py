@@ -1,7 +1,8 @@
 import asyncio
 import logging
 import signal
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from collections.abc import MutableSet
+from typing import Any, Optional
 
 import arrow
 import discord
@@ -11,14 +12,11 @@ from discord.client import _cleanup_loop
 from discord.ext import commands
 
 from modmail.addons.errors import NoPluginTomlFoundError
-from modmail.addons.plugins import PLUGINS, find_local_plugins, walk_plugin_files
+from modmail.addons.models import Plugin
+from modmail.addons.plugins import PLUGINS, find_local_plugins
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import BOT_MODE, EXTENSIONS, NO_UNLOAD, walk_extensions
-
-
-if TYPE_CHECKING:
-    from modmail.addons.models import Plugin
 
 
 REQUIRED_INTENTS = Intents(
@@ -47,7 +45,7 @@ class ModmailBot(commands.Bot):
         self.http_session: Optional[ClientSession] = None
 
         # keys: plugins, list values: all plugin files
-        self.installed_plugins: Dict["Plugin", List[str]] = {}
+        self.installed_plugins: MutableSet[Plugin] = {}
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
@@ -148,7 +146,12 @@ class ModmailBot(commands.Bot):
 
     async def close(self) -> None:
         """Safely close HTTP session, unload plugins and extensions when the bot is shutting down."""
-        plugins = self.extensions & PLUGINS.keys()
+        plugins = []
+        for plug in PLUGINS:
+            plugins.extend([mod for mod in plug.modules])
+
+        plugins = self.extensions.keys() & plugins
+
         for plug in list(plugins):
             try:
                 self.unload_extension(plug)
@@ -190,32 +193,33 @@ class ModmailBot(commands.Bot):
 
     def load_plugins(self) -> None:
         """Load all enabled plugins."""
-        PLUGINS.update(walk_plugin_files())
+        self.installed_plugins = PLUGINS
+        dont_load_at_start = []
         try:
-            plugins = find_local_plugins()
+            for p in find_local_plugins():
+                PLUGINS.add(p)
         except NoPluginTomlFoundError:
-            dont_load_at_start = []
+            # no local plugins
+            pass
         else:
-            self.installed_plugins.update(plugins)
-
-            dont_load_at_start = []
-            for plug, modules in self.installed_plugins.items():
+            for plug in self.installed_plugins:
                 if plug.enabled:
                     continue
                 self.logger.debug(f"Not loading {plug.__str__()} on start since it's not enabled.")
-                dont_load_at_start.extend(modules)
+                dont_load_at_start.extend(plug.modules)
 
-        for plugin, should_load in PLUGINS.items():
-            if should_load and plugin not in dont_load_at_start:
-                self.logger.debug(f"Loading plugin {plugin}")
-                try:
-                    # since we're loading user generated content,
-                    # any errors here will take down the entire bot
-                    self.load_extension(plugin)
-                except Exception:
-                    self.logger.error("Failed to load plugin {0}".format(plugin), exc_info=True)
-            else:
-                self.logger.debug(f"SKIPPED loading plugin {plugin}")
+        for plug in PLUGINS:
+            for mod, metadata in plug.modules.items():
+                if metadata.load_if_mode & self.mode and mod not in dont_load_at_start:
+                    self.logger.debug(f"Loading plugin {mod}")
+                    try:
+                        # since we're loading user generated content,
+                        # any errors here will take down the entire bot
+                        self.load_extension(mod)
+                    except Exception:
+                        self.logger.error(f"Failed to load plugin {mod!s}", exc_info=True)
+                else:
+                    self.logger.debug(f"SKIPPED loading plugin {mod}")
 
     def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         """
