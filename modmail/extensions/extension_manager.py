@@ -5,7 +5,7 @@ import functools
 import logging
 from collections import defaultdict
 from enum import Enum
-from typing import Mapping, Optional, Tuple
+from typing import Dict, Mapping, Optional, Tuple
 
 from discord import Colour, Embed
 from discord.ext import commands
@@ -15,7 +15,7 @@ from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils import responses
 from modmail.utils.cogs import BotModeEnum, ExtMetadata, ModmailCog
-from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
+from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, ModuleName, unqualify, walk_extensions
 from modmail.utils.pagination import ButtonPaginator
 
 
@@ -176,7 +176,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             return
 
         if "*" in extensions:
-            extensions = self.bot.extensions.keys() & self.all_extensions.keys()
+            extensions = self.bot.extensions.keys() & self.all_extensions
 
         msg, is_error = self.batch_manage(Action.RELOAD, *extensions)
         await responses.send_response(ctx, msg, not is_error)
@@ -215,17 +215,17 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         log.debug(f"Refreshing list of {self.type}s.")
 
         # make sure the new walk contains all currently loaded extensions, so they can be unloaded
-        loaded_extensions = {}
-        for name, should_load in self.all_extensions.items():
+        all_exts: Dict[ModuleName, ExtMetadata] = {}
+        for name, metadata in self.all_extensions.items():
             if name in self.bot.extensions:
-                loaded_extensions[name] = should_load
+                all_exts[name] = metadata
 
-        # now that we know what the list was, we can clear it
+        # re-walk the extensions
+        for name, metadata in self.refresh_method():
+            all_exts[name] = metadata
+
         self.all_extensions.clear()
-        # put the loaded extensions back in
-        self.all_extensions.update(loaded_extensions)
-        # now we can re-walk the extensions
-        self.all_extensions.update(self.refresh_method())
+        self.all_extensions.update(all_exts)
 
     @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def resync_extensions(self, ctx: Context) -> None:

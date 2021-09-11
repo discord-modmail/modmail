@@ -1,25 +1,26 @@
-# original source:
+# initial source:
 # https://github.com/python-discord/bot/blob/a8869b4d60512b173871c886321b261cbc4acca9/bot/utils/extensions.py
 # MIT License 2021 Python Discord
 import importlib
 import inspect
 import logging
 import pkgutil
-import typing as t
+from typing import Dict, Generator, List, NewType, NoReturn, Tuple
 
 from modmail import extensions
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BOT_MODES, BotModeEnum, ExtMetadata
+from modmail.utils.cogs import BotModeEnum, ExtMetadata
 
 
 log: ModmailLogger = logging.getLogger(__name__)
 
 EXT_METADATA = ExtMetadata
 
+ModuleName = NewType("ModuleName", str)
 
-EXTENSIONS: t.Dict[str, t.Tuple[bool, bool]] = dict()
-NO_UNLOAD: t.List[str] = list()
+EXTENSIONS: Dict[ModuleName, ExtMetadata] = dict()
+NO_UNLOAD: List[ModuleName] = list()
 
 
 def unqualify(name: str) -> str:
@@ -44,14 +45,14 @@ BOT_MODE = determine_bot_mode()
 
 
 log.trace(f"BOT_MODE value: {BOT_MODE}")
-log.debug(f"Dev mode status: {bool(BOT_MODE & BOT_MODES.DEVELOP)}")
-log.debug(f"Plugin dev mode status: {bool(BOT_MODE & BOT_MODES.PLUGIN_DEV)}")
+log.debug(f"Dev mode status: {bool(BOT_MODE & BotModeEnum.DEVELOP)}")
+log.debug(f"Plugin dev mode status: {bool(BOT_MODE & BotModeEnum.PLUGIN_DEV)}")
 
 
-def walk_extensions() -> t.Iterator[t.Tuple[str, t.Tuple[bool, bool]]]:
+def walk_extensions() -> Generator[Tuple[ModuleName, ExtMetadata], None, None]:
     """Yield extension names from the modmail.exts subpackage."""
 
-    def on_error(name: str) -> t.NoReturn:
+    def on_error(name: str) -> NoReturn:
         raise ImportError(name=name)  # pragma: no cover
 
     for module in pkgutil.walk_packages(extensions.__path__, f"{extensions.__name__}.", onerror=on_error):
@@ -60,21 +61,34 @@ def walk_extensions() -> t.Iterator[t.Tuple[str, t.Tuple[bool, bool]]]:
             continue
 
         imported = importlib.import_module(module.name)
-        if module.ispkg:
-            if not inspect.isfunction(getattr(imported, "setup", None)):
-                # If it lacks a setup function, it's not an extension.
-                continue
+        if not inspect.isfunction(getattr(imported, "setup", None)):
+            # If it lacks a setup function, it's not an extension.
+            continue
 
         ext_metadata: ExtMetadata = getattr(imported, "EXT_METADATA", None)
         if ext_metadata is not None:
-            # check if this cog is dev only or plugin dev only
-            load_cog = bool(ext_metadata.load_if_mode.value & BOT_MODE)
-            log.trace(f"Load cog {module.name!r}?: {load_cog}")
-            no_unload = ext_metadata.no_unload
-            yield module.name, (load_cog, no_unload)
+            if not isinstance(ext_metadata, ExtMetadata):
+                if ext_metadata == ExtMetadata:
+                    log.info(
+                        f"{module.name!r} seems to have passed the ExtMetadata class directly to "
+                        "EXT_METADATA. Using defaults."
+                    )
+                else:
+                    log.error(
+                        f"Extension {module.name!r} contains an invalid EXT_METADATA variable. "
+                        "Loading with metadata defaults. Please report this bug to the developers."
+                    )
+                yield module.name, ExtMetadata()
+                continue
+
+            log.debug(f"{module.name!r} contains a EXT_METADATA variable. Loading it.")
+
+            yield module.name, ext_metadata
             continue
 
-        log.notice(f"Cog {module.name!r} is missing an EXT_METADATA variable. Assuming its a normal cog.")
+        log.notice(
+            f"Extension {module.name!r} is missing an EXT_METADATA variable. Assuming its a normal extension."
+        )
 
         # Presume Production Mode/Metadata defaults if metadata var does not exist.
-        yield module.name, (ExtMetadata.load_if_mode, ExtMetadata.no_unload)
+        yield module.name, ExtMetadata()

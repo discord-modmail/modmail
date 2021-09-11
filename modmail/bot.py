@@ -14,7 +14,7 @@ from modmail.addons.errors import NoPluginTomlFoundError
 from modmail.addons.plugins import PLUGINS, find_local_plugins, walk_plugin_files
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
+from modmail.utils.extensions import BOT_MODE, EXTENSIONS, NO_UNLOAD, walk_extensions
 
 
 if TYPE_CHECKING:
@@ -39,6 +39,7 @@ class ModmailBot(commands.Bot):
     """
 
     logger: ModmailLogger = logging.getLogger(__name__)
+    mode: int
 
     def __init__(self, **kwargs):
         self.config = CONFIG
@@ -173,17 +174,19 @@ class ModmailBot(commands.Bot):
 
     def load_extensions(self) -> None:
         """Load all enabled extensions."""
+        self.mode = BOT_MODE
         EXTENSIONS.update(walk_extensions())
 
-        # set up no_unload global too
-        for ext, value in EXTENSIONS.items():
-            if value[1]:
+        for ext, metadata in EXTENSIONS.items():
+            # set up no_unload global too
+            if metadata.no_unload:
                 NO_UNLOAD.append(ext)
 
-        for extension, value in EXTENSIONS.items():
-            if value[0]:
-                self.logger.debug(f"Loading extension {extension}")
-                self.load_extension(extension)
+            if metadata.load_if_mode & BOT_MODE:
+                self.logger.info(f"Loading extension {ext}")
+                self.load_extension(ext)
+            else:
+                self.logger.debug(f"SKIPPING load of extension {ext} due to BOT_MODE.")
 
     def load_plugins(self) -> None:
         """Load all enabled plugins."""
