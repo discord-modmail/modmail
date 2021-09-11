@@ -4,7 +4,7 @@ import asyncio
 import logging
 import shutil
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, List, Mapping, MutableSet
+from typing import TYPE_CHECKING, Mapping, Set
 
 from atoml.exceptions import ParseError
 from discord import Colour, Embed
@@ -20,14 +20,15 @@ from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
 from modmail.addons.plugins import (
     BASE_PLUGIN_PATH,
     PLUGINS,
-    find_plugins_in_dir,
+    find_partial_plugins_from_dir,
+    find_plugins,
     update_local_toml_enable_or_disable,
     walk_plugin_files,
 )
 from modmail.extensions.extension_manager import Action, ExtensionConverter, ExtensionManager, StatusEmojis
 from modmail.utils import responses
 from modmail.utils.cogs import BotModeEnum, ExtMetadata
-from modmail.utils.extensions import BOT_MODE
+from modmail.utils.extensions import BOT_MODE, ModuleDict
 from modmail.utils.pagination import ButtonPaginator
 
 
@@ -53,38 +54,28 @@ class PluginDevPathConverter(ExtensionConverter):
     type = "plugin"
     NO_UNLOAD = None
 
+    def __init__(self):
+        """Properly set the source_list."""
+        super().__init__()
+        PluginDevPathConverter.source_list
+        modules: ModuleDict = {}
+        for plug in PluginDevPathConverter.source_list:
+            modules.update({k: v for k, v in plug.modules.items()})
+        self.source_list = modules
+
 
 class PluginConverter(commands.Converter):
     """Convert a plugin name into a full plugin with path and related args."""
 
     async def convert(self, ctx: Context, argument: str) -> Plugin:
         """Converts a plugin into a full plugin with a path and all other attributes."""
-        loaded_plugs: MutableSet[Plugin] = ctx.bot.installed_plugins
+        loaded_plugs: Set[Plugin] = ctx.bot.installed_plugins
 
         for plug in loaded_plugs:
             if argument in (plug.name, plug.folder_name):
                 return plug
 
         raise commands.BadArgument(f"{argument} is not in list of installed plugins.")
-
-
-class PluginFilesConverter(commands.Converter):
-    """
-    Convert a name of a plugin into a full plugin.
-
-    In this case Plugins are group of extensions, as if they have multiple files in their directory,
-    they will be treated as one plugin for the sake of managing.
-    """
-
-    async def convert(self, ctx: Context, argument: str) -> List[str]:
-        """Converts a provided plugin into a list of its paths."""
-        loaded_plugs: Dict[Plugin, List[str]] = ctx.bot.installed_plugins
-
-        for plug in loaded_plugs:
-            if argument in (plug.name, plug.folder_name):
-                return loaded_plugs[plug]
-
-        raise commands.BadArgument(f"{argument} is not an installed plugin.")
 
 
 class PluginManager(ExtensionManager, name="Plugin Manager"):
@@ -95,8 +86,11 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
     def __init__(self, bot: ModmailBot):
         super().__init__(bot)
-        self.all_extensions = PLUGINS
-        self.refresh_method = walk_plugin_files
+
+        modules: ModuleDict = {}
+        for plug in PLUGINS:
+            modules.update({k: v for k, v in plug.modules.items()})
+        self.all_extensions = modules
 
     def get_black_listed_extensions(self) -> list:
         """
@@ -122,7 +116,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     @plugin_dev_group.command(name="load", aliases=("l",))
     async def load_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
-        Load plugins given their fully qualified or unqualified names.
+        Load singular plugin files given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all unloaded plugins will be loaded.
         """
@@ -131,7 +125,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     @plugin_dev_group.command(name="unload", aliases=("u", "ul"))
     async def unload_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
-        Unload currently loaded plugins given their fully qualified or unqualified names.
+        Unoad singular plugin files given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all loaded plugins will be unloaded.
         """
@@ -140,23 +134,51 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
     @plugin_dev_group.command(name="reload", aliases=("r", "rl"))
     async def reload_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
-        Reload plugins given their fully qualified or unqualified names.
+        Reload singular plugin files given their fully qualified or unqualified names.
 
-        If an plugin fails to be reloaded, it will be rolled-back to the prior working state.
+        If a plugin file fails to be reloaded, it will be rolled-back to the prior working state.
 
         If '\*' is given as the name, all currently loaded plugins will be reloaded.
         """
         await self.reload_extensions.callback(self, ctx, *plugins)
 
-    @plugin_dev_group.command(name="list", aliases=("all", "ls"))
-    async def dev_list_plugins(self, ctx: Context) -> None:
-        """
-        Get a list of all plugin files, including their loaded status.
+    def group_extension_statuses(self) -> Mapping[str, str]:
+        """Return a mapping of plugin names and statuses to their categories."""
+        categories = defaultdict(list)
 
-        Red indicates that the plugin file is unloaded.
-        Green indicates that the plugin file is currently loaded.
-        """
-        await self.list_extensions.callback(self, ctx)
+        for plug in PLUGINS:
+            for mod, metadata in plug.modules.items():
+                if mod in self.bot.extensions:
+                    status = StatusEmojis.fully_loaded
+                elif metadata.load_if_mode & BOT_MODE:
+                    status = StatusEmojis.disabled
+                else:
+                    status = StatusEmojis.unloaded
+
+                name = mod.split(".", 2)[-1]
+                categories[plug.name].append(f"{status}  `{name}`")
+
+        return dict(categories)
+
+    def _resync_extensions(self) -> None:
+        """Resyncs plugin. Useful for when the files are dynamically updated."""
+        logger.debug(f"Refreshing list of {self.type}s.")
+
+        # remove all fully unloaded plugins from the list
+        for plug in PLUGINS:
+            safe_to_remove = []
+            for mod in plug.modules:
+                safe_to_remove.append(mod not in self.bot.extensions)
+            if all(safe_to_remove):
+                PLUGINS.remove(plug)
+
+        for plug in find_plugins():
+            PLUGINS.update(plug)
+
+        modules: ModuleDict = {}
+        for plug in PLUGINS:
+            modules.update({k: v for k, v in plug.modules.items()})
+        self.all_extensions = modules
 
     @plugin_dev_group.command(name="refresh", aliases=("rewalk", "rescan", "resync"))
     async def resync_plugins(self, ctx: Context) -> None:
@@ -196,15 +218,15 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         source.cache_file = directory
 
         # determine plugins in the archive
-        plugins = find_plugins_in_dir(directory)
+        archive_plugins = {x for x in find_partial_plugins_from_dir(directory)}
 
         # yield to any coroutines that need to run
-        # its not possible to do this with aiofiles, so when we export the zip,
+        # afaik its not possible to do this with aiofiles, so when we export the zip,
         # its important to yield right after
         await asyncio.sleep(0)
 
         # copy the requested plugin over to the new folder
-        for p in plugins.keys():
+        for p in archive_plugins:
             # check if user-provided plugin matches either plugin name or folder name
             if plugin.name in (p.name, p.folder_name):
                 install_path = BASE_PLUGIN_PATH / p.folder_path.name
@@ -227,23 +249,11 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             return
         logger.trace(f"{BASE_PLUGIN_PATH = }")
 
-        PLUGINS.update(walk_plugin_files(BASE_PLUGIN_PATH / p.folder_path.name))
+        plugin.modules.update(walk_plugin_files(BASE_PLUGIN_PATH / plugin.folder_name))
 
-        files_to_load: List[str] = []
-        for plug in plugins[plugin]:
-            logger.trace(f"{plug = }")
-            try:
-                plug = await PluginDevPathConverter().convert(None, plug.name.rstrip(".py"))
-            except commands.BadArgument:
-                pass
-            else:
-                if plug in PLUGINS:
-                    files_to_load.append(plug)
+        PLUGINS.add(plugin)
 
-        logger.debug(f"{files_to_load = }")
-        self.batch_manage(Action.LOAD, *files_to_load)
-
-        self.bot.installed_plugins[plugin] = files_to_load
+        self.batch_manage(Action.LOAD, *plugin.modules.keys())
 
         await responses.send_positive_response(ctx, f"Installed plugin {plugin}.")
 
@@ -258,9 +268,10 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             )
             return
 
-        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
-
-        _, err = self.batch_manage(Action.UNLOAD, *plugin_files, is_plugin=True, suppress_already_error=True)
+        plugin = await PluginConverter().convert(ctx, plugin.folder_name)
+        _, err = self.batch_manage(
+            Action.UNLOAD, *plugin.modules.keys(), is_plugin=True, suppress_already_error=True
+        )
         if err:
             await responses.send_negatory_response(
                 ctx, "There was a problem unloading the plugin from the bot."
@@ -269,10 +280,8 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         shutil.rmtree(plugin.installed_path)
 
-        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
-        for file_ in plugin_files:
-            del PLUGINS[file_]
-        del self.bot.installed_plugins[plugin]
+        plugin = await PluginConverter().convert(ctx, plugin.folder_name)
+        PLUGINS.remove(plugin)
 
         await responses.send_positive_response(ctx, f"Successfully uninstalled plugin {plugin}")
 
@@ -291,8 +300,6 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         plugin.enabled = enable
 
-        plugin_files: List[str] = await PluginFilesConverter().convert(ctx, plugin.folder_name)
-
         if plugin.local:
             try:
                 update_local_toml_enable_or_disable(plugin)
@@ -300,7 +307,9 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                 plugin.enabled = not plugin.enabled  # reverse the state
                 await responses.send_negatory_response(ctx, e.args[0])
 
-        msg, err = self.batch_manage(Action.LOAD, *plugin_files, is_plugin=True, suppress_already_error=True)
+        msg, err = self.batch_manage(
+            action, *plugin.modules.keys(), is_plugin=True, suppress_already_error=True
+        )
         if err:
             await responses.send_negatory_response(
                 ctx, "Er, something went wrong.\n" f":x: {plugin!s} was unable to be {verb}d properly!"
@@ -322,13 +331,13 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """Return a mapping of plugin names and statuses to their module."""
         plugins = defaultdict(str)
 
-        for plug, files in self.bot.installed_plugins.items():
+        for plug in self.bot.installed_plugins:
             plug_status = []
-            for ext in files:
-                if ext in self.bot.extensions:
-                    status = True
-                else:
-                    status = False
+            for mod, metadata in plug.modules.items():
+                status = mod in self.bot.extensions
+                # check that the file is supposed to be loaded
+                if not status and not metadata.load_if_mode & self.bot.mode:
+                    continue
                 plug_status.append(status)
 
             if len(plug_status) == 0:
@@ -347,7 +356,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         return dict(plugins)
 
-    @plugins_group.command(name="list", aliases=("all", "ls"))
+    @plugins_group.group(name="list", aliases=("all", "ls"), invoke_without_command=True)
     async def list_plugins(self, ctx: Context) -> None:
         """
         Get a list of all plugins, including their loaded status.
@@ -368,10 +377,23 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             lines.append(f"{status}  **{plugin_name}**")
 
         logger.debug(f"{ctx.author} requested a list of all {self.type}s. " "Returning a paginated list.")
-
+        if PLUGIN_DEV_ENABLED:
+            kw = {"footer_text": "Tip: use the detailed command to see all plugin files"}
+        else:
+            kw = {}
         await ButtonPaginator.paginate(
-            lines or f"There are no {self.type}s installed.", ctx.message, embed=embed
+            lines or f"There are no {self.type}s installed.", ctx.message, embed=embed, **kw
         )
+
+    @list_plugins.command(name="detailed", aliases=("files", "-a"), hidden=not PLUGIN_DEV_ENABLED)
+    async def dev_list_plugins(self, ctx: Context) -> None:
+        """
+        Get a list of all plugin files, including their loaded status.
+
+        Red indicates that the plugin file is unloaded.
+        Green indicates that the plugin file is currently loaded.
+        """
+        await self.list_extensions.callback(self, ctx)
 
     # This cannot be static (must have a __func__ attribute).
     async def cog_check(self, ctx: Context) -> bool:

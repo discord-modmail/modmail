@@ -15,7 +15,7 @@ from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils import responses
 from modmail.utils.cogs import BotModeEnum, ExtMetadata, ModmailCog
-from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, ModuleDict, unqualify, walk_extensions
+from modmail.utils.extensions import BOT_MODE, EXTENSIONS, NO_UNLOAD, ModuleDict, unqualify, walk_extensions
 from modmail.utils.pagination import ButtonPaginator
 
 
@@ -100,11 +100,11 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     type = "extension"
     module_name = "extensions"  # modmail/extensions
+    all_extensions: ModuleDict
 
     def __init__(self, bot: ModmailBot):
         self.bot = bot
         self.all_extensions = EXTENSIONS
-        self.refresh_method = walk_extensions
 
     def get_black_listed_extensions(self) -> list:
         """Returns a list of all unload blacklisted extensions."""
@@ -221,7 +221,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 all_exts[name] = metadata
 
         # re-walk the extensions
-        for name, metadata in self.refresh_method():
+        for name, metadata in walk_extensions():
             all_exts[name] = metadata
 
         self.all_extensions.clear()
@@ -241,9 +241,11 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         """Return a mapping of extension names and statuses to their categories."""
         categories = defaultdict(list)
 
-        for ext in self.all_extensions:
+        for ext, metadata in self.all_extensions.items():
             if ext in self.bot.extensions:
                 status = StatusEmojis.fully_loaded
+            elif metadata.load_if_mode & BOT_MODE:
+                status = StatusEmojis.disabled
             else:
                 status = StatusEmojis.unloaded
 

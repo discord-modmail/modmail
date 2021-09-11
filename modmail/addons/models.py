@@ -167,6 +167,8 @@ class Plugin(Addon):
         self.local = local
         self.enabled = enabled
 
+        self.modules = dict()
+
         # store any extra kwargs here
         # this is to ensure backwards compatiablilty with plugins that support older versions,
         # but want to use newer toml options

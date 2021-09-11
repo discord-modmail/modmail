@@ -15,8 +15,8 @@ import inspect
 import logging
 import os
 import pathlib
-from collections.abc import Generator, MutableSet
-from typing import Dict, List, Tuple
+from collections.abc import Generator
+from typing import List, Optional, Set, Tuple
 
 import atoml
 
@@ -28,13 +28,27 @@ from modmail.utils.cogs import ExtMetadata
 from modmail.utils.extensions import ModuleName, unqualify
 
 
+__all__ = [
+    "VALID_ZIP_PLUGIN_DIRECTORIES",
+    "BASE_PLUGIN_PATH",
+    "PLUGINS",
+    "PLUGIN_TOML",
+    "LOCAL_PLUGIN_TOML",
+    "parse_plugin_toml_from_string",
+    "update_local_toml_enable_or_disable",
+    "find_partial_plugins_from_dir",
+    "find_plugins",
+    "walk_plugin_files",
+]
+
+
 logger: ModmailLogger = logging.getLogger(__name__)
 
 VALID_ZIP_PLUGIN_DIRECTORIES = ["plugins", "Plugins"]
 
 BASE_PLUGIN_PATH = pathlib.Path(plugins.__file__).parent.resolve()
 
-PLUGINS: MutableSet[Plugin] = set()
+PLUGINS: Set[Plugin] = set()
 
 PLUGIN_TOML = "plugin.toml"
 
@@ -104,12 +118,12 @@ def update_local_toml_enable_or_disable(plugin: Plugin, /) -> None:
         f.write(doc.as_string())
 
 
-def find_plugins_in_dir(
+def find_partial_plugins_from_dir(
     addon_repo_path: pathlib.Path,
     *,
     parse_toml: bool = True,
     no_toml_exist_ok: bool = True,
-) -> Dict[Plugin, List[pathlib.Path]]:
+) -> Generator[Plugin, None, None]:
     """
     Find the plugins that are in a directory.
 
@@ -142,66 +156,48 @@ def find_plugins_in_dir(
 
     plugin_directory = addon_repo_path / plugin_directory
 
-    all_plugins: Dict[Plugin, List[pathlib.Path]] = {}
+    all_plugins: Set[Plugin] = set()
 
-    toml_plugins: List[Plugin] = []
     if parse_toml:
         toml_path = plugin_directory / PLUGIN_TOML
         if toml_path.exists():
             # parse the toml
             with open(toml_path) as toml_file:
-                toml_plugins = parse_plugin_toml_from_string(toml_file.read())
+                all_plugins.update(parse_plugin_toml_from_string(toml_file.read()))
+
         elif no_toml_exist_ok:
             # toml does not exist but the caller does not care
             pass
         else:
             raise NoPluginTomlFoundError(toml_path, "does not exist")
 
-    logger.debug(f"{toml_plugins =}")
-    toml_plugin_names = [p.folder_name for p in toml_plugins]
+    logger.debug(f"{all_plugins =}")
     for path in plugin_directory.iterdir():
         logger.debug(f"plugin_directory: {path}")
         if path.is_dir():
             # use an existing toml plugin object
-            if path.name in toml_plugin_names:
-                for p in toml_plugins:
+            if path.name in all_plugins:
+                for p in all_plugins:
                     if p.folder_name == path.name:
                         p.folder_path = path
-                        all_plugins[p] = list()
+                        yield p
+                        break
             else:
-                temp_plugin = Plugin(path.name, folder_path=path)
-                all_plugins[temp_plugin] = list()
-
-    logger.debug(f"Plugins detected: {[p.name for p in all_plugins.keys()]}")
-
-    for plugin_ in all_plugins.keys():
-        logger.trace(f"{plugin_.folder_path =}")
-        for dirpath, dirnames, filenames in os.walk(plugin_.folder_path):
-            logger.trace(f"{dirpath =}, {dirnames =}, {filenames =}")
-            for list_ in dirnames, filenames:
-                logger.trace(f"{list_ =}")
-                for file in list_:
-                    logger.trace(f"{file =}")
-                    if file == dirpath:  # don't include files that are plugin directories
-                        continue
-
-                    all_plugins[plugin_].append(pathlib.Path(file))
-
-    logger.debug(f"{all_plugins.keys() = }")
-    logger.debug(f"{all_plugins.values() = }")
-
-    return all_plugins
+                logger.debug(
+                    f"Plugin in {addon_repo_path!s} is not provided in toml. Creating new plugin object."
+                )
+                yield Plugin(path.name, folder_path=path)
 
 
-def find_local_plugins(
-    detection_path: pathlib.Path = BASE_PLUGIN_PATH, /  # noqa: W504
+def find_plugins(
+    detection_path: pathlib.Path = BASE_PLUGIN_PATH, /, *, local: Optional[bool] = True
 ) -> Generator[Plugin, None, None]:
     """
     Walks the local path, and determines which files are local plugins.
 
     Yields a list of plugins,
     """
-    all_plugins: MutableSet[Plugin] = set()
+    all_plugins: Set[Plugin] = set()
 
     toml_plugins: List[Plugin] = []
     toml_path = LOCAL_PLUGIN_TOML
@@ -228,7 +224,9 @@ def find_local_plugins(
 
     for plugin_ in all_plugins:
         logger.trace(f"{plugin_.folder_path =}")
-        plugin_.local = True  # take this as an opportunity to configure local to True on all plugins
+        if local is not None:
+            # configure all plugins with the provided local variable
+            plugin_.local = local
         for dirpath, dirnames, filenames in os.walk(plugin_.folder_path):
             logger.trace(f"{dirpath =}, {dirnames =}, {filenames =}")
             for list_ in dirnames, [dirpath]:

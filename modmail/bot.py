@@ -1,8 +1,7 @@
 import asyncio
 import logging
 import signal
-from collections.abc import MutableSet
-from typing import Any, Optional
+from typing import Any, Optional, Set
 
 import arrow
 import discord
@@ -13,7 +12,7 @@ from discord.ext import commands
 
 from modmail.addons.errors import NoPluginTomlFoundError
 from modmail.addons.models import Plugin
-from modmail.addons.plugins import PLUGINS, find_local_plugins
+from modmail.addons.plugins import PLUGINS, find_plugins
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import BOT_MODE, EXTENSIONS, NO_UNLOAD, walk_extensions
@@ -45,7 +44,7 @@ class ModmailBot(commands.Bot):
         self.http_session: Optional[ClientSession] = None
 
         # keys: plugins, list values: all plugin files
-        self.installed_plugins: MutableSet[Plugin] = {}
+        self.installed_plugins: Set[Plugin] = {}
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
@@ -196,8 +195,7 @@ class ModmailBot(commands.Bot):
         self.installed_plugins = PLUGINS
         dont_load_at_start = []
         try:
-            for p in find_local_plugins():
-                PLUGINS.add(p)
+            PLUGINS.update(find_plugins())
         except NoPluginTomlFoundError:
             # no local plugins
             pass
