@@ -308,6 +308,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                 await responses.send_negatory_response(
                     ctx, "Could not successfully install plugin dependencies.", message=message
                 )
+                return
 
         logger.trace(f"{BASE_PLUGIN_PATH = }")
 
@@ -315,9 +316,28 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         PLUGINS.add(plugin)
 
-        self.batch_manage(Action.LOAD, *plugin.modules.keys())
+        self.batch_manage(Action.INSTALL, *plugin.modules.keys())
 
-        await responses.send_positive_response(ctx, f"Installed plugin {plugin}.", message=message)
+        # check if the manage was successful
+        failed = []
+        for mod, metadata in plugin.modules.items():
+            if mod in self.bot.extensions:
+                fail = False
+            elif metadata.load_if_mode & BOT_MODE:
+                fail = False
+            else:
+                fail = True
+
+            failed.append(fail)
+
+        if any(failed):
+            await responses.send_negatory_response(
+                ctx, f"Failed to fully install plugin {plugin}.", message=message
+            )
+        else:
+            await responses.send_positive_response(
+                ctx, f"Successfully installed plugin {plugin}.", message=message
+            )
 
     @plugins_group.command(name="uninstall", aliases=("rm",))
     async def uninstall_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:

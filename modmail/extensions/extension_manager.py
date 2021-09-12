@@ -47,6 +47,8 @@ class Action(Enum):
     ENABLE = functools.partial(ModmailBot.load_extension)
     DISABLE = functools.partial(ModmailBot.unload_extension)
 
+    INSTALL = functools.partial(ModmailBot.reload_extension)
+
 
 class ExtensionConverter(commands.Converter):
     """
@@ -314,6 +316,10 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 # When reloading, have a special error.
                 msg = f":x: {self.type.capitalize()} `{ext}` is not loaded, so it was not {verb}ed."
                 not_quite = True
+            elif action is Action.INSTALL:
+                # extension wasn't loaded, so load it
+                # this is used for plugins
+                Action.LOAD.value(self.bot, ext)
 
             else:
                 msg = f":x: {self.type.capitalize()} `{ext}` is already {verb}ed."
