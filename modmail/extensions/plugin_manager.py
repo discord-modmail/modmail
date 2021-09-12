@@ -23,6 +23,7 @@ from modmail.addons.plugins import (
     PLUGINS,
     find_partial_plugins_from_dir,
     find_plugins,
+    install_dependencies,
     update_local_toml_enable_or_disable,
     walk_plugin_files,
 )
@@ -240,6 +241,9 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         # I'm aware this should be a context manager, but do not want to indent almost the entire command
         await ctx.trigger_typing()
 
+        # if we send a preliminary action message this gets set and is edited upon success.
+        message = None
+
         # create variables for the user input, typehint them, then assign them from the converter tuple
         plugin: Plugin
         source: AddonSource
@@ -294,6 +298,19 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         if plugin.folder_path is None:
             await responses.send_negatory_response(ctx, f"Could not find plugin {plugin}")
             return
+
+        if plugin.dependencies and len(plugin.dependencies):
+            # install dependencies since they exist
+            message = await ctx.send(
+                embed=Embed("Installing dependencies.", title="Pending install", colour=Colour.yellow())
+            )
+            try:
+                await install_dependencies(plugin)
+            except Exception:
+                await responses.send_negatory_response(
+                    ctx, "Could not successfully install plugin dependencies.", message=message
+                )
+
         logger.trace(f"{BASE_PLUGIN_PATH = }")
 
         plugin.modules.update(walk_plugin_files(BASE_PLUGIN_PATH / plugin.folder_name))
@@ -302,7 +319,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         self.batch_manage(Action.LOAD, *plugin.modules.keys())
 
-        await responses.send_positive_response(ctx, f"Installed plugin {plugin}.")
+        await responses.send_positive_response(ctx, f"Installed plugin {plugin}.", message=message)
 
     @plugins_group.command(name="uninstall", aliases=("rm",))
     async def uninstall_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:

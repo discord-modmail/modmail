@@ -8,6 +8,7 @@ TODO: Expand file to download plugins from github and gitlab from a list that is
 """
 from __future__ import annotations
 
+import asyncio
 import glob
 import importlib
 import importlib.util
@@ -15,6 +16,8 @@ import inspect
 import logging
 import os
 import pathlib
+import sys
+from asyncio import subprocess
 from collections.abc import Generator
 from typing import List, Optional, Set, Tuple
 
@@ -54,6 +57,44 @@ PLUGIN_TOML = "plugin.toml"
 
 LOCAL_PLUGIN_TOML = BASE_PLUGIN_PATH / "local.toml"
 
+PYTHON_INTERPRETER: Optional[str] = sys.executable
+
+
+async def install_dependencies(plugin: Plugin) -> str:
+    """Installs provided dependencies from a plugin."""
+    # check if there are any plugins to install
+    if not len(plugin.dependencies):
+        return
+
+    if PYTHON_INTERPRETER is None:
+        raise FileNotFoundError("Could not locate python interpreter.")
+
+    # This uses the check argument with our exported requirements.txt
+    # to make pip promise that anything it installs won't change
+    # the packages that the bot requires to have installed.
+    pip_install_args = [
+        "-m",
+        "pip",
+        "--no-input",
+        "--no-color",
+        "install",
+        "--constraint",
+        "requirements.txt",
+    ]
+    proc = await asyncio.create_subprocess_exec(
+        f"{PYTHON_INTERPRETER}",
+        *pip_install_args,
+        *plugin.dependencies,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdout, stderr = await proc.communicate()
+    logger.debug(f"{stdout.decode() = }")
+    if stderr:
+        logger.error(f"Received stderr: {stderr.decode()}")
+        raise Exception("Daquack?")
+    return stdout.decode()
+
 
 def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /, local: bool = False) -> List[Plugin]:
     """Parses a plugin toml, given the string loaded in."""
@@ -71,6 +112,7 @@ def parse_plugin_toml_from_string(unparsed_plugin_toml_str: str, /, local: bool 
                 description=plug_entry.get("description"),
                 min_bot_version=plug_entry.get("min_bot_version"),
                 enabled=enabled,
+                dependencies=plug_entry.get("dependencies"),
             )
         )
     return found_plugins

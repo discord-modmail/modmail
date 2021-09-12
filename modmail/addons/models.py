@@ -149,11 +149,12 @@ class Plugin(Addon):
         folder: str,
         description: Optional[str] = None,
         *,
-        min_bot_version: Optional[str] = None,
-        name: Optional[str] = None,
+        dependencies: Optional[List[str]] = None,
+        enabled: bool = True,
         folder_path: Optional[pathlib.Path] = None,
         local: bool = False,
-        enabled: bool = True,
+        min_bot_version: Optional[str] = None,
+        name: Optional[str] = None,
         **kw,
     ):
         self.folder_name = folder
@@ -166,6 +167,8 @@ class Plugin(Addon):
         self.min_bot_version = min_bot_version
         self.local = local
         self.enabled = enabled
+
+        self.dependencies = dependencies or []
 
         self.modules = dict()
 
