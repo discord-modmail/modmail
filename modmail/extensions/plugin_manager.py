@@ -147,7 +147,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         return []
 
-    @commands.group("plugins", aliases=("plug", "plugs"), invoke_without_command=True)
+    @commands.group("plugins", aliases=("plug", "plugs", "plugin"), invoke_without_command=True)
     async def plugins_group(self, ctx: Context) -> None:
         """Install, uninstall, disable, update, and enable installed plugins."""
         await ctx.send_help(ctx.command)
