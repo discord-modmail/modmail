@@ -7,6 +7,7 @@ from typing import Callable, Coroutine, Dict, List, Optional, Union
 
 from modmail import ModmailLogger
 
+
 logger: ModmailLogger = logging.getLogger(__name__)
 
 CoroutineFunction = Callable[..., Coroutine]

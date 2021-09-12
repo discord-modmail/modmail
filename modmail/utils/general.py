@@ -2,6 +2,7 @@ import asyncio
 from functools import wraps
 from typing import Callable, Coroutine
 
+
 CoroutineFunction = Callable[..., Coroutine]
 
 
