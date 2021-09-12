@@ -67,6 +67,7 @@ async def send_positive_response(
     response: str,
     embed: discord.Embed = _UNSET,
     colour: discord.Colour = _UNSET,
+    message: discord.Message = None,
     **kwargs,
 ) -> discord.Message:
     """
@@ -76,13 +77,18 @@ async def send_positive_response(
     If embed is set to None, this will send response as a plaintext message, with no allowed_mentions.
     If embed is provided, this method will send a response using the provided embed, edited in place.
     Extra kwargs are passed to Messageable.send()
+
+    If message is provided, it will attempt to edit that message rather than sending a new one.
     """
     kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", discord.AllowedMentions.none())
 
     logger.debug(f"Requested to send affirmative message to {channel!s}. Response: {response!s}")
 
     if embed is None:
-        return await channel.send(response, **kwargs)
+        if message is None:
+            return await channel.send(response, **kwargs)
+        else:
+            return await message.edit(response, **kwargs)
 
     if colour is _UNSET:
         colour = default_success_color
@@ -92,7 +98,10 @@ async def send_positive_response(
     embed.title = choice(success_headers)
     embed.description = response
 
-    return await channel.send(embed=embed, **kwargs)
+    if message is None:
+        return await channel.send(embed=embed, **kwargs)
+    else:
+        return await message.edit(embed=embed, **kwargs)
 
 
 async def send_negatory_response(
@@ -100,6 +109,7 @@ async def send_negatory_response(
     response: str,
     embed: discord.Embed = _UNSET,
     colour: discord.Colour = _UNSET,
+    message: discord.Message = None,
     **kwargs,
 ) -> discord.Message:
     """
@@ -115,7 +125,10 @@ async def send_negatory_response(
     logger.debug(f"Requested to send affirmative message to {channel!s}. Response: {response!s}")
 
     if embed is None:
-        return await channel.send(response, **kwargs)
+        if message is None:
+            return await channel.send(response, **kwargs)
+        else:
+            return await message.edit(response, **kwargs)
 
     if colour is _UNSET:
         colour = default_error_color
@@ -125,7 +138,10 @@ async def send_negatory_response(
     embed.title = choice(error_headers)
     embed.description = response
 
-    return await channel.send(embed=embed, **kwargs)
+    if message is None:
+        return await channel.send(embed=embed, **kwargs)
+    else:
+        return await message.edit(embed=embed, **kwargs)
 
 
 async def send_response(
@@ -134,6 +150,7 @@ async def send_response(
     success: bool,
     embed: discord.Embed = _UNSET,
     colour: discord.Colour = _UNSET,
+    message: discord.Message = None,
     **kwargs,
 ) -> discord.Message:
     """
@@ -145,6 +162,6 @@ async def send_response(
     Extra kwargs are passed to Messageable.send()
     """
     if success:
-        return await send_positive_response(channel, response, embed, colour, **kwargs)
+        return await send_positive_response(channel, response, embed, colour, message, **kwargs)
     else:
-        return await send_negatory_response(channel, response, embed, colour, **kwargs)
+        return await send_negatory_response(channel, response, embed, colour, message, **kwargs)
