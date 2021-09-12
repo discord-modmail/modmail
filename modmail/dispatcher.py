@@ -1,5 +1,7 @@
 import asyncio
 import bisect
+import dis
+import inspect
 import logging
 from typing import Callable, Coroutine, Dict, List, Optional, Union
 
@@ -43,6 +45,14 @@ class Dispatcher:
             self.blocking_handlers[event_name] = []
             self.blocking_priorities[event_name] = []
 
+    def activate(self, instance: object) -> None:
+        """Register all the handlers on a given class instance on instance initialization."""
+        for attr in dir(instance):
+            value = getattr(instance, attr)
+            if hasattr(value, "_dispatchable") and value._dispatchable:
+                for (event_name, priority) in value._dispatchable:
+                    self._register_handler(event_name, priority, value)
+
     def _register_handler(
         self,
         event_name: Optional[str],
@@ -65,6 +75,32 @@ class Dispatcher:
                 raise ValueError(
                     "You must pass an event name if the function name doesn't follow the on_eventname format."
                 )
+
+        if not hasattr(func, "_dispatchable"):
+            func._dispatchable = []
+        frame = inspect.currentframe()
+
+        # this backs up out until we're no longer in our code here
+        while frame.f_globals == globals():
+            frame = frame.f_back
+
+        # Determine if we're in a class
+        # This is _super cursed_ but also the only way I can figure out. PR's welcome.
+        # It may be a better idea to do this via detecting self in the parameters list.
+        in_class = False
+        for instruction in dis.get_instructions(frame.f_code):
+            if instruction.opname == "LOAD_CLASSDEREF":
+                in_class = True
+                break
+
+        del frame
+
+        if in_class:
+            func._dispatchable.append((event_name, priority))
+            # We've been given an unbound method. We're registering on a class, so this will be re-called
+            # later during __init__. We store all the event names it should be registered under on
+            # _dispatchable for use at that time.
+            return
 
         if event_name not in self.handlers:
             logger.warning(
