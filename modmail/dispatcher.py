@@ -36,7 +36,7 @@ class Dispatcher:
         """
         Registers the given arguments as event types.
 
-        This exists because if a user wants to dispatch or register a handler there is a  or
+        This exists because if a user wants to dispatch or register a handler there is a
         significant possibility of typos. If we make event types manually registered, then we can
         fire a warning message in cases that are likely to be typos and make development
         significantly easier.
