@@ -1,22 +1,23 @@
 FROM python:3.9-slim
 
 # Set pip to have cleaner logs and no saved cache
-ENV PIP_NO_CACHE_DIR=false \
-    POETRY_VIRTUALENVS_CREATE=false
+ENV PIP_NO_CACHE_DIR=false
 
-# Install poetry
-RUN pip install -U poetry
-
-# See https://github.com/python-poetry/poetry/issues/3336
-RUN poetry config experimental.new-installer false
+# Update pip
+RUN pip install -U pip
 
 # Create the working directory
 WORKDIR /modmail
 
+# Copy requirements so they can be installed
+COPY ./requirements.txt ./requirements.txt
+
+# Install dependencies
+RUN pip install -r ./requirements.txt
+
+
 # Copy the source code in last to optimize rebuilding the image
 COPY . .
 
-# Install project dependencies
-RUN poetry install --no-dev
 
 CMD ["python", "-m", "modmail"]
