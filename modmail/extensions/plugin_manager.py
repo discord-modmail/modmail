@@ -85,19 +85,17 @@ class PluginConverter(commands.Converter):
             return secondary_names[argument]
 
         # Determine close plugins
-        # Using a set to prevent duplicates
-        # all_possible_args: Set[str] = set()
+        # Using a dict to prevent duplicates
         arg_mapping: Dict[str, Plugin] = dict()
         for plug in loaded_plugs:
             for name in plug.name, plug.folder_name:
-                # all_possible_args.add(name)
                 arg_mapping[name] = plug
 
         result = process.extract(
             argument,
             arg_mapping.keys(),
             scorer=fuzz.ratio,
-            score_cutoff=86,
+            score_cutoff=69,
         )
         logger.debug(f"{result = }")
 
