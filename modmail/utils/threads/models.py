@@ -24,6 +24,9 @@ class MessageDict(dict):
         dict.__setitem__(self, key, value)
         dict.__setitem__(self, value, key)
 
+    def __getitem__(self, k: discord.Message) -> discord.Message:
+        return super().__getitem__(k)
+
 
 class Ticket:
     """
