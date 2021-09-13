@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING, Optional, Union
 
 import discord
 
-from modmail.utils.threads.embeds import ThreadEmbed
-
 
 if TYPE_CHECKING:
     from modmail.log import ModmailLogger
@@ -56,7 +54,6 @@ class Ticket:
         ] = self.thread.parent.get_partial_message(self.thread.id)
         self.messages = MessageDict()
         self.close_after = self.thread.auto_archive_duration
-        self.embed_creator: ThreadEmbed = ThreadEmbed()
 
         logger.trace(f"Created a Ticket object for recipient {recipient} with thread {thread}.")
 
