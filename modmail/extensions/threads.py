@@ -232,7 +232,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             sent_message = await ticket.recipient.send(embed=embed, reference=dm_reference_message)
 
             # also relay it in the thread channel
-            embed.set_footer(text=f"Message ID: {message.id}")
+            embed.set_footer(text=f"User ID: {message.author.id}")
             new_message = await ticket.thread.send(embed=embed, reference=guild_reference_message)
             await message.delete()
 
