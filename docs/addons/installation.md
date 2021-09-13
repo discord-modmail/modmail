@@ -1,7 +1,7 @@
 # Installation
 
 !!!note
-    If you are looking to write addons, check our writing addons guide.
+    If you are looking to write addons, check our [writing addons][addon-guide] guide.
 
 
 
@@ -51,3 +51,5 @@ A repository should provide a list of their plugins either in a plugin readme, o
 This is the git reference, leave blank to use the repository default.
 If you would like to use a specific commit, branch, or tag, then provide it preceeded by a `@`.
 For example, to use tagged version 1.2, `@v1.2` would install from that tag.
+
+[addon-guide]: ./README.md
