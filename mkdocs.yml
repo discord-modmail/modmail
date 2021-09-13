@@ -57,8 +57,8 @@ plugins:
 # Page tree
 nav:
   - Home: README.md
-  - Security: security.md
   - Changelog: changelog.md
+  - Security: security.md
   - Addons:
       - Overview: addons/README.md
       - Installation: addons/installation.md
