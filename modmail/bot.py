@@ -15,6 +15,7 @@ from modmail.addons.models import Plugin
 from modmail.addons.plugins import PLUGINS, find_plugins
 from modmail.config import CONFIG
 from modmail.log import ModmailLogger
+from modmail.utils.cogs import ModmailCog
 from modmail.utils.extensions import BOT_MODE, EXTENSIONS, NO_UNLOAD, walk_extensions
 
 
@@ -226,12 +227,10 @@ class ModmailBot(commands.Bot):
         Utilizes the default discord.py loader beneath, but also checks so we can warn when we're
         loading a non-ModmailCog cog.
         """
-        from modmail.utils.cogs import ModmailCog
-
         if not isinstance(cog, ModmailCog):
             self.logger.warning(
-                f"Cog {cog.name} is not a ModmailCog. All loaded cogs should always be"
-                f" instances of ModmailCog."
+                f"Cog {cog.qualified_name} is not a ModmailCog. All loaded cogs should always be"
+                " instances of ModmailCog."
             )
         super().add_cog(cog, override=override)
         self.logger.info(f"Cog loaded: {cog.qualified_name}")
