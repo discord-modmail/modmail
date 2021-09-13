@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Dict, Optional, Set, Union
 
 import discord
 from arrow import Arrow
@@ -49,6 +49,11 @@ class TicketsCog(ModmailCog, name="Threads"):
         self.relay_channel: Union[
             discord.TextChannel, discord.PartialMessageable
         ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
+
+        # message deletion events are messed up
+        self.dms_to_users: Dict[int, int] = dict()
+        self.dm_deleted_messages: Set[int] = set()
+
         self.thread_create_delete_lock = asyncio.Lock()
 
         self.use_audit_logs: bool = USE_AUDIT_LOGS
@@ -79,6 +84,10 @@ class TicketsCog(ModmailCog, name="Threads"):
             raise ThreadNotFoundError(f"Could not find thread from id {id}.")
         else:
             return ticket
+
+    def get_user_from_dm_channel_id(self, id: int, /) -> int:
+        """Get a user id from a dm channel id. Raises a KeyError if user is not found."""
+        return self.users_to_channels[id]
 
     # the reason we're checking for a user here rather than a member is because of future support for
     # a designated server to handle threads and a server where the community resides,
@@ -166,6 +175,11 @@ class TicketsCog(ModmailCog, name="Threads"):
             # the tickets can be retrieved from both users or threads.
             self.bot.tickets[recipient.id] = ticket
             self.bot.tickets[thread_channel.id] = ticket
+
+            # also save user dm channel id
+            if recipient.dm_channel is None:
+                await recipient.create_dm()
+            self.dms_to_users[recipient.dm_channel.id] = recipient.id
 
         return ticket
 
@@ -320,7 +334,12 @@ class TicketsCog(ModmailCog, name="Threads"):
         if message is None:
             message = ticket.last_sent_message
             ticket.last_sent_message = None
-        await ticket.messages[message].delete()
+
+        dm_message = ticket.messages[message]
+        # add to deleted set
+        self.dm_deleted_messages.add(dm_message.id)
+
+        await dm_message.delete()
         await message.delete()
         await ctx.message.add_reaction(ON_SUCCESS_EMOJI)
 
@@ -369,6 +388,14 @@ class TicketsCog(ModmailCog, name="Threads"):
             except KeyError:
                 logger.warning("Ticket not found in tickets dict when attempting removal.")
             # ensure we get rid of the ticket messages, as this can be an extremely large dict
+            else:
+                # remove the user's dm channel from the dict
+                try:
+                    del self.dms_to_users[ticket.recipient.dm_channel.id]
+                except KeyError:
+                    # not a problem if the user is already removed
+                    pass
+
             del ticket.messages
 
         await ticket.thread.edit(archived=True, locked=False)
@@ -419,6 +446,91 @@ class TicketsCog(ModmailCog, name="Threads"):
             await self._relay_message_to_guild(ticket, message)
 
         await message.add_reaction(ON_SUCCESS_EMOJI)
+
+    @ModmailCog.listener(name="on_raw_message_edit")
+    async def on_dm_message_edit(self, payload: discord.RawMessageUpdateEvent) -> None:
+        """
+        Receive a dm message edit, and edit the message in the channel.
+
+        In the future, this will be expanded to use a modified paginator.
+        """
+        if payload.guild_id is not None:
+            return
+
+        logger.trace(
+            f'User ID {payload.data["author"]["id"]} has edited a message '
+            f"in their dms with id {payload.message_id}"
+        )
+        try:
+            ticket = self.get_ticket(int(payload.data["author"]["id"]))
+        except ThreadNotFoundError:
+            logger.debug(
+                f"User {payload.data['author']['id']} edited a message in dms which "
+                "was related to a non-existant ticket."
+            )
+            return
+
+        guild_msg = ticket.messages[payload.message_id]
+
+        new_embed = guild_msg.embeds[0]
+
+        new_embed.insert_field_at(0, name="Former contents", value=new_embed.description)
+        new_embed.description = payload.data["content"]
+
+        await guild_msg.edit(embed=new_embed)
+
+        dm_channel = self.bot.get_partial_messageable(payload.channel_id, type=discord.DMChannel)
+        await dm_channel.send(
+            embed=discord.Embed("Successfully edited message."),
+            reference=discord.MessageReference(message_id=payload.message_id, channel_id=payload.channel_id),
+        )
+
+    @ModmailCog.listener(name="on_raw_message_delete")
+    async def on_dm_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
+        """
+        Receive a dm message edit, and edit the message in the channel.
+
+        In the future, this will be expanded to use a modified paginator.
+        """
+        if payload.guild_id is not None:
+            return
+
+        if payload.message_id in self.dm_deleted_messages:
+            logger.debug(f"Ignoring message deleted by self in {payload.channel_id}")
+            self.dm_deleted_messages.remove(payload.message_id)
+            return
+
+        try:
+            # get the user id
+            author_id = self.dms_to_users[payload.channel_id]
+        except KeyError:
+            channel = await self.bot.fetch_channel(payload.channel_id)
+            author_id = channel.recipient.id
+
+        logger.trace(
+            f"A message from {author_id} in dm channel {payload.channel_id} has "
+            f"been deleted with id {payload.message_id}."
+        )
+        try:
+            ticket = self.get_ticket(author_id)
+        except ThreadNotFoundError:
+            logger.debug(
+                f"User {author_id} edited a message in dms which was related to a non-existant ticket."
+            )
+            return
+
+        guild_msg = ticket.messages[payload.message_id]
+
+        new_embed = guild_msg.embeds[0]
+
+        new_embed.colour = discord.Colour.red()
+        new_embed.insert_field_at(0, name="Deleted", value=f"Deleted at {Arrow.utcnow().humanize()}")
+        await guild_msg.edit(embed=new_embed)
+
+        dm_channel = self.bot.get_partial_messageable(payload.channel_id, type=discord.DMChannel)
+        await dm_channel.send(
+            embed=discord.Embed("Successfully deleted message."),
+        )
 
     @ModmailCog.listener(name="on_typing")
     async def on_typing(
