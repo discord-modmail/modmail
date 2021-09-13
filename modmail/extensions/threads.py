@@ -214,12 +214,15 @@ class TicketsCog(ModmailCog, name="Threads"):
                 timestamp=message.created_at,
                 color=message.author.color,
                 author=message.author,
-                footer_text=f"Message ID: {message.id}",
             )
+
             sent_message = await ticket.recipient.send(embed=embed)
+
             # also relay it in the thread channel
+            embed.set_footer(text=f"Message ID: {message.id}")
             new_message = await ticket.thread.send(embed=embed)
             await message.delete()
+
             message = new_message
             ticket.last_sent_message = message
         else:
@@ -257,15 +260,19 @@ class TicketsCog(ModmailCog, name="Threads"):
         if message is None:
             message = ticket.last_sent_message
 
-        embed = message.embeds[0]
+        # edit user message
+        user_message = ticket.messages[message]
+        embed = user_message.embeds[0]
         embed.description = content
-        await ticket.messages[message].edit(embed=embed)
+        await user_message.edit(embed=embed)
         del embed
 
-        message = ticket.messages[message]
+        # edit guild message
         embed = message.embeds[0]
         embed.description = content
-        await ticket.thread.send(embed=embed)
+        await message.edit(embed=embed)
+        del embed
+
         await ctx.message.add_reaction(ON_SUCCESS_EMOJI)
 
     @is_modmail_thread()
