@@ -60,8 +60,9 @@ nav:
   - Security: security.md
   - Changelog: changelog.md
   - Addons:
-      - Overview: addons/
+      - Overview: addons/README.md
       - Installation: addons/installation.md
+      - Creating Plugins: addons/plugins.md
   - Contributing:
       - Guidelines: contributing.md
       - Creating an Extension: contributing/creating_an_extension.md

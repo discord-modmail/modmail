@@ -1,13 +1,17 @@
 # Creating Plugins
 
-## File Structure Overview
+Modmail, in its simplest form, is small: relay messages to and from users to staff members. However, we acknowledge that its not a one size fits all solution. Some communities need a bit more than most. That's where the addon system comes in to play.
 
-This details the structure of a plugin addon.
-!!!note
-    This builds on the [addon structure documentation][addon-guide].
+!!!Tip
+    This builds on the [addon structure documentation][addon-guide]. Please ensure you have a solid understanding of the basic repository structure beforehand.
 
 !!!note
     This guide is **not** how to install plugins, please view our [installation guide][installation] for that.
+
+## File Structure Overview
+
+This details the structure of a plugin addon.
+
 ```sh
 Plugins/
 ├── react_to_contact
@@ -18,7 +22,7 @@ Plugins/
 └── plugin.toml
 ```
 
-Even though there are three .py files, this repository contains two plugins. Each top level folder in the Plugins folder contains one plugin.
+Even though there are three `.py` files, this repository contains two plugins. Each top level folder in the Plugins folder contains one plugin.
 The number of py files in each plugins folder does not matter, there are still two plugins here.
 
 One plugin here is named `react_to_contact`, the other is `verify_contact`
@@ -33,14 +37,15 @@ There are several variables which can be configured by providing a plugin.toml f
 
 If you don't already know what toml is, [check out their docs](https://toml.io/)
 
-
-!!!warning
+!!!tip
     `plugin.toml` is supplemental to the list of folders. This means that all plugins in the repository are installable at any time. Providing a plugin.toml does not mean that any plugins *not* in the toml are not included anymore.
 
     This has the advantage of being able to use `plugin.toml` to change the name of one plugin, without having to add all other plugins to the toml.
 
 
-A full plugin.toml for the above repository may look like this:
+### Options
+
+A full `plugin.toml` for the above repository may look like this:
 
 ```toml
 [[plugins]]
@@ -56,11 +61,70 @@ directory = 'verify_contact'
 
 The name and directory are the only keys in use today,
 the description is not yet used.
-`directory` is required, name is optional, and defaults to the directory if not provided.
 
+The `directory` key is required, if wanting to set any other settings for a plugin.
 
+!!!tip
+    `directory` is aliased to `folder`. Both keys are valid, but if the `directory` key exists it will be used and `folder` will be ignored.
 
+Name is optional, and defaults to the directory if not provided.
+
+!!!warning
+    Capitals matter. Both the `plugin.toml` file and `[[plugins]]` table ***must*** be lowercase.
+    This also goes for all keys and directory arguments--they must match the capitials of the existing directory.
+
+### Dependencies
+
+If the dependencies that the bot is installed with, it is possible to declare a dependency and it will be installed when installing the plugin.
+
+!!! Waring
+    For the most part, you won't need to use this. But if you absolutely must use an additional dependency which isn't part of the bot, put it in this array.
+
+This is an array of arguments which should be just like they are being passed to pip.
+
+```toml
+[[plugins]]
+directory = 'solar_system'
+dependencies = ['earthlib==0.2.2']
+```
+
+This will install earthlib 0.2.2.
+
+## Code
+
+Now that we have an understanding of where the plugin files go, and how to configure them, its time to write their code.
+
+### `PluginCog`
+
+All plugin cogs ***must*** inherit from `PluginCog`.
+
+If plugin cogs do not inherit from this class, they will fail to load.
+
+A majority of the needed modmail classes have been imported into helpers for your convinence.
+
+```python
+from modmail.addons import helpers
+
+# Cog
+helpers.PluginCog
+
+# Extension Metadata
+helpers.ExtMetadata
+
+### For Typehints
+# bot class
+helpers.ModmailBot
+
+# logger
+helpers.ModmailLogger
+```
+
+### `ExtMetadata`
+
+There is a system where extensions can declare load modes.
+
+There is a longer write up on it [here][ext_metadata].
 
 [addon-guide]: ./README.md
-[addon-repo-structure]: ./README.md#initial-setup
+[ext_metadata]: /contributing/creating_an_extension/#bot_mode-and-extmetadata
 [installation]: ./installation.md#plugins
