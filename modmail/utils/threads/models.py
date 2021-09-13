@@ -1,6 +1,6 @@
 import logging
 from enum import IntEnum, auto
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import discord
 
@@ -54,7 +54,7 @@ class Ticket:
     messages: MessageDict
     log_message: discord.Message
     close_after: Optional[int] = None
-    last_sent_message: Optional[discord.Message] = None
+    last_sent_messages: List[discord.Message] = list()
 
     def __init__(self, recipient: discord.User, thread: discord.Thread):
         """
