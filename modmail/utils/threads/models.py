@@ -21,8 +21,9 @@ class MessageDict(dict):
     """A dict that stores every item as a key and as a value."""
 
     def __setitem__(self, key: discord.Message, value: discord.Message):
-        dict.__setitem__(self, key, value)
-        dict.__setitem__(self, value, key)
+
+        dict.__setitem__(self, getattr(key, "id", key), value)
+        dict.__setitem__(self, getattr(value, "id", value), key)
 
     def __getitem__(self, k: discord.Message) -> discord.Message:
         return super().__getitem__(k)

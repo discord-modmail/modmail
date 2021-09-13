@@ -215,12 +215,25 @@ class TicketsCog(ModmailCog, name="Threads"):
                 color=message.author.color,
                 author=message.author,
             )
+            # make a reply if it was a reply
+            dm_reference_message = None
+            guild_reference_message = None
+            if message.reference is not None:
+                # don't want to fail a reference
+                message.reference.fail_if_not_exists = False
+                guild_reference_message = message.reference
+                try:
+                    dm_reference_message = ticket.messages[message.reference.message_id].to_reference(
+                        fail_if_not_exists=False
+                    )
+                except KeyError:
+                    pass
 
-            sent_message = await ticket.recipient.send(embed=embed)
+            sent_message = await ticket.recipient.send(embed=embed, reference=dm_reference_message)
 
             # also relay it in the thread channel
             embed.set_footer(text=f"Message ID: {message.id}")
-            new_message = await ticket.thread.send(embed=embed)
+            new_message = await ticket.thread.send(embed=embed, reference=guild_reference_message)
             await message.delete()
 
             message = new_message
@@ -232,13 +245,26 @@ class TicketsCog(ModmailCog, name="Threads"):
                     message.id, ticket.recipient.dm_channel.id, ticket.thread.id, message.author
                 )
             )
+            # make a reply if it was a reply
+            guild_reference_message = None
+            if message.reference is not None:
+                # don't want to fail a reference
+                message.reference.fail_if_not_exists = False
+                try:
+                    guild_reference_message = ticket.messages[message.reference.message_id].to_reference(
+                        fail_if_not_exists=False
+                    )
+                except KeyError:
+                    pass
+
             sent_message = await ticket.thread.send(
                 embed=Embed(
                     description=str(f"{message.content}"),
                     author=message.author,
                     timestamp=message.created_at,
                     footer_text=f"Message ID: {message.id}",
-                )
+                ),
+                reference=guild_reference_message,
             )
 
         # add messages to the dict
