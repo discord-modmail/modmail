@@ -8,9 +8,8 @@ import pkgutil
 from typing import Dict, Generator, List, NewType, NoReturn, Tuple
 
 from modmail import extensions
-from modmail.config import CONFIG
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BotModeEnum, ExtMetadata
+from modmail.utils.cogs import BOT_MODE, BotModeEnum, ExtMetadata
 
 
 log: ModmailLogger = logging.getLogger(__name__)
@@ -27,22 +26,6 @@ NO_UNLOAD: List[ModuleName] = list()
 def unqualify(name: str) -> str:
     """Return an unqualified name given a qualified module/package `name`."""
     return name.rsplit(".", maxsplit=1)[-1]
-
-
-def determine_bot_mode() -> int:
-    """
-    Figure out the bot mode from the configuration system.
-
-    The configuration system uses true/false values, so we need to turn them into an integer for bitwise.
-    """
-    bot_mode = 0
-    for mode in BotModeEnum:
-        if getattr(CONFIG.dev.mode, unqualify(str(mode)).lower(), True):
-            bot_mode += mode.value
-    return bot_mode
-
-
-BOT_MODE = determine_bot_mode()
 
 
 log.trace(f"BOT_MODE value: {BOT_MODE}")
