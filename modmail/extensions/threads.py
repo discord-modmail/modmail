@@ -196,76 +196,87 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         return thread_channel
 
-    async def _relay_message(
+    async def _relay_message_to_user(
         self, ticket: Ticket, message: discord.Message, contents: str = None
     ) -> discord.Message:
-        """Send a message to the thread, either from dms or to guild, or from guild to dms."""
+        """Relay a message from guild to user."""
         if ticket.recipient.dm_channel is None:
             await ticket.recipient.create_dm()
-        if message.guild is not None:
-            # thread -> dm
-            logger.debug(
-                "Relaying message id {0} by {3} from thread {1} to dm channel {2}.".format(
-                    message.id, ticket.thread.id, ticket.recipient.dm_channel.id, message.author
-                )
+
+        # thread -> dm
+        logger.debug(
+            "Relaying message id {0} by {3} from thread {1} to dm channel {2}.".format(
+                message.id, ticket.thread.id, ticket.recipient.dm_channel.id, message.author
             )
-            embed = Embed(
-                description=contents,
-                timestamp=message.created_at,
-                color=message.author.color,
+        )
+        embed = Embed(
+            description=contents,
+            timestamp=message.created_at,
+            color=message.author.color,
+            author=message.author,
+        )
+        # make a reply if it was a reply
+        dm_reference_message = None
+        guild_reference_message = None
+        if message.reference is not None:
+            # don't want to fail a reference
+            message.reference.fail_if_not_exists = False
+            guild_reference_message = message.reference
+            try:
+                dm_reference_message = ticket.messages[message.reference.message_id].to_reference(
+                    fail_if_not_exists=False
+                )
+            except KeyError:
+                pass
+
+        sent_message = await ticket.recipient.send(embed=embed, reference=dm_reference_message)
+
+        # also relay it in the thread channel
+        embed.set_footer(text=f"User ID: {message.author.id}")
+        new_message = await ticket.thread.send(embed=embed, reference=guild_reference_message)
+        await message.delete()
+
+        message = new_message
+        ticket.last_sent_message = message
+
+        # add messages to the dict
+        ticket.messages[message] = sent_message
+        return sent_message
+
+    async def _relay_message_to_guild(
+        self, ticket: Ticket, message: discord.Message, contents: str = None
+    ) -> discord.Message:
+        """Relay a message from user to guild."""
+        if ticket.recipient.dm_channel is None:
+            await ticket.recipient.create_dm()
+
+        # dm -> thread
+        logger.debug(
+            "Relaying message id {0} from dm channel {1} with {3} to thread {2}.".format(
+                message.id, ticket.recipient.dm_channel.id, ticket.thread.id, message.author
+            )
+        )
+        # make a reply if it was a reply
+        guild_reference_message = None
+        if message.reference is not None:
+            # don't want to fail a reference
+            message.reference.fail_if_not_exists = False
+            try:
+                guild_reference_message = ticket.messages[message.reference.message_id].to_reference(
+                    fail_if_not_exists=False
+                )
+            except KeyError:
+                pass
+
+        sent_message = await ticket.thread.send(
+            embed=Embed(
+                description=str(f"{message.content}"),
                 author=message.author,
-            )
-            # make a reply if it was a reply
-            dm_reference_message = None
-            guild_reference_message = None
-            if message.reference is not None:
-                # don't want to fail a reference
-                message.reference.fail_if_not_exists = False
-                guild_reference_message = message.reference
-                try:
-                    dm_reference_message = ticket.messages[message.reference.message_id].to_reference(
-                        fail_if_not_exists=False
-                    )
-                except KeyError:
-                    pass
-
-            sent_message = await ticket.recipient.send(embed=embed, reference=dm_reference_message)
-
-            # also relay it in the thread channel
-            embed.set_footer(text=f"User ID: {message.author.id}")
-            new_message = await ticket.thread.send(embed=embed, reference=guild_reference_message)
-            await message.delete()
-
-            message = new_message
-            ticket.last_sent_message = message
-        else:
-            # dm -> thread
-            logger.debug(
-                "Relaying message id {0} from dm channel {1} with {3} to thread {2}.".format(
-                    message.id, ticket.recipient.dm_channel.id, ticket.thread.id, message.author
-                )
-            )
-            # make a reply if it was a reply
-            guild_reference_message = None
-            if message.reference is not None:
-                # don't want to fail a reference
-                message.reference.fail_if_not_exists = False
-                try:
-                    guild_reference_message = ticket.messages[message.reference.message_id].to_reference(
-                        fail_if_not_exists=False
-                    )
-                except KeyError:
-                    pass
-
-            sent_message = await ticket.thread.send(
-                embed=Embed(
-                    description=str(f"{message.content}"),
-                    author=message.author,
-                    timestamp=message.created_at,
-                    footer_text=f"Message ID: {message.id}",
-                ),
-                reference=guild_reference_message,
-            )
+                timestamp=message.created_at,
+                footer_text=f"Message ID: {message.id}",
+            ),
+            reference=guild_reference_message,
+        )
 
         # add messages to the dict
         ticket.messages[message] = sent_message
@@ -276,7 +287,7 @@ class TicketsCog(ModmailCog, name="Threads"):
     async def reply(self, ctx: Context, *, message: str) -> None:
         """Send a reply to the user."""
         ticket = self.get_ticket(ctx.channel.id)
-        await self._relay_message(ticket, ctx.message, message)
+        await self._relay_message_to_user(ticket, ctx.message, message)
 
     @is_modmail_thread()
     @commands.command(aliases=("e",))
@@ -395,7 +406,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         except KeyError:
             # Thread doesn't exist, so create one.
             ticket = await self.create_ticket(message, check_for_existing_thread=False)
-            await self._relay_message(ticket, message)
+            await self._relay_message_to_guild(ticket, message)
             await message.channel.send(
                 embed=Embed(
                     title="Ticket Opened",
@@ -405,7 +416,7 @@ class TicketsCog(ModmailCog, name="Threads"):
                 )
             )
         else:
-            await self._relay_message(ticket, message)
+            await self._relay_message_to_guild(ticket, message)
 
         await message.add_reaction(ON_SUCCESS_EMOJI)
 
