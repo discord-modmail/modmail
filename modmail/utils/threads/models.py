@@ -18,15 +18,27 @@ class Target(IntEnum):
 
 
 class MessageDict(dict):
-    """A dict that stores every item as a key and as a value."""
+    """
+    A dict that stores only discord.Messages as pairs which can be mapped to each other.
+
+    This is implemented by storing the ids as the keys, and the messages as the values.
+
+    Both adding and deleting items will delete both keys,
+    so the user does not have to worry about managing that.
+    """
 
     def __setitem__(self, key: discord.Message, value: discord.Message):
+        if not isinstance(key, discord.Message) or not isinstance(value, discord.Message):
+            raise ValueError("key or value are not of type discord.Message")
+        super().__setitem__(key.id, value)
+        super().__setitem__(value.id, key)
 
-        dict.__setitem__(self, getattr(key, "id", key), value)
-        dict.__setitem__(self, getattr(value, "id", value), key)
-
-    def __getitem__(self, key: discord.Message) -> discord.Message:
+    def __getitem__(self, key: Union[discord.Message, int]) -> discord.Message:
         return super().__getitem__(getattr(key, "id", key))
+
+    def __delitem__(self, key: Union[discord.Message, int]) -> None:
+        super().__delitem__(self.__getitem__(key).id)
+        return super().__delitem__(getattr(key, "id", key))
 
 
 class Ticket:
