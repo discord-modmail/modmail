@@ -57,6 +57,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         # message deletion events are messed up
         self.dms_to_users: Dict[int, int] = dict()
         self.dm_deleted_messages: Set[int] = set()
+        self.thread_deleted_messages: Set[int] = set()
 
         self.thread_create_delete_lock = asyncio.Lock()
 
@@ -85,7 +86,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         try:
             ticket = self.bot.tickets[id]
         except KeyError:
-            raise ThreadNotFoundError(f"Could not find thread from id {id}.")
+            raise ThreadNotFoundError(f"Could not find thread from id {id}.") from None
         else:
             return ticket
 
@@ -297,7 +298,12 @@ class TicketsCog(ModmailCog, name="Threads"):
             embed.description = contents = str(f"{message.content}")
         if len(message.attachments) > 0:
             attachments = message.attachments
+
             for a in attachments:
+                if a.url.endswith((".png", ".apng", ".gif", ".webm", "jpg", ".jpeg")):
+                    if not len(embed.image):
+                        embed.set_image(url=a.proxy_url)
+                        continue
                 embed.add_field(name=a.filename, value=a.proxy_url, inline=False)
 
         sticker = None
@@ -330,14 +336,14 @@ class TicketsCog(ModmailCog, name="Threads"):
             kw["stickers"] = [sticker]
 
         if (
-            0 == len(embed.description) == len(embed.fields)
+            0 == len(embed.description) == len(embed.image) == len(embed.fields)
             and kw.get("attachments", None) is None
             and kw.get("stickers", None) is None
         ):
             logger.info(
                 f"SKIPPING relay of message id {message.id} from {message.author!s} due to nothing to relay."
             )
-            return
+            return None
 
         sent_message = await ticket.thread.send(embed=embed, reference=guild_reference_message, **kw)
 
@@ -472,6 +478,9 @@ class TicketsCog(ModmailCog, name="Threads"):
             self.dm_deleted_messages.add(msg.id)
             await msg.delete()
 
+        for msg in messages:
+            self.thread_deleted_messages.add(msg.id)
+
         await ctx.channel.delete_messages(messages)
 
         if len(messages) > 0:
@@ -555,7 +564,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         await self._close_thread(ticket, ctx.author)
 
     @ModmailCog.listener(name="on_message")
-    async def on_message(self, message: discord.Message) -> None:
+    async def on_dm_message(self, message: discord.Message) -> None:
         """Relay all dms to a thread channel."""
         author = message.author
 
@@ -569,7 +578,9 @@ class TicketsCog(ModmailCog, name="Threads"):
         except KeyError:
             # Thread doesn't exist, so create one.
             ticket = await self.create_ticket(message, check_for_existing_thread=False)
-            await self._relay_message_to_guild(ticket, message)
+            msg = await self._relay_message_to_guild(ticket, message)
+            if msg is None:
+                return
             await message.channel.send(
                 embed=Embed(
                     title="Ticket Opened",
@@ -579,7 +590,9 @@ class TicketsCog(ModmailCog, name="Threads"):
                 )
             )
         else:
-            await self._relay_message_to_guild(ticket, message)
+            msg = await self._relay_message_to_guild(ticket, message)
+            if msg is None:
+                return
 
         await message.add_reaction(ON_SUCCESS_EMOJI)
 
@@ -671,6 +684,41 @@ class TicketsCog(ModmailCog, name="Threads"):
         await dm_channel.send(
             embed=discord.Embed("Successfully deleted message."),
         )
+
+    @ModmailCog.listener(name="on_raw_message_delete")
+    async def on_thread_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
+        """Automatically deletes a message in the dms if it was deleted on the moderator end."""
+        if payload.guild_id is None:
+            return
+
+        if payload.message_id in self.thread_deleted_messages:
+            self.thread_deleted_messages.remove(payload.message_id)
+            logger.debug(
+                f"SKIPPING mirror of deleted message {payload.message_id} since it was deleted via a command."
+            )
+            return
+
+        try:
+            ticket = self.get_ticket(payload.channel_id)
+        except ThreadNotFoundError:
+            # not a valid ticket
+            return
+
+        if ticket.thread.id != payload.channel_id:
+            logger.warn("I have no idea what happened. This is a good time to stop using the bot.")
+            return
+
+        try:
+            dm_msg = ticket.messages[payload.message_id]
+        except KeyError:
+            # message was deleted as a command
+            return
+
+        logger.info(
+            f"Relaying manual message deletion in {payload.channel_id} to {ticket.recipient.dm_channel}"
+        )
+        self.dm_deleted_messages.add(dm_msg.id)
+        await dm_msg.delete()
 
     @ModmailCog.listener(name="on_typing")
     async def on_typing(
