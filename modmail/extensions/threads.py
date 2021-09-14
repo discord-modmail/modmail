@@ -216,7 +216,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         return thread_channel
 
     async def _relay_message_to_user(
-        self, ticket: Ticket, message: discord.Message, contents: str = None
+        self, ticket: Ticket, message: discord.Message, contents: str = None, *, delete: bool = True
     ) -> discord.Message:
         """Relay a message from guild to user."""
         if ticket.recipient.dm_channel is None:
@@ -247,13 +247,23 @@ class TicketsCog(ModmailCog, name="Threads"):
                 )
             except KeyError:
                 pass
+        if len(message.attachments) > 0:
+            delete = False
+            for a in message.attachments:
+                if a.url.endswith((".png", ".apng", ".gif", ".webm", "jpg", ".jpeg")):
+                    if not len(embed.image):
+                        embed.set_image(url=a.url)
+                        continue
+                embed.add_field(name=a.filename, value=a.proxy_url, inline=False)
 
         sent_message = await ticket.recipient.send(embed=embed, reference=dm_reference_message)
 
         # also relay it in the thread channel
         embed.set_footer(text=f"User ID: {message.author.id}")
         guild_message = await ticket.thread.send(embed=embed, reference=guild_reference_message)
-        await message.delete()
+
+        if delete:
+            await message.delete()
 
         # add last sent message to the list
         ticket.last_sent_messages.append(guild_message)
@@ -353,8 +363,10 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     @is_modmail_thread()
     @commands.command(aliases=("r",))
-    async def reply(self, ctx: Context, *, message: str) -> None:
+    async def reply(self, ctx: Context, *, message: str = None) -> None:
         """Send a reply to the user."""
+        if message is None and len(ctx.message.attachments) == 0:
+            raise commands.MissingRequiredArgument("message is a required argument that is missing.")
         ticket = self.get_ticket(ctx.channel.id)
         await self._relay_message_to_user(ticket, ctx.message, message)
 
@@ -604,6 +616,9 @@ class TicketsCog(ModmailCog, name="Threads"):
         In the future, this will be expanded to use a modified paginator.
         """
         if payload.guild_id is not None:
+            return
+
+        if payload.data.get("embeds") is not None:
             return
 
         logger.trace(
