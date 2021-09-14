@@ -12,6 +12,7 @@ from discord.utils import escape_markdown
 
 from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.converters import Duration
+from modmail.utils.extensions import BOT_MODE, BotModes
 from modmail.utils.threads import Ticket, is_modmail_thread
 from modmail.utils.threads.errors import ThreadAlreadyExistsError, ThreadNotFoundError
 from modmail.utils.users import check_can_dm_user
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 
 EXT_METADATA = ExtMetadata()
 
+DEV_MODE_ENABLED = BOT_MODE & BotModes.DEVELOP
 
 BASE_JUMP_URL = "https://discord.com/channels"
 USER_NOT_ABLE_TO_BE_DMED_MESSAGE = (
@@ -286,15 +288,58 @@ class TicketsCog(ModmailCog, name="Threads"):
             except KeyError:
                 pass
 
-        sent_message = await ticket.thread.send(
-            embed=Embed(
-                description=str(f"{message.content}"),
-                author=message.author,
-                timestamp=message.created_at,
-                footer_text=f"Message ID: {message.id}",
-            ),
-            reference=guild_reference_message,
+        embed = Embed(
+            author=message.author,
+            timestamp=message.created_at,
+            footer_text=f"Message ID: {message.id}",
         )
+        if contents is None:
+            embed.description = contents = str(f"{message.content}")
+        if len(message.attachments) > 0:
+            attachments = message.attachments
+            for a in attachments:
+                embed.add_field(name=a.filename, value=a.proxy_url, inline=False)
+
+        sticker = None
+        if len(message.stickers) > 0:
+            # while stickers is a list, we only care about the first one because
+            # as of now, users cannot send more than one sticker in a message.
+            # if this changes, we will support it.
+            sticker = message.stickers[0]
+            sticker = await sticker.fetch()
+            # this can be one of two types of stickers, either a StandardSticker or a GuildSticker
+            # StandardStickers are not usable by bots, but GuildStickers are, if they're from
+            # the same guild
+            if hasattr(sticker, "available"):
+                pass
+            else:
+                # we can't use this sticker
+                if sticker.description is not None:
+                    description = f"**Description:** {sticker.description.strip()}\n"
+                else:
+                    description = ""
+                embed.add_field(
+                    name=f"Sticker: {sticker.name}",
+                    value=f"Received Sticker.\n{description}\n" f"[Click for file]({sticker.url})",
+                    inline=False,
+                )
+                sticker = None
+
+        kw = dict()
+        if sticker is not None:
+            kw["stickers"] = [sticker]
+
+        if (
+            0 == len(embed.description) == len(embed.fields)
+            and kw.get("attachments", None) is None
+            and kw.get("stickers", None) is None
+        ):
+            logger.info(
+                f"SKIPPING relay of message id {message.id} from {message.author!s} due to nothing to relay."
+            )
+            return
+
+        sent_message = await ticket.thread.send(embed=embed, reference=guild_reference_message, **kw)
 
         # add messages to the dict
         ticket.messages[message] = sent_message
@@ -565,8 +610,10 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         new_embed = guild_msg.embeds[0]
 
-        new_embed.insert_field_at(0, name="Former contents", value=new_embed.description)
-        new_embed.description = payload.data["content"]
+        data = payload.data
+        if data.get("content", None) is not None:
+            new_embed.insert_field_at(0, name="Former contents", value=new_embed.description)
+            new_embed.description = data["content"]
 
         await guild_msg.edit(embed=new_embed)
 
@@ -724,6 +771,35 @@ class TicketsCog(ModmailCog, name="Threads"):
             archiver,
             automatically_archived=automatically_archived,
         )
+
+    @is_modmail_thread()
+    @commands.command(enabled=DEV_MODE_ENABLED)
+    async def debug(self, ctx: Context, attr: str = None) -> None:
+        """Debug command. Requires a message reference (reply)."""
+        tick = self.get_ticket(ctx.channel.id)
+        dm_msg = tick.messages[ctx.message.reference.message_id]
+
+        if attr is None:
+            attribs: Dict[str] = {}
+            longest_len = 0
+            for attr in dir(dm_msg):
+                if attr.startswith("_"):
+                    continue
+                thing = getattr(dm_msg, attr)
+                if callable(thing):
+                    continue
+                attribs[attr] = thing
+                if len(attr) > longest_len:
+                    longest_len = len(attr)
+
+            con = ""
+            longest_len += 2
+            for k, v in attribs.items():
+                con += f"{k.rjust(longest_len, ' ')}: {v!r}\n"
+
+        else:
+            con = getattr(dm_msg, attr, "UNSET")
+        await ctx.send(f"```py\n{con}```")
 
 
 def setup(bot: "ModmailBot") -> None:
