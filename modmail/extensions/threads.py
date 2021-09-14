@@ -664,7 +664,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         new_embed = guild_msg.embeds[0]
 
         new_embed.colour = discord.Colour.red()
-        new_embed.insert_field_at(0, name="Deleted", value=f"Deleted at {Arrow.utcnow().humanize()}")
+        new_embed.insert_field_at(0, name="Deleted", value=f"Deleted at <t:{Arrow.utcnow().int_timestamp}:f>")
         await guild_msg.edit(embed=new_embed)
 
         dm_channel = self.bot.get_partial_messageable(payload.channel_id, type=discord.DMChannel)

@@ -26,7 +26,7 @@ class Meta(ModmailCog):
     @commands.command(name="uptime")
     async def uptime(self, ctx: commands.Context) -> None:
         """Get the current uptime of the bot."""
-        timestamp = round(float(self.bot.start_time.format("X")))
+        timestamp = self.bot.start_time.int_timestamp
         await ctx.send(f"Start time: <t:{timestamp}:R>")
 
     @commands.command(name="prefix")
