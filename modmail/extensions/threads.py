@@ -597,6 +597,8 @@ class TicketsCog(ModmailCog, name="Threads"):
         except KeyError:
             channel = await self.bot.fetch_channel(payload.channel_id)
             author_id = channel.recipient.id
+            # add user to dict
+            self.dms_to_users[payload.channel_id] = author_id
 
         logger.trace(
             f"A message from {author_id} in dm channel {payload.channel_id} has "
