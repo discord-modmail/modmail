@@ -198,7 +198,12 @@ class TicketsCog(ModmailCog, name="Threads"):
         return ticket
 
     async def _start_discord_thread(
-        self, message: discord.Message, recipient: discord.User = None, *, embed=None, **send_kwargs
+        self,
+        message: discord.Message,
+        recipient: discord.User = None,
+        *,
+        embed: discord.Embed = None,
+        **send_kwargs,
     ) -> discord.Thread:
         """Create a discord thread."""
         await self.init_relay_channel()

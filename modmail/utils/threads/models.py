@@ -57,7 +57,9 @@ class Ticket:
     last_sent_messages: List[discord.Message] = list()
     has_sent_initial_message: bool
 
-    def __init__(self, recipient: discord.User, thread: discord.Thread, *, has_sent_initial_message=True):
+    def __init__(
+        self, recipient: discord.User, thread: discord.Thread, *, has_sent_initial_message: bool = True
+    ):
         """
         Creates a Ticket instance.
 
