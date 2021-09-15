@@ -570,6 +570,8 @@ class TicketsCog(ModmailCog, name="Threads"):
         discord_thread_already_archived: bool = False,
         notify_user: Optional[bool] = None,
         automatically_archived: bool = False,
+        *,
+        contents: str = None,
     ) -> None:
         """
         Close the current thread after `after` time from now.
@@ -582,13 +584,13 @@ class TicketsCog(ModmailCog, name="Threads"):
         if closer is not None:
             thread_close_embed = discord.Embed(
                 title="Thread Closed",
-                description=f"{closer.mention} has closed this Modmail thread.",
+                description=contents or f"{closer.mention} has closed this Modmail thread.",
                 timestamp=Arrow.utcnow().datetime,
             )
         else:
             thread_close_embed = discord.Embed(
                 title="Thread Closed",
-                description="This thread has been closed.",
+                description=contents or "This thread has been closed.",
                 timestamp=Arrow.utcnow().datetime,
             )
 
@@ -629,7 +631,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     @is_modmail_thread()
     @commands.group(invoke_without_command=True)
-    async def close(self, ctx: Context, *, _: Duration = None) -> None:
+    async def close(self, ctx: Context, _: Optional[Duration] = None, *, contents: str = None) -> None:
         """Close the current thread after `after` time from now."""
         # TODO: Implement after duration
         try:
@@ -638,7 +640,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             await ctx.send("Error: this thread is not in the list of tickets.")
             return
 
-        await self._close_thread(ticket, ctx.author)
+        await self._close_thread(ticket, ctx.author, contents=contents)
 
     @ModmailCog.listener(name="on_message")
     async def on_dm_message(self, message: discord.Message) -> None:
