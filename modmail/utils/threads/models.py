@@ -55,8 +55,9 @@ class Ticket:
     log_message: discord.Message
     close_after: Optional[int] = None
     last_sent_messages: List[discord.Message] = list()
+    has_sent_initial_message: bool
 
-    def __init__(self, recipient: discord.User, thread: discord.Thread):
+    def __init__(self, recipient: discord.User, thread: discord.Thread, *, has_sent_initial_message=True):
         """
         Creates a Ticket instance.
 
@@ -70,6 +71,7 @@ class Ticket:
         ] = self.thread.parent.get_partial_message(self.thread.id)
         self.messages = MessageDict()
         self.close_after = self.thread.auto_archive_duration
+        self.has_sent_initial_message = has_sent_initial_message
 
         logger.trace(f"Created a Ticket object for recipient {recipient} with thread {thread}.")
 

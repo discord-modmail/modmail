@@ -118,7 +118,10 @@ class TicketsCog(ModmailCog, name="Threads"):
         try:
             async with self.thread_create_lock:
                 ticket = await self.create_ticket(
-                    ctx.message, recipient=recipient, raise_for_preexisting_ticket=True
+                    ctx.message,
+                    recipient=recipient,
+                    raise_for_preexisting_ticket=True,
+                    send_initial_message=False,
                 )
         except ThreadAlreadyExistsError:
             thread = self.get_ticket(recipient.id).thread
@@ -180,7 +183,7 @@ class TicketsCog(ModmailCog, name="Threads"):
                     return self.bot.tickets[recipient.id]
 
             thread_channel = await self._start_discord_thread(initial_message, recipient)
-            ticket = Ticket(recipient, thread_channel)
+            ticket = Ticket(recipient, thread_channel, has_sent_initial_message=send_initial_message)
 
             # add the ticket as both the recipient and the thread ids so
             # the tickets can be retrieved from both users or threads.
@@ -406,6 +409,23 @@ class TicketsCog(ModmailCog, name="Threads"):
             param = inspect.Parameter("message", "POSITIONAL_OR_KEYWORD")
             raise commands.MissingRequiredArgument(param)
         ticket = self.get_ticket(ctx.channel.id)
+        if not ticket.has_sent_initial_message:
+            logger.info(
+                "Sending initial message before replying on a thread "
+                "that was opened with the contact command."
+            )
+            await ticket.recipient.send(
+                embeds=[
+                    Embed(
+                        title="Ticket Opened",
+                        description="A moderator has opened this ticket to have a conversation with you.",
+                    )
+                ]
+            )
+            await ctx.trigger_typing()
+            await asyncio.sleep(1)
+
+            ticket.has_sent_initial_message = True
         await self._relay_message_to_user(ticket, ctx.message, message)
 
     @is_modmail_thread()
@@ -641,12 +661,14 @@ class TicketsCog(ModmailCog, name="Threads"):
                     if msg is None:
                         return
                     await message.channel.send(
-                        embed=Embed(
-                            title="Ticket Opened",
-                            description=f"Thanks for dming {self.bot.user.name}! "
-                            "A member of our staff will be with you shortly!",
-                            timestamp=message.created_at,
-                        )
+                        embeds=[
+                            Embed(
+                                title="Ticket Opened",
+                                description=f"Thanks for dming {self.bot.user.name}! "
+                                "A member of our staff will be with you shortly!",
+                                timestamp=message.created_at,
+                            )
+                        ]
                     )
         else:
             msg = await self._relay_message_to_guild(ticket, message)
