@@ -198,15 +198,18 @@ class TicketsCog(ModmailCog, name="Threads"):
         return ticket
 
     async def _start_discord_thread(
-        self, message: discord.Message, recipient: discord.User = None
+        self, message: discord.Message, recipient: discord.User = None, *, embed=None, **send_kwargs
     ) -> discord.Thread:
         """Create a discord thread."""
         await self.init_relay_channel()
+
+        send_kwargs = {}
         if recipient is None:
             recipient = message.author
-        allowed_mentions = discord.AllowedMentions(
-            everyone=False, users=False, roles=True, replied_user=False
-        )
+        if send_kwargs.get("allowed_mentions", None) is not None:
+            send_kwargs["allowed_mentions"] = discord.AllowedMentions(
+                everyone=False, users=False, roles=True, replied_user=False
+            )
         if self.bot.config.thread.thread_mention_role_id is not None:
             mention = f"<@&{self.bot.config.thread.thread_mention_role_id}>"
         else:
@@ -215,7 +218,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         relayed_msg = await self.relay_channel.send(
             content=mention,
             embed=embed,
-            allowed_mentions=allowed_mentions,
+            **send_kwargs,
         )
         thread_channel = await relayed_msg.create_thread(
             name=str(recipient.name + "-" + recipient.discriminator),
@@ -406,7 +409,7 @@ class TicketsCog(ModmailCog, name="Threads"):
     async def reply(self, ctx: Context, *, message: str = None) -> None:
         """Send a reply to the user."""
         if message is None and 0 == len(ctx.message.attachments) == len(ctx.message.stickers):
-            param = inspect.Parameter("message", "POSITIONAL_OR_KEYWORD")
+            param = inspect.Parameter("message", 3)
             raise commands.MissingRequiredArgument(param)
         ticket = self.get_ticket(ctx.channel.id)
         if not ticket.has_sent_initial_message:
@@ -422,10 +425,11 @@ class TicketsCog(ModmailCog, name="Threads"):
                     )
                 ]
             )
+            ticket.has_sent_initial_message = True
+
             await ctx.trigger_typing()
             await asyncio.sleep(1)
 
-            ticket.has_sent_initial_message = True
         await self._relay_message_to_user(ticket, ctx.message, message)
 
     @is_modmail_thread()
@@ -564,7 +568,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         closer: Optional[Union[discord.User, discord.Member]] = None,
         time: Optional[datetime.datetime] = None,
         discord_thread_already_archived: bool = False,
-        notify_user: bool = True,
+        notify_user: Optional[bool] = None,
         automatically_archived: bool = False,
     ) -> None:
         """
@@ -572,6 +576,9 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         Note: This method destroys the Ticket object.
         """
+        if notify_user is None:
+            notify_user = bool(ticket.has_sent_initial_message or len(ticket.messages) > 0)
+
         if closer is not None:
             thread_close_embed = discord.Embed(
                 title="Thread Closed",
