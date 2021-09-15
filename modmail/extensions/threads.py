@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import inspect
 import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Union
 
@@ -228,12 +229,15 @@ class TicketsCog(ModmailCog, name="Threads"):
                 message.id, ticket.thread.id, ticket.recipient.dm_channel.id, message.author
             )
         )
-        embed = Embed(
-            description=contents,
-            timestamp=message.created_at,
-            color=message.author.color,
-            author=message.author,
-        )
+
+        embeds: List[Embed] = [
+            Embed(
+                description=contents,
+                timestamp=message.created_at,
+                color=message.author.color,
+                author=message.author,
+            )
+        ]
         # make a reply if it was a reply
         dm_reference_message = None
         guild_reference_message = None
@@ -251,16 +255,32 @@ class TicketsCog(ModmailCog, name="Threads"):
             delete = False
             for a in message.attachments:
                 if a.url.endswith((".png", ".apng", ".gif", ".webm", "jpg", ".jpeg")):
-                    if not len(embed.image):
-                        embed.set_image(url=a.url)
+                    if not len(embeds[0].image):
+                        embeds[0].set_image(url=a.url)
                         continue
-                embed.add_field(name=a.filename, value=a.proxy_url, inline=False)
+                embeds[0].add_field(name=a.filename, value=a.proxy_url, inline=False)
 
-        sent_message = await ticket.recipient.send(embed=embed, reference=dm_reference_message)
+        if len(message.stickers):
+            # since users can only send one sticker right now, we only care about the first one
+            sticker = await message.stickers[0].fetch()
+            # IF its possible, add the sticker url to the embed attachment
+            if (
+                getattr(sticker, "format", discord.StickerFormatType.lottie)
+                == discord.StickerFormatType.lottie
+            ):
+                await message.channel.send("Nope! This sticker of a type which can't be shown to the user.")
+                return None
+            else:
+                if len(embeds[0].image) == 0:
+                    embeds[0].set_image(url=sticker.url)
+                else:
+                    embeds.append(Embed().set_image(url=sticker.url))
+
+        sent_message = await ticket.recipient.send(embeds=embeds, reference=dm_reference_message)
 
         # also relay it in the thread channel
-        embed.set_footer(text=f"User ID: {message.author.id}")
-        guild_message = await ticket.thread.send(embed=embed, reference=guild_reference_message)
+        embeds[0].set_footer(text=f"User ID: {message.author.id}")
+        guild_message = await ticket.thread.send(embeds=embeds, reference=guild_reference_message)
 
         if delete:
             await message.delete()
@@ -326,17 +346,26 @@ class TicketsCog(ModmailCog, name="Threads"):
             # this can be one of two types of stickers, either a StandardSticker or a GuildSticker
             # StandardStickers are not usable by bots, but GuildStickers are, if they're from
             # the same guild
-            if hasattr(sticker, "available"):
+            if getattr(sticker, "guild_id", False) == ticket.thread.guild.id and getattr(
+                sticker, "available", False
+            ):
                 pass
             else:
+
+                # IF its possible, add the sticker url to the embed attachment
+                if getattr(
+                    sticker, "format", discord.StickerFormatType.lottie
+                ) != discord.StickerFormatType.lottie and not len(embed.image):
+                    embed.set_image(url=sticker.url)
+
                 # we can't use this sticker
                 if sticker.description is not None:
                     description = f"**Description:** {sticker.description.strip()}\n"
                 else:
                     description = ""
                 embed.add_field(
-                    name=f"Sticker: {sticker.name}",
-                    value=f"Received Sticker.\n{description}\n" f"[Click for file]({sticker.url})",
+                    name="Received Sticker",
+                    value=f"**Sticker**: {sticker.name}\n{description}\n[Click for file]({sticker.url})",
                     inline=False,
                 )
                 sticker = None
@@ -344,6 +373,9 @@ class TicketsCog(ModmailCog, name="Threads"):
         kw = dict()
         if sticker is not None:
             kw["stickers"] = [sticker]
+
+        if message.activity is not None:
+            embed.add_field(name="Activity Sent", value="\u200b")
 
         if (
             0 == len(embed.description) == len(embed.image) == len(embed.fields)
@@ -365,8 +397,9 @@ class TicketsCog(ModmailCog, name="Threads"):
     @commands.command(aliases=("r",))
     async def reply(self, ctx: Context, *, message: str = None) -> None:
         """Send a reply to the user."""
-        if message is None and len(ctx.message.attachments) == 0:
-            raise commands.MissingRequiredArgument("message is a required argument that is missing.")
+        if message is None and 0 == len(ctx.message.attachments) == len(ctx.message.stickers):
+            param = inspect.Parameter("message", "POSITIONAL_OR_KEYWORD")
+            raise commands.MissingRequiredArgument(param)
         ticket = self.get_ticket(ctx.channel.id)
         await self._relay_message_to_user(ticket, ctx.message, message)
 
@@ -585,6 +618,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         if message.guild:
             return
+
         try:
             ticket = self.bot.tickets[author.id]
         except KeyError:
