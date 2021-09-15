@@ -8,6 +8,7 @@ from random import choice
 from typing import List
 
 import discord
+from discord.ext.commands import Context
 
 from modmail.log import ModmailLogger
 
@@ -82,6 +83,9 @@ async def send_positive_response(
     """
     kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", discord.AllowedMentions.none())
 
+    if isinstance(channel, Context):
+        channel = channel.channel
+
     logger.debug(f"Requested to send affirmative message to {channel!s}. Response: {response!s}")
 
     if embed is None:
@@ -122,7 +126,10 @@ async def send_negatory_response(
     """
     kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", discord.AllowedMentions.none())
 
-    logger.debug(f"Requested to send affirmative message to {channel!s}. Response: {response!s}")
+    if isinstance(channel, Context):
+        channel = channel.channel
+
+    logger.debug(f"Requested to send negatory message to {channel!s}. Response: {response!s}")
 
     if embed is None:
         if message is None:

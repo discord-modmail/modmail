@@ -335,7 +335,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             msg = f":x: Failed to {verb} {self.type} `{ext}`:\n```\n{error_msg}```"
 
         if msg is None:
-            msg = f":thumbsup: {self.type.capitalize()} successfully {verb}ed: `{ext}`."
+            msg = f":thumbsup: {self.type.capitalize()} successfully {verb.rstrip('e')}d: `{ext}`."
 
         log.debug(error_msg or msg)
         return msg, error_msg or not_quite
