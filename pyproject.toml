@@ -83,15 +83,15 @@ include = '\.pyi?$'
 
 [tool.taskipy.tasks.export]
 cmd = """
-echo 'Exporting installed packages to requirements.txt.\n\
+echo 'Exporting installed packages to modmail/constraints.txt.\n\
 This task automatically relocks the lock file using "poetry lock --no-update"' && \
 poetry lock --no-update && \
-echo '# Do not manually edit.\n# Generate with "poetry run task export"\n' > requirements.txt && \
+echo '# Do not manually edit.\n# Generate with "poetry run task export"\n' > modmail/constraints.txt && \
 echo "Exporting..." && \
-poetry export --without-hashes >> requirements.txt && \
+poetry export --without-hashes >> modmail/constraints.txt && \
 echo "Done exporting."
 """
-help = "Export installed packages in requirements.txt format"
+help = "Export installed packages in requirements.txt format to modmail/constraints.txt."
 
 [tool.taskipy.tasks]
 # Documentation

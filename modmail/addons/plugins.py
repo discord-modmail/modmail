@@ -79,10 +79,10 @@ async def install_dependencies(plugin: Plugin) -> str:
         "--no-color",
         "install",
         "--constraint",
-        "requirements.txt",
+        str(BASE_PLUGIN_PATH.parent / "constraints.txt"),
     ]
     proc = await asyncio.create_subprocess_exec(
-        f"{PYTHON_INTERPRETER}",
+        PYTHON_INTERPRETER,
         *pip_install_args,
         *plugin.dependencies,
         stdout=subprocess.PIPE,
@@ -92,7 +92,7 @@ async def install_dependencies(plugin: Plugin) -> str:
     logger.debug(f"{stdout.decode() = }")
     if stderr:
         logger.error(f"Received stderr: {stderr.decode()}")
-        raise Exception("Daquack?")
+        raise Exception("Something went wrong when installing.")
     return stdout.decode()
 
 

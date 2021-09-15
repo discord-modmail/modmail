@@ -10,7 +10,7 @@ RUN pip install -U pip
 WORKDIR /modmail
 
 # Copy requirements so they can be installed
-COPY ./requirements.txt ./requirements.txt
+COPY ./modmail/constraints.txt ./requirements.txt
 
 # Install dependencies
 RUN pip install -r ./requirements.txt
