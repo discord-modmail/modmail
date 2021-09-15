@@ -61,6 +61,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         self.thread_deleted_messages: Set[int] = set()
 
         self.thread_create_delete_lock = asyncio.Lock()
+        self.thread_create_lock = asyncio.Lock()
 
         self.use_audit_logs: bool = USE_AUDIT_LOGS
         self.fetch_necessary_values.start()
@@ -115,9 +116,10 @@ class TicketsCog(ModmailCog, name="Threads"):
             return
 
         try:
-            ticket = await self.create_ticket(
-                ctx.message, recipient=recipient, check_for_existing_thread=True
-            )
+            async with self.thread_create_lock:
+                ticket = await self.create_ticket(
+                    ctx.message, recipient=recipient, raise_for_preexisting_ticket=True
+                )
         except ThreadAlreadyExistsError:
             thread = self.get_ticket(recipient.id).thread
             await ctx.send(
@@ -140,7 +142,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         /,
         *,
         recipient: discord.User = None,
-        check_for_existing_thread: bool = True,
+        raise_for_preexisting_ticket: bool = True,
         send_initial_message: bool = True,
     ) -> Ticket:
         """
@@ -171,8 +173,11 @@ class TicketsCog(ModmailCog, name="Threads"):
         # lock this next session, since we're checking if a thread already exists here
         # we want to ensure that anything entering this section can get validated.
         async with self.thread_create_delete_lock:
-            if check_for_existing_thread and recipient.id in self.bot.tickets.keys():
-                raise ThreadAlreadyExistsError(recipient.id)
+            if recipient.id in self.bot.tickets.keys():
+                if raise_for_preexisting_ticket:
+                    raise ThreadAlreadyExistsError(recipient.id)
+                else:
+                    return self.bot.tickets[recipient.id]
 
             thread_channel = await self._start_discord_thread(initial_message, recipient)
             ticket = Ticket(recipient, thread_channel)
@@ -623,18 +628,26 @@ class TicketsCog(ModmailCog, name="Threads"):
             ticket = self.bot.tickets[author.id]
         except KeyError:
             # Thread doesn't exist, so create one.
-            ticket = await self.create_ticket(message, check_for_existing_thread=False)
-            msg = await self._relay_message_to_guild(ticket, message)
-            if msg is None:
-                return
-            await message.channel.send(
-                embed=Embed(
-                    title="Ticket Opened",
-                    description=f"Thanks for dming {self.bot.user.name}! "
-                    "A member of our staff will be with you shortly!",
-                    timestamp=message.created_at,
-                )
-            )
+            async with self.thread_create_lock:
+                try:
+                    ticket = await self.create_ticket(message, raise_for_preexisting_ticket=True)
+                except ThreadAlreadyExistsError:
+                    # the thread already exists, so we still need to relay the message
+                    # thankfully a keyerror should NOT happen now
+                    ticket = self.bot.tickets[author.id]
+                    msg = await self._relay_message_to_guild(ticket, message)
+                else:
+                    msg = await self._relay_message_to_guild(ticket, message)
+                    if msg is None:
+                        return
+                    await message.channel.send(
+                        embed=Embed(
+                            title="Ticket Opened",
+                            description=f"Thanks for dming {self.bot.user.name}! "
+                            "A member of our staff will be with you shortly!",
+                            timestamp=message.created_at,
+                        )
+                    )
         else:
             msg = await self._relay_message_to_guild(ticket, message)
             if msg is None:
