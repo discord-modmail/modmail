@@ -59,6 +59,12 @@ LOCAL_PLUGIN_TOML = BASE_PLUGIN_PATH / "local.toml"
 
 PYTHON_INTERPRETER: Optional[str] = sys.executable
 
+PIP_NO_ROOT_WARNING = (
+    "WARNING: Running pip as the 'root' user can result in broken permissions and "
+    "conflicting behaviour with the system package manager. "
+    "It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv"
+).encode()
+
 
 async def install_dependencies(plugin: Plugin) -> str:
     """Installs provided dependencies from a plugin."""
@@ -90,9 +96,12 @@ async def install_dependencies(plugin: Plugin) -> str:
     )
     stdout, stderr = await proc.communicate()
     logger.debug(f"{stdout.decode() = }")
+
     if stderr:
-        logger.error(f"Received stderr: {stderr.decode()}")
-        raise Exception("Something went wrong when installing.")
+        stderr = stderr.replace(PIP_NO_ROOT_WARNING, b"").strip()
+        if len(stderr.decode()) > 0:
+            logger.error(f"Received stderr: '{stderr.decode()}'")
+            raise Exception("Something went wrong when installing.")
     return stdout.decode()
 
 

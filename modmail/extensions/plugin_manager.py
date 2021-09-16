@@ -304,7 +304,8 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             )
             try:
                 await install_dependencies(plugin)
-            except Exception:
+            except Exception as e:
+                logger.error(e, exc_info=True)
                 await responses.send_negatory_response(
                     ctx, "Could not successfully install plugin dependencies.", message=message
                 )
