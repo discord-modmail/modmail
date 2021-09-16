@@ -1,11 +1,16 @@
 FROM python:3.9-slim
 
 # Set pip to have cleaner logs and no saved cache
+# Set poetry to not make virtualenvs
+# set pipx to use the same folder that pip puts scripts in
 ENV PIP_NO_CACHE_DIR=false \
-    POETRY_VIRTUALENVS_CREATE=false
+    POETRY_VIRTUALENVS_CREATE=false \
+    PIPX_BIN_DIR=/usr/local/bin
 
-# Install poetry
-RUN pip install -U poetry
+
+# Install poetry with pipx
+RUN pip install -U pipx==0.16.4
+RUN pipx install poetry==1.1.7
 
 # See https://github.com/python-poetry/poetry/issues/3336
 RUN poetry config experimental.new-installer false
