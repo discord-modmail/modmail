@@ -322,7 +322,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 Action.LOAD.value(self.bot, ext)
 
             else:
-                msg = f":x: {self.type.capitalize()} `{ext}` is already {verb}ed."
+                msg = f":x: {self.type.capitalize()} `{ext}` is already {verb.rstrip('e')}ed."
                 not_quite = True
         except Exception as e:
             if hasattr(e, "original"):
@@ -335,7 +335,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             msg = f":x: Failed to {verb} {self.type} `{ext}`:\n```\n{error_msg}```"
 
         if msg is None:
-            msg = f":thumbsup: {self.type.capitalize()} successfully {verb.rstrip('e')}d: `{ext}`."
+            msg = f":thumbsup: {self.type.capitalize()} successfully {verb.rstrip('e')}ed: `{ext}`."
 
         log.debug(error_msg or msg)
         return msg, error_msg or not_quite
