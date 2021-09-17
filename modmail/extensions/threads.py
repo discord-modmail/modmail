@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import inspect
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
 
 import discord
 from arrow import Arrow
@@ -41,6 +41,10 @@ ENABLE_DM_TO_GUILD_TYPING = False  # Library bug prevents this form working righ
 ENABLE_GUILD_TO_DM_TYPING = False
 
 USE_AUDIT_LOGS = True
+
+NO_REPONSE_COLOUR = discord.Colour.red()
+HAS_RESPONSE_COLOUR = discord.Colour.yellow()
+CLOSED_COLOUR = discord.Colour.green()
 
 logger: "ModmailLogger" = logging.getLogger(__name__)
 
@@ -100,7 +104,13 @@ class TicketsCog(ModmailCog, name="Threads"):
     # a designated server to handle threads and a server where the community resides,
     # so its possible that the user isn't in the server where this command is run.
     @commands.command()
-    async def contact(self, ctx: Context, recipient: Union[discord.User, discord.Member]) -> None:
+    async def contact(
+        self,
+        ctx: Context,
+        recipient: Union[discord.User, discord.Member],
+        *,
+        reason: str = "",
+    ) -> None:
         """
         Open a new ticket with a provided recipient.
 
@@ -122,6 +132,8 @@ class TicketsCog(ModmailCog, name="Threads"):
                     recipient=recipient,
                     raise_for_preexisting_ticket=True,
                     send_initial_message=False,
+                    description=reason,
+                    creator=ctx.message.author,
                 )
         except ThreadAlreadyExistsError:
             thread = self.get_ticket(recipient.id).thread
@@ -147,6 +159,8 @@ class TicketsCog(ModmailCog, name="Threads"):
         recipient: discord.User = None,
         raise_for_preexisting_ticket: bool = True,
         send_initial_message: bool = True,
+        description: str = None,
+        creator: Union[discord.User, discord.Member] = None,
     ) -> Ticket:
         """
         Creates a bot ticket with a user. Also adds it to the tickets dict.
@@ -182,9 +196,18 @@ class TicketsCog(ModmailCog, name="Threads"):
                 else:
                     return self.bot.tickets[recipient.id]
 
-            thread_channel = await self._start_discord_thread(initial_message, recipient)
-            ticket = Ticket(recipient, thread_channel, has_sent_initial_message=send_initial_message)
-
+            thread_channel, thread_msg = await self._start_discord_thread(
+                initial_message,
+                recipient,
+                description=description,
+                creator=creator,
+            )
+            ticket = Ticket(
+                recipient,
+                thread_channel,
+                has_sent_initial_message=send_initial_message,
+                log_message=thread_msg,
+            )
             # add the ticket as both the recipient and the thread ids so
             # the tickets can be retrieved from both users or threads.
             self.bot.tickets[recipient.id] = ticket
@@ -203,8 +226,10 @@ class TicketsCog(ModmailCog, name="Threads"):
         recipient: discord.User = None,
         *,
         embed: discord.Embed = None,
+        description: str = None,
+        creator: Union[discord.User, discord.Member] = None,
         **send_kwargs,
-    ) -> discord.Thread:
+    ) -> Tuple[discord.Thread, discord.Message]:
         """Create a discord thread."""
         await self.init_relay_channel()
 
@@ -219,7 +244,21 @@ class TicketsCog(ModmailCog, name="Threads"):
             mention = f"<@&{self.bot.config.thread.thread_mention_role_id}>"
         else:
             mention = "@here"
-        embed = Embed(author=message.author, description=message.content)
+
+        if description is None:
+            description = message.content
+        description = description.strip()
+        description += f"\n\nOpened <t:{int(datetime.datetime.now().timestamp())}:R>"
+        if creator:
+            description += f" by {creator!s}"
+
+        embed = discord.Embed(
+            title=f"{discord.utils.escape_markdown(recipient.name,ignore_links=False)}"
+            f"#{recipient.discriminator} (`{recipient.id}`)",
+            description=f"{description}",
+            timestamp=datetime.datetime.now(),
+            color=NO_REPONSE_COLOUR,
+        )
         relayed_msg = await self.relay_channel.send(
             content=mention,
             embed=embed,
@@ -230,7 +269,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             auto_archive_duration=relayed_msg.channel.default_auto_archive_duration,
         )
 
-        return thread_channel
+        return thread_channel, relayed_msg
 
     async def _relay_message_to_user(
         self, ticket: Ticket, message: discord.Message, contents: str = None, *, delete: bool = True
@@ -437,6 +476,10 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         await self._relay_message_to_user(ticket, ctx.message, message)
 
+        if (log_embeds := ticket.log_message.embeds)[0].colour == NO_REPONSE_COLOUR:
+            log_embeds[0].colour = HAS_RESPONSE_COLOUR
+            await ticket.log_message.edit(embeds=log_embeds)
+
     @is_modmail_thread()
     @commands.command(aliases=("e",))
     async def edit(self, ctx: Context, message: Optional[discord.Message] = None, *, content: str) -> None:
@@ -626,6 +669,10 @@ class TicketsCog(ModmailCog, name="Threads"):
                     pass
 
             del ticket.messages
+
+        if (log_embeds := ticket.log_message.embeds)[0].colour != CLOSED_COLOUR:
+            log_embeds[0].colour = CLOSED_COLOUR
+            await ticket.log_message.edit(embeds=log_embeds)
 
         await ticket.thread.edit(archived=True, locked=False)
 

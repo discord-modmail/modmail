@@ -58,7 +58,12 @@ class Ticket:
     has_sent_initial_message: bool
 
     def __init__(
-        self, recipient: discord.User, thread: discord.Thread, *, has_sent_initial_message: bool = True
+        self,
+        recipient: discord.User,
+        thread: discord.Thread,
+        *,
+        has_sent_initial_message: bool = True,
+        log_message: discord.Message = None,
     ):
         """
         Creates a Ticket instance.
@@ -70,18 +75,9 @@ class Ticket:
         self.recipient = recipient
         self.log_message: Union[
             discord.Message, discord.PartialMessage
-        ] = self.thread.parent.get_partial_message(self.thread.id)
+        ] = log_message or self.thread.parent.get_partial_message(self.thread.id)
         self.messages = MessageDict()
         self.close_after = self.thread.auto_archive_duration
         self.has_sent_initial_message = has_sent_initial_message
 
         logger.trace(f"Created a Ticket object for recipient {recipient} with thread {thread}.")
-
-    async def fetch_log_message(self) -> discord.Message:
-        """
-        Fetch the log message from the discord api.
-
-        This ensures that log_message is not a PartialMessage, but a full discord.Message.
-        """
-        self.log_message = await self.thread.parent.fetch_message(self.thread.id)
-        return self.log_message
