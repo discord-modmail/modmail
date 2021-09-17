@@ -211,15 +211,14 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         logger.debug(f"Refreshing list of {self.type}s.")
 
         # remove all fully unloaded plugins from the list
-        for plug in PLUGINS:
+        for plug in PLUGINS.copy():
             safe_to_remove = []
             for mod in plug.modules:
                 safe_to_remove.append(mod not in self.bot.extensions)
             if all(safe_to_remove):
                 PLUGINS.remove(plug)
 
-        for plug in find_plugins():
-            PLUGINS.update(plug)
+        PLUGINS.update(find_plugins())
 
         modules: ModuleDict = {}
         for plug in PLUGINS:
