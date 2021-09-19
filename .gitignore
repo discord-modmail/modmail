@@ -136,7 +136,7 @@ dmypy.json
 logs
 
 # Configuration
-*config.toml
+/modmail_config.toml
 
 # Custom docker compose override
 docker-compose.override.yml
