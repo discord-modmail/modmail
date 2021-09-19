@@ -37,20 +37,16 @@ except FileNotFoundError:
     pass
 
 
-def convert_to_color(col: typing.Union[str, int, discord.Colour]) -> discord.Colour:
-    """Convert a string or integer to a discord.Colour. Also supports being passed a discord.Colour."""
-    if isinstance(col, discord.Colour):
-        return col
-    if isinstance(col, str):
-        col = int(col, 16)
-    return discord.Colour(col)
-
-
 class _ColourField(marshmallow.fields.Field):
     """Class to convert a str or int into a color and deseriaze into a string."""
 
     class ColourConvert(discord.ext.commands.converter.ColourConverter):
         def convert(self, argument: str) -> discord.Colour:
+            if isinstance(argument, discord.Colour):
+                return argument
+            if not isinstance(argument, str):
+                argument = str(argument)
+
             if argument[0] == "#":
                 return self.parse_hex_number(argument[1:])
 
@@ -89,7 +85,12 @@ class _ColourField(marshmallow.fields.Field):
         return value
 
 
-@attr.s(auto_attribs=True)
+def convert_to_color(col: typing.Union[str, int, discord.Colour]) -> discord.Colour:
+    """Convert a string or integer to a discord.Colour. Also supports being passed a discord.Colour."""
+    return _ColourField.ColourConvert().convert(col)
+
+
+@attr.s(auto_attribs=True, slots=True)
 class Bot:
     """
     Values that are configuration for the bot itself.
@@ -100,10 +101,11 @@ class Bot:
 
     token: str = attr.ib(
         default=marshmallow.missing,
-        on_setattr=attr.setters.NO_OP,
+        on_setattr=attr.setters.frozen,
+        repr=False,
         metadata={
             "required": True,
-            "load_only": True,
+            "dump_only": True,
             "allow_none": False,
         },
     )
@@ -122,7 +124,7 @@ class Bot:
         partial = True
 
 
-@attr.s(auto_attribs=True, frozen=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class BotModeCfg:
     """
     The three bot modes for the bot. Enabling some of these may enable other bot features.
@@ -142,7 +144,7 @@ class BotModeCfg:
     plugin_dev: bool = attr.ib(default=False, metadata={"allow_none": False})
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, slots=True)
 class Colours:
     """
     Default colors.
@@ -155,20 +157,21 @@ class Colours:
     )
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, slots=True)
 class DevCfg:
     """Developer configuration. These values should not be changed unless you know what you're doing."""
 
     mode: BotModeCfg = BotModeCfg()
-    log_level: int = desert.ib(
-        marshmallow.fields.Integer(
-            validate=marshmallow.validate.Range(0, 50, error="Logging level must be within 0 to 50.")
-        ),
-        default=logging.INFO,
-    )
+    log_level: int = attr.ib(default=logging.INFO)
+
+    @log_level.validator
+    def _log_level_validator(self, _: attr.Attribute, value: int) -> None:
+        """Validate that log_level is within 0 to 50."""
+        if value not in range(0, 50):
+            raise ValueError("log_level must be an integer within 0 to 50.")
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, slots=True)
 class Cfg:
     """
     Base configuration attrs class.
