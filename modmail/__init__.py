@@ -9,7 +9,7 @@ from modmail.log import ModmailLogger
 
 
 env = environs.Env()
-env.read_env(".env")
+env.read_env(".env", recurse=False)
 
 logging.TRACE = 5
 logging.NOTICE = 25

@@ -2,43 +2,74 @@ import inspect
 import logging
 import os
 import pathlib
-import sys
 import typing
 from collections import defaultdict
-from pprint import pprint
 
 import atoml
 import attr
 import desert
 import discord
+import discord.ext.commands.converter
 import environs
 import marshmallow
 import marshmallow.fields
 import marshmallow.validate
 
 
+_CWD = pathlib.Path(os.getcwd())
 ENV_PREFIX = "MODMAIL_"
+USER_CONFIG_TOML = _CWD / "modmail_config.toml"
 
 env = environs.Env(eager=False, expand_vars=True)
+env.read_env(_CWD / ".env", recurse=False)
 
 
-DEFAULT_CONFIG_PATH = pathlib.Path(os.path.join(os.path.dirname(__file__), "test.toml"))
-
-
-def _generate_default_dict():
+def _generate_default_dict() -> defaultdict:
     """For defaultdicts to default to a defaultdict."""
     return defaultdict(_generate_default_dict)
 
 
+unparsed_user_provided_cfg = defaultdict(lambda: marshmallow.missing)
 try:
-    with open(DEFAULT_CONFIG_PATH) as f:
-        unparsed_user_provided_cfg = defaultdict(_generate_default_dict, atoml.parse(f.read()).value)
+    with open(USER_CONFIG_TOML) as f:
+        unparsed_user_provided_cfg.update(atoml.parse(f.read()).value)
 except FileNotFoundError:
-    unparsed_user_provided_cfg = defaultdict(_generate_default_dict)
+    pass
+
+
+def convert_to_color(col: typing.Union[str, int, discord.Colour]) -> discord.Colour:
+    """Convert a string or integer to a discord.Colour. Also supports being passed a discord.Colour."""
+    if isinstance(col, discord.Colour):
+        return col
+    if isinstance(col, str):
+        col = int(col, 16)
+    return discord.Colour(col)
 
 
 class _ColourField(marshmallow.fields.Field):
     """Class to convert a str or int into a color and deseriaze into a string."""
+
+    class ColourConvert(discord.ext.commands.converter.ColourConverter):
+        def convert(self, argument: str) -> discord.Colour:
+            if argument[0] == "#":
+                return self.parse_hex_number(argument[1:])
+
+            if argument[0:2] == "0x":
+                rest = argument[2:]
+                # Legacy backwards compatible syntax
+                if rest.startswith("#"):
+                    return self.parse_hex_number(rest[1:])
+                return self.parse_hex_number(rest)
+
+            arg = argument.lower()
+            if arg[0:3] == "rgb":
+                return self.parse_rgb(arg)
+
+            arg = arg.replace(" ", "_")
+            method = getattr(discord.Colour, arg, None)
+            if arg.startswith("from_") or method is None or not inspect.ismethod(method):
+                raise discord.ext.commands.converter.BadColourArgument(arg)
+            return method()
 
     def _serialize(self, value: typing.Any, attr: str, obj: typing.Any, **kwargs) -> discord.Colour:
         return str(value.value)
@@ -51,16 +82,17 @@ class _ColourField(marshmallow.fields.Field):
         **kwargs,
     ) -> str:
         if not isinstance(value, discord.Colour):
-            value = discord.Colour(int(value, 16))
+            if isinstance(value, str):
+                value = self.ColourConvert().convert(value)
+            else:
+                value = discord.Colour(value)
         return value
 
 
-# marshmallow.fields.Colour = _ColourField
-
-
-@attr.s(auto_attribs=True, frozen=True)
+@attr.s(auto_attribs=True)
 class Bot:
-    """Values that are configuration for the bot itself.
+    """
+    Values that are configuration for the bot itself.
 
     These are metavalues, and are the token, prefix, database bind, basically all of the stuff that needs to
     be known BEFORE attempting to log in to the database or discord.
@@ -68,6 +100,7 @@ class Bot:
 
     token: str = attr.ib(
         default=marshmallow.missing,
+        on_setattr=attr.setters.NO_OP,
         metadata={
             "required": True,
             "load_only": True,
@@ -76,28 +109,34 @@ class Bot:
     )
     prefix: str = attr.ib(
         default="?",
+        converter=lambda x: "?" if x is None else x,
         metadata={
             "allow_none": False,
         },
     )
 
     class Meta:
+        """Marshmallow configuration class for schema generation."""
+
         load_only = ("token",)
         partial = True
 
 
-def convert_to_color(col: typing.Union[str, int, discord.Colour]) -> discord.Colour:
-    if isinstance(col, discord.Colour):
-        return col
-    if isinstance(col, str):
-        col = int(col, 16)
-    return discord.Colour(col)
-
-
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, frozen=True)
 class BotModeCfg:
+    """
+    The three bot modes for the bot. Enabling some of these may enable other bot features.
+
+    `production` is used internally and is always True.
+    `develop` enables additonal features which are useful for bot developers.
+    `plugin_dev` enables additional commands which are useful when working with plugins.
+    """
+
     production: bool = desert.ib(
-        marshmallow.fields.Constant(True), default=True, metadata={"dump_default": True, "dump_only": True}
+        marshmallow.fields.Constant(True),
+        default=True,
+        converter=lambda _: True,
+        metadata={"dump_default": True, "dump_only": True},
     )
     develop: bool = attr.ib(default=False, metadata={"allow_none": False})
     plugin_dev: bool = attr.ib(default=False, metadata={"allow_none": False})
@@ -118,6 +157,8 @@ class Colours:
 
 @attr.s(auto_attribs=True)
 class DevCfg:
+    """Developer configuration. These values should not be changed unless you know what you're doing."""
+
     mode: BotModeCfg = BotModeCfg()
     log_level: int = desert.ib(
         marshmallow.fields.Integer(
@@ -129,11 +170,20 @@ class DevCfg:
 
 @attr.s(auto_attribs=True)
 class Cfg:
+    """
+    Base configuration attrs class.
+
+    The reason this creates defaults of the variables is so
+    we can get a clean default variable if we don't pass anything.
+    """
+
     bot: Bot = Bot()
     colours: Colours = Colours()
     dev: DevCfg = DevCfg()
 
     class Meta:
+        """Marshmallow configuration class for schema generation."""
+
         exclude = ("bot.token",)
 
 
@@ -165,30 +215,32 @@ def _build_bot_class(klass: typing.Any, class_prefix: str = "", defaults: typing
     return klass(**kw)
 
 
+_toml_bot_cfg = unparsed_user_provided_cfg["bot"]
 unparsed_user_provided_cfg["bot"] = attr.asdict(
-    _build_bot_class(Bot, "BOT_", unparsed_user_provided_cfg["bot"])
+    _build_bot_class(Bot, "BOT_", _toml_bot_cfg if _toml_bot_cfg is not marshmallow.missing else None)
 )
-
-# env.seal()
-
+del _toml_bot_cfg
 # build configuration
 Configuration = desert.schema_class(Cfg)  # noqa: N818
-USER_PROVIDED_CONFIG: Cfg = Configuration().load(unparsed_user_provided_cfg, unknown=marshmallow.RAISE)
-
-
-# hide the bot token from serilzation
-# this prevents the token from being saved to places.
-
-
+USER_PROVIDED_CONFIG: Cfg = Configuration().load(unparsed_user_provided_cfg, unknown=marshmallow.EXCLUDE)
 DEFAULTS_CONFIG = Cfg()
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, kw_only=True)
 class Config:
+    """
+    Base configuration variable. Used across the entire bot for configuration variables.
+
+    Holds two variables, default and user.
+    Default is a Cfg instance with nothing passed. It is a default instance of Cfg.
+
+    User is a Cfg schema instance, generated from a combination of the defaults,
+    user provided toml, and environment variables.
+    """
+
     user: Cfg
     default: Cfg
+    schema: marshmallow.Schema
 
 
-config = Config(USER_PROVIDED_CONFIG, DEFAULTS_CONFIG)
-
-print(config.user.bot.prefix)
+config = Config(user=USER_PROVIDED_CONFIG, default=DEFAULTS_CONFIG, schema=Configuration)
