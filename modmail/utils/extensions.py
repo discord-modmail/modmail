@@ -8,7 +8,7 @@ import pkgutil
 import typing as t
 
 from modmail import extensions
-from modmail.config import CONFIG
+from modmail.config import config
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import BOT_MODES, BotModes, ExtMetadata
 
@@ -35,7 +35,7 @@ def determine_bot_mode() -> int:
     """
     bot_mode = 0
     for mode in BotModes:
-        if getattr(CONFIG.dev.mode, unqualify(str(mode)).lower(), True):
+        if getattr(config.user.dev.mode, unqualify(str(mode)).lower(), True):
             bot_mode += mode.value
     return bot_mode
 

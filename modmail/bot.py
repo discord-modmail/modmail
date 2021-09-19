@@ -11,7 +11,7 @@ from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
 
-from modmail.config import CONFIG
+from modmail.config import config
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
@@ -37,7 +37,7 @@ class ModmailBot(commands.Bot):
     logger: ModmailLogger = logging.getLogger(__name__)
 
     def __init__(self, **kwargs):
-        self.config = CONFIG
+        self.config = config
         self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
         self.http_session: t.Optional[ClientSession] = None
 
@@ -45,7 +45,7 @@ class ModmailBot(commands.Bot):
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
         # listen to messages mentioning the bot or matching the prefix
         # ! NOTE: This needs to use the configuration system to get the prefix from the db once it exists.
-        prefix = commands.when_mentioned_or(CONFIG.bot.prefix)
+        prefix = commands.when_mentioned_or(self.config.user.bot.prefix)
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)

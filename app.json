@@ -1,6 +1,6 @@
 {
     "env": {
-        "TOKEN": {
+        "MODMAIL_BOT_TOKEN": {
             "description": "Discord bot token. This is from https://discord.com/developers/applications",
             "required": true
         }

@@ -3,9 +3,13 @@ import logging.handlers
 from pathlib import Path
 
 import coloredlogs
+import environs
 
 from modmail.log import ModmailLogger
 
+
+env = environs.Env()
+env.read_env(".env")
 
 logging.TRACE = 5
 logging.NOTICE = 25
@@ -17,7 +21,7 @@ LOG_FILE_SIZE = 8 * (2 ** 10) ** 2  # 8MB, discord upload limit
 
 # this logging level is set to logging.TRACE because if it is not set to the lowest level,
 # the child level will be limited to the lowest level this is set to.
-ROOT_LOG_LEVEL = logging.TRACE
+ROOT_LOG_LEVEL = env.log_level("MODMAIL_LOG_LEVEL", logging.TRACE)
 FMT = "%(asctime)s %(levelname)10s %(name)15s - [%(lineno)5d]: %(message)s"
 DATEFMT = "%Y/%m/%d %H:%M:%S"
 

@@ -1,144 +1,194 @@
-import asyncio
-import datetime
-import json
+import inspect
 import logging
 import os
+import pathlib
 import sys
 import typing
-from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from collections import defaultdict
+from pprint import pprint
 
+import atoml
+import attr
+import desert
 import discord
-import toml
-from discord.ext.commands import BadArgument
-from pydantic import BaseModel
-from pydantic import BaseSettings as PydanticBaseSettings
-from pydantic import Field, SecretStr
-from pydantic.color import Color as ColorBase
-from pydantic.env_settings import SettingsSourceCallable
-from pydantic.types import conint
+import environs
+import marshmallow
+import marshmallow.fields
+import marshmallow.validate
 
 
-log = logging.getLogger(__name__)
+ENV_PREFIX = "MODMAIL_"
 
-CONFIG_PATHS: list = [
-    f"{os.getcwd()}/config.toml",
-    f"{os.getcwd()}/modmail/config.toml",
-    "./config.toml",
-]
-
-DEFAULT_CONFIG_PATHS = [os.path.join(os.path.dirname(__file__), "config-default.toml")]
+env = environs.Env(eager=False, expand_vars=True)
 
 
-def determine_file_path(
-    paths=typing.Union[list, tuple], config_type: str = "default"
-) -> typing.Union[str, None]:
-    path = None
-    for file_path in paths:
-        config_file = Path(file_path)
-        if (config_file).exists():
-            path = config_file
-            log.debug(f"Found {config_type} config at {file_path}")
-            break
-    return path or None
+DEFAULT_CONFIG_PATH = pathlib.Path(os.path.join(os.path.dirname(__file__), "test.toml"))
 
 
-DEFAULT_CONFIG_PATH = determine_file_path(DEFAULT_CONFIG_PATHS)
-USER_CONFIG_PATH = determine_file_path(CONFIG_PATHS, config_type="")
+def _generate_default_dict():
+    """For defaultdicts to default to a defaultdict."""
+    return defaultdict(_generate_default_dict)
 
 
-def toml_default_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]:
-    """
-    A simple settings source that loads variables from a toml file
-    from within the module's source folder.
-
-    Here we happen to choose to use the `env_file_encoding` from Config
-    when reading `config-default.toml`
-    """
-    return dict(**toml.load(DEFAULT_CONFIG_PATH))
+try:
+    with open(DEFAULT_CONFIG_PATH) as f:
+        unparsed_user_provided_cfg = defaultdict(_generate_default_dict, atoml.parse(f.read()).value)
+except FileNotFoundError:
+    unparsed_user_provided_cfg = defaultdict(_generate_default_dict)
 
 
-def toml_user_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]:
-    """
-    A simple settings source that loads variables from a toml file
-    from within the module's source folder.
+class _ColourField(marshmallow.fields.Field):
+    """Class to convert a str or int into a color and deseriaze into a string."""
 
-    Here we happen to choose to use the `env_file_encoding` from Config
-    when reading `config-default.toml`
-    """
-    if USER_CONFIG_PATH:
-        return dict(**toml.load(USER_CONFIG_PATH))
-    else:
-        return dict()
+    def _serialize(self, value: typing.Any, attr: str, obj: typing.Any, **kwargs) -> discord.Colour:
+        return str(value.value)
 
-
-class BaseSettings(PydanticBaseSettings):
-    class Config:
-        extra = "ignore"
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-
-        @classmethod
-        def customise_sources(
-            cls,
-            init_settings: SettingsSourceCallable,
-            env_settings: SettingsSourceCallable,
-            file_secret_settings: SettingsSourceCallable,
-        ) -> Tuple[SettingsSourceCallable, ...]:
-            return (
-                env_settings,
-                init_settings,
-                file_secret_settings,
-                toml_user_config_source,
-                toml_default_config_source,
-            )
+    def _deserialize(
+        self,
+        value: typing.Any,
+        attr: typing.Optional[str],
+        data: typing.Optional[typing.Mapping[str, typing.Any]],
+        **kwargs,
+    ) -> str:
+        if not isinstance(value, discord.Colour):
+            value = discord.Colour(int(value, 16))
+        return value
 
 
-class BotConfig(BaseSettings):
-    prefix: str = "?"
-    token: str = None
-
-    class Config:
-        # env_prefix = "bot."
-        allow_mutation = False
+# marshmallow.fields.Colour = _ColourField
 
 
-class BotMode(BaseSettings):
-    """
-    Bot mode.
+@attr.s(auto_attribs=True, frozen=True)
+class Bot:
+    """Values that are configuration for the bot itself.
 
-    Used to determine when the bot will run.
+    These are metavalues, and are the token, prefix, database bind, basically all of the stuff that needs to
+    be known BEFORE attempting to log in to the database or discord.
     """
 
-    production: bool = True
-    plugin_dev: bool = False
-    develop: bool = False
+    token: str = attr.ib(
+        default=marshmallow.missing,
+        metadata={
+            "required": True,
+            "load_only": True,
+            "allow_none": False,
+        },
+    )
+    prefix: str = attr.ib(
+        default="?",
+        metadata={
+            "allow_none": False,
+        },
+    )
+
+    class Meta:
+        load_only = ("token",)
+        partial = True
 
 
-class Colors(BaseSettings):
+def convert_to_color(col: typing.Union[str, int, discord.Colour]) -> discord.Colour:
+    if isinstance(col, discord.Colour):
+        return col
+    if isinstance(col, str):
+        col = int(col, 16)
+    return discord.Colour(col)
+
+
+@attr.s(auto_attribs=True)
+class BotModeCfg:
+    production: bool = desert.ib(
+        marshmallow.fields.Constant(True), default=True, metadata={"dump_default": True, "dump_only": True}
+    )
+    develop: bool = attr.ib(default=False, metadata={"allow_none": False})
+    plugin_dev: bool = attr.ib(default=False, metadata={"allow_none": False})
+
+
+@attr.s(auto_attribs=True)
+class Colours:
     """
     Default colors.
 
     These should only be changed here to change the default colors.
     """
 
-    embed_color: ColorBase = "0087BD"
+    base_embed_color: discord.Colour = desert.ib(
+        _ColourField(), default="0x7289DA", converter=convert_to_color
+    )
 
 
-class DevConfig(BaseSettings):
+@attr.s(auto_attribs=True)
+class DevCfg:
+    mode: BotModeCfg = BotModeCfg()
+    log_level: int = desert.ib(
+        marshmallow.fields.Integer(
+            validate=marshmallow.validate.Range(0, 50, error="Logging level must be within 0 to 50.")
+        ),
+        default=logging.INFO,
+    )
+
+
+@attr.s(auto_attribs=True)
+class Cfg:
+    bot: Bot = Bot()
+    colours: Colours = Colours()
+    dev: DevCfg = DevCfg()
+
+    class Meta:
+        exclude = ("bot.token",)
+
+
+# find and build a bot class from our env
+def _build_bot_class(klass: typing.Any, class_prefix: str = "", defaults: typing.Dict = None) -> Bot:
     """
-    Developer specific configuration.
-    These settings should not be changed unless you know what you're doing.
+    Create an instance of the provided klass from env vars prefixed with ENV_PREFIX and class_prefix.
+
+    If defaults is provided, uses a value from there if the environment variable is not set or is None.
     """
+    # get the attributes of the provided class
+    if defaults is None:
+        defaults = defaultdict(lambda: marshmallow.missing)
+    else:
+        defaults = defaultdict(lambda: marshmallow.missing, defaults.copy())
+    attribs: typing.Set[attr.Attribute] = set()
+    for a in dir(klass.__attrs_attrs__):
+        if hasattr(klass.__attrs_attrs__, a):
+            if isinstance(attribute := getattr(klass.__attrs_attrs__, a), attr.Attribute):
+                attribs.add(attribute)
+    # read the env vars from the above
+    with env.prefixed(ENV_PREFIX):
+        kw = defaultdict(lambda: marshmallow.missing)  # any missing required vars provide as missing
+        for var in attribs:
+            kw[var.name] = getattr(env, var.type.__name__)(class_prefix + var.name.upper())
+            if defaults and kw[var.name] is None:
+                kw[var.name] = defaults[var.name]
 
-    log_level: conint(ge=0, le=50) = getattr(logging, "NOTICE", 25)
-    mode: BotMode
+    return klass(**kw)
 
 
-class ModmailConfig(BaseSettings):
-    bot: BotConfig
-    dev: DevConfig
-    colors: Colors
+unparsed_user_provided_cfg["bot"] = attr.asdict(
+    _build_bot_class(Bot, "BOT_", unparsed_user_provided_cfg["bot"])
+)
+
+# env.seal()
+
+# build configuration
+Configuration = desert.schema_class(Cfg)  # noqa: N818
+USER_PROVIDED_CONFIG: Cfg = Configuration().load(unparsed_user_provided_cfg, unknown=marshmallow.RAISE)
 
 
-CONFIG = ModmailConfig()
+# hide the bot token from serilzation
+# this prevents the token from being saved to places.
+
+
+DEFAULTS_CONFIG = Cfg()
+
+
+@attr.s(auto_attribs=True, slots=True)
+class Config:
+    user: Cfg
+    default: Cfg
+
+
+config = Config(USER_PROVIDED_CONFIG, DEFAULTS_CONFIG)
+
+print(config.user.bot.prefix)

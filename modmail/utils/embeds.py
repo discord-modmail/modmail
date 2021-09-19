@@ -3,10 +3,10 @@ from typing import List, Tuple, Union
 import discord
 from discord.embeds import EmptyEmbed
 
-from modmail.config import CONFIG
+from modmail.config import config
 
 
-DEFAULT_COLOR = int(CONFIG.colors.embed_color.as_hex().lstrip("#"), 16)
+DEFAULT_COLOR = config.user.colours.base_embed_color
 
 original_init = discord.Embed.__init__
 
