@@ -117,12 +117,6 @@ class Bot:
         },
     )
 
-    class Meta:
-        """Marshmallow configuration class for schema generation."""
-
-        load_only = ("token",)
-        partial = True
-
 
 @attr.s(auto_attribs=True, slots=True, frozen=True)
 class BotModeCfg:
@@ -184,11 +178,6 @@ class Cfg:
     colours: Colours = Colours()
     dev: DevCfg = DevCfg()
 
-    class Meta:
-        """Marshmallow configuration class for schema generation."""
-
-        exclude = ("bot.token",)
-
 
 # find and build a bot class from our env
 def _build_bot_class(klass: typing.Any, class_prefix: str = "", defaults: typing.Dict = None) -> Bot:
@@ -224,7 +213,7 @@ unparsed_user_provided_cfg["bot"] = attr.asdict(
 )
 del _toml_bot_cfg
 # build configuration
-Configuration = desert.schema_class(Cfg)  # noqa: N818
+Configuration = desert.schema_class(Cfg, meta={"ordered": True})  # noqa: N818
 USER_PROVIDED_CONFIG: Cfg = Configuration().load(unparsed_user_provided_cfg, unknown=marshmallow.EXCLUDE)
 DEFAULTS_CONFIG = Cfg()
 
