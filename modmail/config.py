@@ -266,15 +266,10 @@ def _build_bot_class(
         defaults = defaultdict(lambda: marshmallow.missing)
     else:
         defaults = defaultdict(lambda: marshmallow.missing, defaults.copy())
-    attribs: typing.Set[attr.Attribute] = set()
-    for a in dir(klass.__attrs_attrs__):
-        if hasattr(klass.__attrs_attrs__, a):
-            if isinstance(attribute := getattr(klass.__attrs_attrs__, a), attr.Attribute):
-                attribs.add(attribute)
-    # read the env vars from the above
+
     with env.prefixed(ENV_PREFIX):
         kw = defaultdict(lambda: marshmallow.missing)  # any missing required vars provide as missing
-        for var in attribs:
+        for var in attr.fields(klass):
             kw[var.name] = getattr(env, var.type.__name__)(class_prefix + var.name.upper())
             if defaults and kw[var.name] is None:
                 kw[var.name] = defaults[var.name]
