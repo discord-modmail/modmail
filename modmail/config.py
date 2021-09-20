@@ -394,10 +394,11 @@ def _load_config(files: typing.List[typing.Union[os.PathLike]] = None, load_env:
             )
 
     if loaded_config_dict is None:
-        raise CfgLoadError(
-            "Not gonna lie, this SHOULD be unreachable...\n"
-            "If you came across this as a consumer, please report this bug to our bug tracker."
-        )
+        # load default configuration since no overrides were provided.
+        # that's actually done by default, so we replace the new dictionary
+        # with the one containing our required environment.
+        loaded_config_dict = env_cfg
+
     loaded_config_dict = ConfigurationSchema().load(loaded_config_dict, unknown=marshmallow.EXCLUDE)
     return Config(user=loaded_config_dict, schema=ConfigurationSchema, default=get_default_config())
 
