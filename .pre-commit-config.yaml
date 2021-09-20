@@ -1,6 +1,16 @@
 ## Pre-commit setup
 
 repos:
+  # its possible to put this at the bottom, but we want the pre-commit-hooks to check these files as well.
+  - repo: local
+    hooks:
+      - id: ensure-default-configuration-is-exported
+        name: Export default configuration
+        language: python
+        entry: poetry run python -m scripts.export_new_config_to_default_config
+        files: '(modmail\/(config.py|default_config(.toml|.yaml)))$'
+        additional_dependencies: [pyyaml==5.4.1]
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
     hooks:

@@ -415,7 +415,7 @@ def get_default_config() -> Cfg:
     return get_config().default
 
 
-def export_default_conf(*, export_toml: bool = True, export_yaml: bool = None) -> None:
+def export_default_conf(*, export_toml: bool = True, export_yaml: bool = None) -> bool:
     """Export default configuration to the preconfigured locations."""
     conf = get_default_config()
     dump: dict = ConfigurationSchema().dump(conf)
@@ -459,11 +459,3 @@ def export_default_conf(*, export_toml: bool = True, export_yaml: bool = None) -
 
 
 config = get_config()
-
-
-if __name__ == "__main__":
-    # if this file is run directly, export the configuration to a defaults file.
-    import sys
-
-    print("Exporting default configuration to desiginated default config files.")
-    sys.exit(export_default_conf())
