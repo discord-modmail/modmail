@@ -177,8 +177,8 @@ class DevCfg:
     @log_level.validator
     def _log_level_validator(self, _: attr.Attribute, value: int) -> None:
         """Validate that log_level is within 0 to 50."""
-        if value not in range(0, 50):
-            raise ValueError("log_level must be an integer within 0 to 50.")
+        if value not in range(0, 50 + 1):
+            raise ValueError("log_level must be an integer within 0 to 50, inclusive.")
 
 
 @attr.s(auto_attribs=True, slots=True)
