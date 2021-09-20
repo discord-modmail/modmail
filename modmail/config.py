@@ -302,7 +302,7 @@ def _load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> d
         existing_cfg_dict = defaultdict(_generate_default_dict)
 
     existing_cfg_dict["bot"] = _recursive_dict_update(
-        attr.asdict(_build_bot_class(Bot, env, BOT_ENV_PREFIX)), existing_cfg_dict["bot"]
+        existing_cfg_dict["bot"], attr.asdict(_build_bot_class(Bot, env, BOT_ENV_PREFIX))
     )
 
     return existing_cfg_dict
@@ -369,6 +369,29 @@ def load_yaml(path: os.PathLike, existing_cfg_dict: dict = None) -> dict:
         raise CfgLoadError from e
 
 
+DictT = typing.TypeVar("DictT", bound=typing.Dict[str, typing.Any])
+
+
+def _remove_extra_values(klass: type, dit: DictT) -> DictT:
+    """
+    Remove extra values from the provided dict which don't fit into the provided klass recursively.
+
+    klass must be an attr.s class.
+    """
+    fields = attr.fields_dict(klass)
+    cleared_dict = dit.copy()
+    for k in dit:
+        if k not in fields:
+            del cleared_dict[k]
+        elif isinstance(cleared_dict[k], dict):
+            if attr.has((new_klass := fields.get(k, None)).type):
+                cleared_dict[k] = _remove_extra_values(new_klass.type, cleared_dict[k])
+            else:
+                # delete this dict
+                del cleared_dict[k]
+    return cleared_dict
+
+
 def _load_config(files: typing.List[typing.Union[os.PathLike]] = None, load_env: bool = True) -> Config:
     """
     Loads a configuration from the specified files.
@@ -407,6 +430,12 @@ def _load_config(files: typing.List[typing.Union[os.PathLike]] = None, load_env:
 
     if load_env:
         loaded_config_dict = _load_env(existing_cfg_dict=loaded_config_dict)
+
+    # HACK remove extra keeps from the configuration dict since marshmallow doesn't know what to do with them
+    # CONTRARY to the marshmallow.EXCLUDE below.
+    # They will cause errors.
+    # Extra configuration values are okay, we aren't trying to be strict here.
+    loaded_config_dict = _remove_extra_values(Cfg, loaded_config_dict)
 
     loaded_config_dict = ConfigurationSchema().load(data=loaded_config_dict, unknown=marshmallow.EXCLUDE)
     return Config(user=loaded_config_dict, schema=ConfigurationSchema, default=get_default_config())
