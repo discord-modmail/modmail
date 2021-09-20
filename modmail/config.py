@@ -1,6 +1,5 @@
 import inspect
 import logging
-import os
 import pathlib
 import typing
 from collections import defaultdict
@@ -16,12 +15,12 @@ import marshmallow.fields
 import marshmallow.validate
 
 
-_CWD = pathlib.Path(os.getcwd())
 ENV_PREFIX = "MODMAIL_"
-USER_CONFIG_TOML = _CWD / "modmail_config.toml"
+USER_CONFIG_FILE_NAME = "modmail_config"
+AUTO_GEN_FILE_NAME = "default_config"
 
 env = environs.Env(eager=False, expand_vars=True)
-env.read_env(_CWD / ".env", recurse=False)
+env.read_env(pathlib.Path.cwd() / ".env", recurse=False)
 
 
 def _generate_default_dict() -> defaultdict:
@@ -31,10 +30,22 @@ def _generate_default_dict() -> defaultdict:
 
 unparsed_user_provided_cfg = defaultdict(lambda: marshmallow.missing)
 try:
-    with open(USER_CONFIG_TOML) as f:
+    with open(pathlib.Path.cwd() / (USER_CONFIG_FILE_NAME + ".toml")) as f:
         unparsed_user_provided_cfg.update(atoml.parse(f.read()).value)
 except FileNotFoundError:
     pass
+
+# attempt to also check for a yaml file
+try:
+    import yaml
+except ImportError:
+    pass
+else:
+    # check for an existing file
+    yaml_cfg = pathlib.Path.cwd() / (USER_CONFIG_FILE_NAME + ".yaml")
+    if yaml_cfg.is_file():
+        with open(yaml_cfg, "r") as f:
+            unparsed_user_provided_cfg.update(yaml.load(f.read(), Loader=yaml.SafeLoader))
 
 
 class _ColourField(marshmallow.fields.Field):
@@ -270,5 +281,9 @@ if __name__ == "__main__":
     doc.update(dump)
 
     # toml
-    with open(pathlib.Path(__file__).parent / "default_config.toml", "w") as f:
+    with open(pathlib.Path(__file__).parent / (AUTO_GEN_FILE_NAME + ".toml"), "w") as f:
         atoml.dump(doc, f)
+
+    # yaml
+    with open(pathlib.Path(__file__).parent / (AUTO_GEN_FILE_NAME + ".yaml"), "w") as f:
+        yaml.dump(dump, f, indent=4)

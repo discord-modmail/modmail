@@ -1,0 +1,10 @@
+bot:
+    prefix: '?'
+colours:
+    base_embed_color: '#7289da'
+dev:
+    log_level: 20
+    mode:
+        develop: false
+        plugin_dev: false
+        production: true

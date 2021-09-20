@@ -133,10 +133,11 @@ dmypy.json
 .idea/
 
 # logs
-logs
+/logs/
 
 # Configuration
 /modmail_config.toml
+/modmail_config.yaml
 
 # Custom docker compose override
 docker-compose.override.yml
