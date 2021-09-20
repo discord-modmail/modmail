@@ -142,6 +142,7 @@ class Bot:
             "dump_only": True,
             "allow_none": False,
             "modmail_export_filler": "MyBotToken",
+            "modmail_env_description": "Discord bot token. This is obtainable from https://discord.com/developers/applications",  # noqa: E501
         },
     )
     prefix: str = attr.ib(
@@ -219,6 +220,7 @@ ConfigurationSchema = desert.schema_class(Cfg, meta={"ordered": True})  # noqa: 
 
 
 _CACHED_CONFIG: "Config" = None
+_CACHED_DEFAULT: Cfg = None
 
 
 @attr.s(auto_attribs=True, slots=True, kw_only=True)
@@ -396,8 +398,8 @@ def _load_config(files: typing.List[typing.Union[os.PathLike]] = None, load_env:
             "Not gonna lie, this SHOULD be unreachable...\n"
             "If you came across this as a consumer, please report this bug to our bug tracker."
         )
-    loaded_config_dict = ConfigurationSchema().load(loaded_config_dict)
-    return Config(user=loaded_config_dict, schema=ConfigurationSchema)
+    loaded_config_dict = ConfigurationSchema().load(loaded_config_dict, unknown=marshmallow.EXCLUDE)
+    return Config(user=loaded_config_dict, schema=ConfigurationSchema, default=get_default_config())
 
 
 def get_config() -> Config:
@@ -414,7 +416,11 @@ def get_config() -> Config:
 
 def get_default_config() -> Cfg:
     """Get the default configuration instance of the global Config instance."""
-    return get_config().default
+    global _CACHED_DEFAULT
+    if _CACHED_DEFAULT is None:
+        _CACHED_DEFAULT = Cfg()
+    return _CACHED_DEFAULT
 
 
-config = get_config()
+config = get_config
+default = get_default_config

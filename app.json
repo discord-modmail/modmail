@@ -1,7 +1,7 @@
 {
     "env": {
         "MODMAIL_BOT_TOKEN": {
-            "description": "Discord bot token. This is from https://discord.com/developers/applications",
+            "description": "Discord bot token. This is obtainable from https://discord.com/developers/applications",
             "required": true
         }
     },

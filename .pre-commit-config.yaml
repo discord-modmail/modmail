@@ -8,7 +8,7 @@ repos:
         name: Export default configuration
         language: python
         entry: poetry run python -m scripts.export_new_config_to_default_config
-        files: '(\.env\.template|modmail\/(config\.py|default_config(\.toml|\.yaml)))$'
+        files: '(app\.json|\.env\.template|modmail\/(config\.py|default_config(\.toml|\.yaml)))$'
         additional_dependencies:
           - atoml~=1.0.3
           - pyyaml~=5.4.1

@@ -3,8 +3,10 @@ Exports the configuration to the configuration default files.
 
 This is intented to be used as a local pre-commit hook, which runs if the modmail/config.py file is changed.
 """
+import json
 import pathlib
 import sys
+import typing
 from collections import defaultdict
 
 import atoml
@@ -17,6 +19,8 @@ import modmail.config
 
 MODMAIL_CONFIG_DIR = pathlib.Path(modmail.config.__file__).parent
 ENV_EXPORT_FILE = MODMAIL_CONFIG_DIR.parent / ".env.template"
+APP_JSON_FILE = MODMAIL_CONFIG_DIR.parent / "app.json"
+METADATA_PREFIX = "modmail_"
 
 
 def export_default_conf() -> None:
@@ -58,7 +62,7 @@ def export_default_conf() -> None:
         yaml.dump(dump, f, indent=4, Dumper=yaml.SafeDumper)
 
 
-def export_env_conf() -> None:
+def export_env_and_app_json_conf() -> None:
     """
     Exports required configuration variables to .env.template.
 
@@ -75,30 +79,51 @@ def export_env_conf() -> None:
     """
     env_prefix = modmail.config.ENV_PREFIX + modmail.config.BOT_ENV_PREFIX
     default = modmail.config.get_default_config()
-    values = defaultdict(str)
+    req_env_values: typing.Dict[str, attr.Attribute.metadata] = dict()
     fields = attr.fields(default.bot.__class__)
     for attribute in fields:
         if attribute.default is marshmallow.missing:
-            values[env_prefix + attribute.name.upper()] = attribute.metadata.get("modmail_export_filler", "")
+            req_env_values[env_prefix + attribute.name.upper()] = defaultdict(str, attribute.metadata)
 
     with open(ENV_EXPORT_FILE, "w") as f:
-        for k, v in values.items():
-            f.write(k + '="' + v + '"\n')
+        for k, v in req_env_values.items():
+            f.write(k + '="' + v[METADATA_PREFIX + "export_filler"] + '"\n')
+
+    # the rest of this is designated for the app.json file
+    with open(APP_JSON_FILE) as f:
+        try:
+            app_json: typing.Dict = json.load(f)
+        except Exception as e:
+            print(
+                "Oops! Please ensure the app.json file is valid json! "
+                "If you've made manual edits, you may want to revert them."
+            )
+            raise e
+    app_json_env = defaultdict(str)
+    for env_var, meta in req_env_values.items():
+        app_json_env[env_var] = defaultdict(
+            str, {"description": meta[METADATA_PREFIX + "env_description"], "required": True}
+        )
+    app_json["env"] = app_json_env
+    with open(APP_JSON_FILE, "w") as f:
+        json.dump(app_json, f, indent=4)
+        f.write("\n")
 
 
 def main() -> None:
     """
     Exports the default configuration.
 
-    There's two parts to this export.
+    There's several parts to this export.
     First, export the default configuration to the default locations.
 
     Next, export the *required* configuration variables to the .env.template
 
+    In addition, export to app.json when exporting .env.template.
     """
     export_default_conf()
 
-    export_env_conf()
+    export_env_and_app_json_conf()
 
 
 if __name__ == "__main__":
