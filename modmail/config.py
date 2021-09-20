@@ -1,5 +1,6 @@
 import inspect
 import logging
+import os
 import pathlib
 import typing
 from collections import defaultdict
@@ -15,12 +16,42 @@ import marshmallow.fields
 import marshmallow.validate
 
 
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
+__all__ = [
+    "AUTO_GEN_FILE_NAME",
+    "DEFAULT_CONFIG_FILES",
+    "ENV_PREFIX",
+    "USER_CONFIG_FILE_NAME",
+    "CfgLoadError",
+    "Config",
+    "config",
+    "ConfigurationSchema",
+    "Bot",
+    "BotModeCfg",
+    "Cfg",
+    "Colours",
+    "DevCfg",
+    "convert_to_color",
+    "export_default_conf",
+    "get_config",
+    "get_default_config",
+    "load_toml",
+    "load_yaml",
+]
+
+_CWD = pathlib.Path.cwd()
+
 ENV_PREFIX = "MODMAIL_"
 USER_CONFIG_FILE_NAME = "modmail_config"
 AUTO_GEN_FILE_NAME = "default_config"
-
-env = environs.Env(eager=False, expand_vars=True)
-env.read_env(pathlib.Path.cwd() / ".env", recurse=False)
+DEFAULT_CONFIG_FILES = [
+    _CWD / (USER_CONFIG_FILE_NAME + ".yaml"),
+    _CWD / (USER_CONFIG_FILE_NAME + ".toml"),
+]
 
 
 def _generate_default_dict() -> defaultdict:
@@ -28,24 +59,10 @@ def _generate_default_dict() -> defaultdict:
     return defaultdict(_generate_default_dict)
 
 
-unparsed_user_provided_cfg = defaultdict(lambda: marshmallow.missing)
-try:
-    with open(pathlib.Path.cwd() / (USER_CONFIG_FILE_NAME + ".toml")) as f:
-        unparsed_user_provided_cfg.update(atoml.parse(f.read()).value)
-except FileNotFoundError:
-    pass
+class CfgLoadError(Exception):
+    """Exception if the configuration failed to load from a local file."""
 
-# attempt to also check for a yaml file
-try:
-    import yaml
-except ImportError:
-    pass
-else:
-    # check for an existing file
-    yaml_cfg = pathlib.Path.cwd() / (USER_CONFIG_FILE_NAME + ".yaml")
-    if yaml_cfg.is_file():
-        with open(yaml_cfg, "r") as f:
-            unparsed_user_provided_cfg.update(yaml.load(f.read(), Loader=yaml.SafeLoader))
+    ...
 
 
 class _ColourField(marshmallow.fields.Field):
@@ -195,8 +212,34 @@ class Cfg:
     dev: DevCfg = DevCfg()
 
 
+# build configuration
+ConfigurationSchema = desert.schema_class(Cfg, meta={"ordered": True})  # noqa: N818
+
+
+_CACHED_CONFIG: "Config" = None
+
+
+@attr.s(auto_attribs=True, slots=True, kw_only=True)
+class Config:
+    """
+    Base configuration variable. Used across the entire bot for configuration variables.
+
+    Holds two variables, default and user.
+    Default is a Cfg instance with nothing passed. It is a default instance of Cfg.
+
+    User is a Cfg schema instance, generated from a combination of the defaults,
+    user provided toml, and environment variables.
+    """
+
+    user: Cfg
+    schema: marshmallow.Schema
+    default: Cfg = Cfg()
+
+
 # find and build a bot class from our env
-def _build_bot_class(klass: typing.Any, class_prefix: str = "", defaults: typing.Dict = None) -> Bot:
+def _build_bot_class(
+    klass: typing.Any, env: environs.Env, class_prefix: str = "", defaults: typing.Dict = None
+) -> Bot:
     """
     Create an instance of the provided klass from env vars prefixed with ENV_PREFIX and class_prefix.
 
@@ -223,40 +266,159 @@ def _build_bot_class(klass: typing.Any, class_prefix: str = "", defaults: typing
     return klass(**kw)
 
 
-_toml_bot_cfg = unparsed_user_provided_cfg["bot"]
-unparsed_user_provided_cfg["bot"] = attr.asdict(
-    _build_bot_class(Bot, "BOT_", _toml_bot_cfg if _toml_bot_cfg is not marshmallow.missing else None)
-)
-del _toml_bot_cfg
-# build configuration
-Configuration = desert.schema_class(Cfg, meta={"ordered": True})  # noqa: N818
-USER_PROVIDED_CONFIG: Cfg = Configuration().load(unparsed_user_provided_cfg, unknown=marshmallow.EXCLUDE)
-DEFAULTS_CONFIG = Cfg()
-
-
-@attr.s(auto_attribs=True, slots=True, kw_only=True)
-class Config:
+def _load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> dict:
     """
-    Base configuration variable. Used across the entire bot for configuration variables.
+    Load a configuration dictionary from the specified env file and environment variables.
 
-    Holds two variables, default and user.
-    Default is a Cfg instance with nothing passed. It is a default instance of Cfg.
-
-    User is a Cfg schema instance, generated from a combination of the defaults,
-    user provided toml, and environment variables.
+    All dependencies for this will always be installed.
     """
+    if env_file is None:
+        env_file = _CWD / ".env"
+    else:
+        env_file = pathlib.Path(env_file)
 
-    user: Cfg
-    default: Cfg
-    schema: marshmallow.Schema
+    env = environs.Env(eager=False, expand_vars=True)
+    env.read_env(".env", recurse=False)
+
+    if not existing_cfg_dict:
+        existing_cfg_dict = defaultdict(_generate_default_dict)
+
+    existing_cfg_dict["bot"].update(attr.asdict(_build_bot_class(Bot, env, "BOT_")))
+
+    return existing_cfg_dict
 
 
-config = Config(user=USER_PROVIDED_CONFIG, default=DEFAULTS_CONFIG, schema=Configuration)
+def load_toml(path: os.PathLike = None, existing_cfg_dict: dict = None) -> defaultdict:
+    """
+    Load a configuration dictionary from the specified toml file.
 
-if __name__ == "__main__":
-    # if this file is run directly, export the configuration to a defaults file.
+    All dependencies for this will always be installed.
+    """
+    if path is None:
+        path = (_CWD / (USER_CONFIG_FILE_NAME + ".toml"),)
+    else:
+        # fully resolve path
+        path = pathlib.Path(path)
 
-    dump: dict = Configuration().dump(DEFAULTS_CONFIG)
+    if not path.is_file():
+        raise CfgLoadError("The provided toml file path is not a valid file.")
+
+    try:
+        with open(path) as f:
+            loaded_cfg = defaultdict(lambda: marshmallow.missing, atoml.parse(f.read()).value)
+            if existing_cfg_dict is not None:
+                loaded_cfg.update(existing_cfg_dict)
+                return existing_cfg_dict
+            else:
+                return loaded_cfg
+    except Exception as e:
+        raise CfgLoadError from e
+
+
+def load_yaml(path: os.PathLike, existing_cfg_dict: dict = None) -> dict:
+    """
+    Load a configuration dictionary from the specified yaml file.
+
+    The dependency for this may not be installed, as toml is already used elsewhere, so this is optional.
+
+    In order to keep errors at a minimum, this function checks if both pyyaml is installed
+    and if a yaml configuration file exists before raising an exception.
+    """
+    if path is None:
+        path = (_CWD / (USER_CONFIG_FILE_NAME + ".yaml"),)
+    else:
+        path = pathlib.Path(path)
+
+    states = [
+        ("The yaml library is not installed.", yaml is not None),
+        ("The provided yaml config path does not exist.", path.exists()),
+        ("The provided yaml config file is not a readable file.", path.is_file()),
+    ]
+    if errors := "\n".join(msg for msg, check in states if not check):
+        raise CfgLoadError(errors)
+
+    try:
+        with open(path, "r") as f:
+            loaded_cfg = dict(yaml.load(f.read(), Loader=yaml.SafeLoader))
+            if existing_cfg_dict is not None:
+                loaded_cfg.update(existing_cfg_dict)
+                return existing_cfg_dict
+            else:
+                return loaded_cfg
+    except Exception as e:
+        raise CfgLoadError from e
+
+
+def _load_config(files: typing.List[typing.Union[os.PathLike]] = None, load_env: bool = True) -> Config:
+    """
+    Loads a configuration from the specified files.
+
+    Configuration will stop loading on the first existing file.
+    Default order checks yaml, then toml.
+
+    Supported file types are .toml or .yaml
+    """
+    # load the env first
+    if load_env:
+        env_cfg = _load_env()
+    else:
+        env_cfg = None
+
+    if files is None:
+        files = DEFAULT_CONFIG_FILES
+    elif len(files) == 0:
+        raise CfgLoadError("At least one file to load from must be provided.")
+
+    loaded_config_dict: dict = None
+    for file in files:
+        if not isinstance(file, pathlib.Path):
+            file = pathlib.Path(file)
+        if not file.exists():
+            # file does not exist
+            continue
+
+        if file.suffix == ".toml" and atoml is not None:
+            loaded_config_dict = load_toml(file, existing_cfg_dict=env_cfg)
+            break
+        elif file.suffix == ".yaml" and yaml is not None:
+            loaded_config_dict = load_yaml(file, existing_cfg_dict=env_cfg)
+            break
+        else:
+            raise Exception(
+                "Provided configuration file is not of a supported type or "
+                "the required dependencies are not installed."
+            )
+
+    if loaded_config_dict is None:
+        raise CfgLoadError(
+            "Not gonna lie, this SHOULD be unreachable...\n"
+            "If you came across this as a consumer, please report this bug to our bug tracker."
+        )
+    loaded_config_dict = ConfigurationSchema().load(loaded_config_dict)
+    return Config(user=loaded_config_dict, schema=ConfigurationSchema)
+
+
+def get_config() -> Config:
+    """
+    Helps to try to ensure that only one instance of the Config class exists.
+
+    This means that all usage of the configuration is using the same configuration class.
+    """
+    global _CACHED_CONFIG
+    if _CACHED_CONFIG is None:
+        _CACHED_CONFIG = _load_config()
+    return _CACHED_CONFIG
+
+
+def get_default_config() -> Cfg:
+    """Get the default configuration instance of the global Config instance."""
+    return get_config().default
+
+
+def export_default_conf(*, export_toml: bool = True, export_yaml: bool = None) -> None:
+    """Export default configuration to the preconfigured locations."""
+    conf = get_default_config()
+    dump: dict = ConfigurationSchema().dump(conf)
 
     # Sort the dictionary configuration.
     # This is the only place where the order of the config should matter, when exporting in a specific style
@@ -281,9 +443,27 @@ if __name__ == "__main__":
     doc.update(dump)
 
     # toml
-    with open(pathlib.Path(__file__).parent / (AUTO_GEN_FILE_NAME + ".toml"), "w") as f:
-        atoml.dump(doc, f)
+    if export_toml:
+        with open(pathlib.Path(__file__).parent / (AUTO_GEN_FILE_NAME + ".toml"), "w") as f:
+            atoml.dump(doc, f)
 
     # yaml
-    with open(pathlib.Path(__file__).parent / (AUTO_GEN_FILE_NAME + ".yaml"), "w") as f:
-        yaml.dump(dump, f, indent=4)
+    if export_yaml is True or (yaml is not None and export_yaml is None):
+        with open(pathlib.Path(__file__).parent / (AUTO_GEN_FILE_NAME + ".yaml"), "w") as f:
+            try:
+                yaml.dump(dump, f, indent=4, Dumper=yaml.SafeDumper)
+            except AttributeError:
+                raise CfgLoadError(
+                    "Tried to export the yaml configuration file but pyyaml is not installed."
+                ) from None
+
+
+config = get_config()
+
+
+if __name__ == "__main__":
+    # if this file is run directly, export the configuration to a defaults file.
+    import sys
+
+    print("Exporting default configuration to desiginated default config files.")
+    sys.exit(export_default_conf())
