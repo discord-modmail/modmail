@@ -29,6 +29,7 @@ repos:
       - id: check-yaml
         exclude: 'mkdocs.yml' # Exclude all mkdocs.yml as they use tags i.e. `!!!`
       - id: pretty-format-json
+        exclude: 'app.json'
         args: [--indent=4, --autofix]
       - id: end-of-file-fixer
       - id: no-commit-to-branch

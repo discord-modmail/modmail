@@ -60,6 +60,21 @@ def _generate_default_dict() -> defaultdict:
     return defaultdict(_generate_default_dict)
 
 
+def _recursive_dict_update(d1: dict, d2: dict) -> defaultdict:
+    """
+    Recursively update a dictionary with the values from another dictionary.
+
+    Serves to ensure that all keys from both exist.
+    """
+    d1.update(d2)
+    for k, v in d1.items():
+        if isinstance(v, dict) and isinstance(d2.get(k, None), dict):
+            d1[k] = _recursive_dict_update(v, d2[k])
+        elif v is marshmallow.missing and d2.get(k, marshmallow.missing) is not marshmallow.missing:
+            d1[k] = d2[k]
+    return defaultdict(lambda: marshmallow.missing, d1)
+
+
 class CfgLoadError(Exception):
     """Exception if the configuration failed to load from a local file."""
 
@@ -146,11 +161,8 @@ class Bot:
         },
     )
     prefix: str = attr.ib(
-        default="?",
-        converter=lambda x: "?" if x is None else x,
-        metadata={
-            "allow_none": False,
-        },
+        default=marshmallow.missing,
+        converter=lambda x: "?" if x is marshmallow.missing else x,
     )
 
 
@@ -266,6 +278,8 @@ def _build_bot_class(
             kw[var.name] = getattr(env, var.type.__name__)(class_prefix + var.name.upper())
             if defaults and kw[var.name] is None:
                 kw[var.name] = defaults[var.name]
+            elif kw[var.name] is None:
+                kw[var.name] = marshmallow.missing
 
     return klass(**kw)
 
@@ -287,7 +301,9 @@ def _load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> d
     if not existing_cfg_dict:
         existing_cfg_dict = defaultdict(_generate_default_dict)
 
-    existing_cfg_dict["bot"].update(attr.asdict(_build_bot_class(Bot, env, BOT_ENV_PREFIX)))
+    existing_cfg_dict["bot"] = _recursive_dict_update(
+        attr.asdict(_build_bot_class(Bot, env, BOT_ENV_PREFIX)), existing_cfg_dict["bot"]
+    )
 
     return existing_cfg_dict
 
@@ -311,8 +327,8 @@ def load_toml(path: os.PathLike = None, existing_cfg_dict: dict = None) -> defau
         with open(path) as f:
             loaded_cfg = defaultdict(lambda: marshmallow.missing, atoml.parse(f.read()).value)
             if existing_cfg_dict is not None:
-                loaded_cfg.update(existing_cfg_dict)
-                return existing_cfg_dict
+                _recursive_dict_update(loaded_cfg, existing_cfg_dict)
+                return loaded_cfg
             else:
                 return loaded_cfg
     except Exception as e:
@@ -362,11 +378,7 @@ def _load_config(files: typing.List[typing.Union[os.PathLike]] = None, load_env:
 
     Supported file types are .toml or .yaml
     """
-    # load the env first
-    if load_env:
-        env_cfg = _load_env()
-    else:
-        env_cfg = None
+    env_cfg = None
 
     if files is None:
         files = DEFAULT_CONFIG_FILES
@@ -393,13 +405,10 @@ def _load_config(files: typing.List[typing.Union[os.PathLike]] = None, load_env:
                 "the required dependencies are not installed."
             )
 
-    if loaded_config_dict is None:
-        # load default configuration since no overrides were provided.
-        # that's actually done by default, so we replace the new dictionary
-        # with the one containing our required environment.
-        loaded_config_dict = env_cfg
+    if load_env:
+        loaded_config_dict = _load_env(existing_cfg_dict=loaded_config_dict)
 
-    loaded_config_dict = ConfigurationSchema().load(loaded_config_dict, unknown=marshmallow.EXCLUDE)
+    loaded_config_dict = ConfigurationSchema().load(data=loaded_config_dict, unknown=marshmallow.EXCLUDE)
     return Config(user=loaded_config_dict, schema=ConfigurationSchema, default=get_default_config())
 
 

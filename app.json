@@ -3,6 +3,10 @@
         "MODMAIL_BOT_TOKEN": {
             "description": "Discord bot token. This is obtainable from https://discord.com/developers/applications",
             "required": true
+        },
+        "MODMAIL_BOT_PREFIX": {
+            "description": "",
+            "required": true
         }
     },
     "name": "Modmail Bot",
