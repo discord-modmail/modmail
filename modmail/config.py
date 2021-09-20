@@ -38,10 +38,18 @@ except FileNotFoundError:
 
 
 class _ColourField(marshmallow.fields.Field):
-    """Class to convert a str or int into a color and deseriaze into a string."""
+    """Class to convert a str or int into a color and deserialize into a string."""
 
     class ColourConvert(discord.ext.commands.converter.ColourConverter):
-        def convert(self, argument: str) -> discord.Colour:
+        """Inherited discord.py colour converter."""
+
+        def convert(self, argument: typing.Union[str, int, discord.Colour]) -> discord.Colour:
+            """
+            Convert an argument into a discord.Colour.
+
+            This code was copied from discord.ext.commands.converter.ColourConverter.
+            Modified to not be async or need a context since it was not used in the first place.
+            """
             if isinstance(argument, discord.Colour):
                 return argument
             if not isinstance(argument, str):
@@ -67,8 +75,8 @@ class _ColourField(marshmallow.fields.Field):
                 raise discord.ext.commands.converter.BadColourArgument(arg)
             return method()
 
-    def _serialize(self, value: typing.Any, attr: str, obj: typing.Any, **kwargs) -> discord.Colour:
-        return str(value.value)
+    def _serialize(self, value: discord.Colour, attr: str, obj: typing.Any, **kwargs) -> discord.Colour:
+        return "#" + hex(value.value)[2:].lower()
 
     def _deserialize(
         self,
@@ -78,10 +86,7 @@ class _ColourField(marshmallow.fields.Field):
         **kwargs,
     ) -> str:
         if not isinstance(value, discord.Colour):
-            if isinstance(value, str):
-                value = self.ColourConvert().convert(value)
-            else:
-                value = discord.Colour(value)
+            value = self.ColourConvert().convert(value)
         return value
 
 
