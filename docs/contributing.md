@@ -152,14 +152,14 @@ $ poetry install
 
 ### Set up modmail config
 
-1. Create a copy of `config-default.yml` named `config.yml` in the the `modmail/` directory.
+1. Create a copy of `modmail/default_config.toml` named `modmail_config.toml` in the root of the repository.
 
 === "Linux, macOS"
 
     <div class="termy">
 
     ```console
-    $ cp -v modmail/config-default.toml modmail/config.toml
+    $ cp -v modmail/default_config.toml modmail_config.toml
     ```
 
     </div>
@@ -169,10 +169,14 @@ $ poetry install
     <div class="termy">
 
     ```console
-    $  xcopy /f modmail/config-default.toml modmail/config.toml
+    $  xcopy /f modmail/default_config.toml modmail_config.toml
     ```
 
     </div>
+
+!!! note
+    If you would like, there is optional support for yaml configuration. Make sure that pyyaml is installed with `poetry install --extras yaml`,
+    and copy modmail/defaults_config.yaml to modmail_config.yaml.
 
 2. Set the modmail bot prefix in `bot.prefix`.
 3. In case you are a contributor set `dev.mode.plugin_dev` and `dev.mode.develop` to `true`. The `develop` variable enables the developer bot extensions and `plugin_dev` enables plugin-developer friendly bot extensions.
@@ -182,7 +186,7 @@ $ poetry install
 !!!note
         The entire file name is literally `.env`
 
-5. Open the file with any text editor and write the bot token to the files in this format: `TOKEN="my_token"`.
+5. Open the file with any text editor and write the bot token to the files in this format: `MODMAIL_BOT_TOKEN="my_token"`.
 
 ### Run The Project
 
