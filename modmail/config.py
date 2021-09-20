@@ -387,7 +387,7 @@ def _remove_extra_values(klass: type, dit: DictT) -> DictT:
     return cleared_dict
 
 
-def _load_config(files: typing.List[typing.Union[os.PathLike]] = None, load_env: bool = True) -> Config:
+def _load_config(*files: os.PathLike, load_env: bool = True) -> Config:
     """
     Loads a configuration from the specified files.
 
@@ -398,10 +398,8 @@ def _load_config(files: typing.List[typing.Union[os.PathLike]] = None, load_env:
     """
     env_cfg = None
 
-    if files is None:
+    if len(files) == 0:
         files = DEFAULT_CONFIG_FILES
-    elif len(files) == 0:
-        raise CfgLoadError("At least one file to load from must be provided.")
 
     loaded_config_dict: dict = None
     for file in files:
