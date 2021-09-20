@@ -37,7 +37,7 @@ class ModmailBot(commands.Bot):
     logger: ModmailLogger = logging.getLogger(__name__)
 
     def __init__(self, **kwargs):
-        self.config = config
+        self.config = config()
         self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
         self.http_session: t.Optional[ClientSession] = None
 
