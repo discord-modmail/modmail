@@ -65,26 +65,6 @@ def _generate_default_dict() -> defaultdict:
     return defaultdict(_generate_default_dict)
 
 
-def _recursive_dict_update(d1: dict, d2: dict, attr_cls: type = None) -> defaultdict:
-    """
-    Recursively update a dictionary with the values from another dictionary.
-
-    Serves to ensure that all keys from both exist.
-    """
-    for k, v in d1.items():
-        if isinstance(v, dict) and isinstance(d2.get(k, None), dict):
-            d1[k] = _recursive_dict_update(v, d2[k])
-        elif (v is marshmallow.missing or v is None) and d2.get(
-            k, marshmallow.missing
-        ) is not marshmallow.missing:
-            d1[k] = d2[k]
-    for k, v in d2.items():
-        no = d1.get(k, None)
-        if no is marshmallow.missing or no is None:
-            d1[k] = v
-    return defaultdict(lambda: marshmallow.missing, d1)
-
-
 class CfgLoadError(Exception):
     """Exception if the configuration failed to load from a local file."""
 
@@ -441,7 +421,7 @@ def _load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> d
     return existing_cfg_dict
 
 
-def load_toml(path: os.PathLike = None, existing_cfg_dict: dict = None) -> defaultdict:
+def load_toml(path: os.PathLike = None) -> defaultdict:
     """
     Load a configuration dictionary from the specified toml file.
 
@@ -458,17 +438,12 @@ def load_toml(path: os.PathLike = None, existing_cfg_dict: dict = None) -> defau
 
     try:
         with open(path) as f:
-            loaded_cfg = defaultdict(lambda: marshmallow.missing, atoml.parse(f.read()).value)
-            if existing_cfg_dict is not None:
-                loaded_cfg = _recursive_dict_update(loaded_cfg, existing_cfg_dict)
-                return loaded_cfg
-            else:
-                return loaded_cfg
+            return defaultdict(lambda: marshmallow.missing, atoml.parse(f.read()).value)
     except Exception as e:
         raise CfgLoadError from e
 
 
-def load_yaml(path: os.PathLike, existing_cfg_dict: dict = None) -> dict:
+def load_yaml(path: os.PathLike) -> dict:
     """
     Load a configuration dictionary from the specified yaml file.
 
@@ -492,12 +467,7 @@ def load_yaml(path: os.PathLike, existing_cfg_dict: dict = None) -> dict:
 
     try:
         with open(path, "r") as f:
-            loaded_cfg = defaultdict(lambda: marshmallow.missing, yaml.load(f.read(), Loader=yaml.SafeLoader))
-            if existing_cfg_dict is not None:
-                loaded_cfg = _recursive_dict_update(loaded_cfg, existing_cfg_dict)
-                return loaded_cfg
-            else:
-                return loaded_cfg
+            return defaultdict(lambda: marshmallow.missing, yaml.load(f.read(), Loader=yaml.SafeLoader))
     except Exception as e:
         raise CfgLoadError from e
 
@@ -534,8 +504,6 @@ def _load_config(*files: os.PathLike, load_env: bool = True) -> Config:
 
     Supported file types are .toml or .yaml
     """
-    env_cfg = None
-
     if len(files) == 0:
         files = DEFAULT_CONFIG_FILES
 
@@ -548,10 +516,10 @@ def _load_config(*files: os.PathLike, load_env: bool = True) -> Config:
             continue
 
         if file.suffix == ".toml" and atoml is not None:
-            loaded_config_dict = load_toml(file, existing_cfg_dict=env_cfg)
+            loaded_config_dict = load_toml(file)
             break
         elif file.suffix == ".yaml" and yaml is not None:
-            loaded_config_dict = load_yaml(file, existing_cfg_dict=env_cfg)
+            loaded_config_dict = load_yaml(file)
             break
         else:
             raise Exception(
