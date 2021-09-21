@@ -9,6 +9,7 @@ repos:
         language: python
         entry: poetry run python -m scripts.export_new_config_to_default_config
         files: '(app\.json|\.env\.template|modmail\/(config\.py|default_config(\.toml|\.yaml)))$'
+        require_serial: true
         additional_dependencies:
           - atoml~=1.0.3
           - attrs~=21.2.0
