@@ -10,7 +10,7 @@ import attr
 import desert
 import discord
 import discord.ext.commands.converter
-import environs
+import dotenv
 import marshmallow
 import marshmallow.fields
 import marshmallow.validate
@@ -53,6 +53,11 @@ DEFAULT_CONFIG_FILES = [
     _CWD / (USER_CONFIG_FILE_NAME + ".yaml"),
     _CWD / (USER_CONFIG_FILE_NAME + ".toml"),
 ]
+
+# load env before we do *anything*
+# TODO: Convert this to a function and check the parent directory too, if the CWD is within the bot.
+# TODO: add the above feature to the other configuration locations too.
+dotenv.load_dotenv(_CWD / ".env")
 
 
 def _generate_default_dict() -> defaultdict:
@@ -252,29 +257,57 @@ class Config:
     default: Cfg = Cfg()
 
 
+ClassT = typing.TypeVar("ClassT", bound=type)
+
+
 # find and build a bot class from our env
-def _build_bot_class(
-    klass: typing.Any, env: environs.Env, class_prefix: str = "", defaults: typing.Dict = None
-) -> Bot:
+def _build_class(
+    klass: ClassT,
+    env: typing.Dict[str, str] = None,
+    env_prefix: str = None,
+    *,
+    dotenv_file: os.PathLike = None,
+    defaults: typing.Dict = None,
+) -> ClassT:
     """
     Create an instance of the provided klass from env vars prefixed with ENV_PREFIX and class_prefix.
 
+    Defaults to getting the environment variables with dotenv.
+    Also can parse from a provided dictionary of environment variables.
     If defaults is provided, uses a value from there if the environment variable is not set or is None.
     """
+    if env_prefix is None:
+        env_prefix = ENV_PREFIX
+
+    if env is None:
+        if dotenv_file is not None:
+            dotenv.load_dotenv(dotenv_file)
+        env = os.environ.copy()
+
     # get the attributes of the provided class
     if defaults is None:
         defaults = defaultdict(lambda: marshmallow.missing)
     else:
         defaults = defaultdict(lambda: marshmallow.missing, defaults.copy())
 
-    with env.prefixed(ENV_PREFIX):
-        kw = defaultdict(lambda: marshmallow.missing)  # any missing required vars provide as missing
-        for var in attr.fields(klass):
-            kw[var.name] = getattr(env, var.type.__name__)(class_prefix + var.name.upper())
-            if defaults and kw[var.name] is None:
-                kw[var.name] = defaults[var.name]
-            elif kw[var.name] is None:
-                kw[var.name] = marshmallow.missing
+    kw = defaultdict(lambda: marshmallow.missing)  # any missing required vars provide as missing
+
+    for var in attr.fields(klass):
+        if attr.has(var.type):
+            # var is an attrs class too
+            kw[var.name] = _build_class(
+                var.type,
+                env=env,
+                env_prefix=env_prefix + var.name.upper() + "_",
+                defaults=defaults.get(var.name, None),
+            )
+        else:
+            kw[var.name] = env.get(env_prefix + var.name.upper(), None)
+            if kw[var.name] is None:
+                if defaults:
+                    kw[var.name] = defaults[var.name]
+                else:
+                    del kw[var.name]
 
     return klass(**kw)
 
@@ -290,14 +323,11 @@ def _load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> d
     else:
         env_file = pathlib.Path(env_file)
 
-    env = environs.Env(eager=False, expand_vars=True)
-    env.read_env(".env", recurse=False)
-
     if not existing_cfg_dict:
         existing_cfg_dict = defaultdict(_generate_default_dict)
 
-    existing_cfg_dict["bot"] = _recursive_dict_update(
-        existing_cfg_dict["bot"], attr.asdict(_build_bot_class(Bot, env, BOT_ENV_PREFIX))
+    existing_cfg_dict = _recursive_dict_update(
+        existing_cfg_dict, attr.asdict(_build_class(Cfg, dotenv_file=env_file))
     )
 
     return existing_cfg_dict
