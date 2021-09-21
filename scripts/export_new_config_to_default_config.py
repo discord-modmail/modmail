@@ -106,13 +106,17 @@ def export_env_and_app_json_conf() -> None:
             raise e
     app_json_env = defaultdict(str)
     for env_var, meta in req_env_values.items():
-        app_json_env[env_var] = defaultdict(
+        options = defaultdict(
             str,
             {
                 "description": meta[modmail.config.METADATA_TABLE].description,
-                "required": meta.get("required", True),
+                "required": meta[modmail.config.METADATA_TABLE].app_json_required
+                or meta.get("required", False),
             },
         )
+        if (value := meta[modmail.config.METADATA_TABLE].app_json_default) is not None:
+            options["value"] = value
+        app_json_env[env_var] = options
     app_json["env"] = app_json_env
     with open(APP_JSON_FILE, "w") as f:
         json.dump(app_json, f, indent=4)

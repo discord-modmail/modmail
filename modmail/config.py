@@ -65,7 +65,7 @@ def _generate_default_dict() -> defaultdict:
     return defaultdict(_generate_default_dict)
 
 
-def _recursive_dict_update(d1: dict, d2: dict) -> defaultdict:
+def _recursive_dict_update(d1: dict, d2: dict, attr_cls: type = None) -> defaultdict:
     """
     Recursively update a dictionary with the values from another dictionary.
 
@@ -175,6 +175,10 @@ class ConfigMetadata:
     # required variables will always be exported, but if this is a commonly changed var, this should be True.
     export_to_env_template: bool = False
 
+    # app json is slightly different, so there's additional options for them
+    app_json_default: str = None
+    app_json_required: bool = None
+
     @description.validator
     def _validate_description(self, attrib: attr.Attribute, value: typing.Any) -> None:
         if not isinstance(value, attrib.type):
@@ -208,11 +212,14 @@ class Bot:
         },
     )
     prefix: str = attr.ib(
-        default="?",
+        default=marshmallow.missing,
         metadata={
             METADATA_TABLE: ConfigMetadata(
                 canconical_name="Command Prefix",
                 description="Command prefix.",
+                export_environment_prefill="?",
+                app_json_default="?",
+                app_json_required=False,
                 export_to_env_template=True,
             )
         },
@@ -261,7 +268,7 @@ class DevCfg:
     log_level: int = attr.ib(default=logging.INFO)
 
     @log_level.validator
-    def _log_level_validator(self, _: attr.Attribute, value: int) -> None:
+    def _log_level_validator(self, a: attr.Attribute, value: int) -> None:
         """Validate that log_level is within 0 to 50."""
         if value not in range(0, 50 + 1):
             raise ValueError("log_level must be an integer within 0 to 50, inclusive.")
@@ -335,11 +342,11 @@ def _build_class(
 
     # get the attributes of the provided class
     if defaults is None:
-        defaults = defaultdict(lambda: marshmallow.missing)
+        defaults = defaultdict(lambda: None)
     else:
-        defaults = defaultdict(lambda: marshmallow.missing, defaults.copy())
+        defaults = defaultdict(lambda: None, defaults.copy())
 
-    kw = defaultdict(lambda: marshmallow.missing)  # any missing required vars provide as missing
+    kw = defaultdict(lambda: None)  # any missing required vars provide as missing
 
     for var in attr.fields(klass):
         if attr.has(var.type):
@@ -353,8 +360,12 @@ def _build_class(
         else:
             kw[var.name] = env.get(env_prefix + var.name.upper(), None)
             if kw[var.name] is None:
-                if defaults:
+                if defaults is not None and (
+                    (defa := defaults.get(var.name, None)) is not None and defa is not marshmallow.missing
+                ):
                     kw[var.name] = defaults[var.name]
+                elif var.default is not attr.NOTHING:  # check for var default
+                    kw[var.name] = var.default
                 else:
                     del kw[var.name]
 
@@ -375,9 +386,7 @@ def _load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> d
     if not existing_cfg_dict:
         existing_cfg_dict = defaultdict(_generate_default_dict)
 
-    existing_cfg_dict = _recursive_dict_update(
-        existing_cfg_dict, attr.asdict(_build_class(Cfg, dotenv_file=env_file))
-    )
+    existing_cfg_dict = attr.asdict(_build_class(Cfg, dotenv_file=env_file, defaults=existing_cfg_dict))
 
     return existing_cfg_dict
 
@@ -401,7 +410,7 @@ def load_toml(path: os.PathLike = None, existing_cfg_dict: dict = None) -> defau
         with open(path) as f:
             loaded_cfg = defaultdict(lambda: marshmallow.missing, atoml.parse(f.read()).value)
             if existing_cfg_dict is not None:
-                _recursive_dict_update(loaded_cfg, existing_cfg_dict)
+                loaded_cfg = _recursive_dict_update(loaded_cfg, existing_cfg_dict)
                 return loaded_cfg
             else:
                 return loaded_cfg
@@ -433,10 +442,10 @@ def load_yaml(path: os.PathLike, existing_cfg_dict: dict = None) -> dict:
 
     try:
         with open(path, "r") as f:
-            loaded_cfg = dict(yaml.load(f.read(), Loader=yaml.SafeLoader))
+            loaded_cfg = defaultdict(lambda: marshmallow.missing, yaml.load(f.read(), Loader=yaml.SafeLoader))
             if existing_cfg_dict is not None:
-                loaded_cfg.update(existing_cfg_dict)
-                return existing_cfg_dict
+                loaded_cfg = _recursive_dict_update(loaded_cfg, existing_cfg_dict)
+                return loaded_cfg
             else:
                 return loaded_cfg
     except Exception as e:

@@ -3,6 +3,11 @@
         "MODMAIL_BOT_TOKEN": {
             "description": "Discord bot token. Required to log in to discord.",
             "required": true
+        },
+        "MODMAIL_BOT_PREFIX": {
+            "description": "Command prefix.",
+            "required": false,
+            "value": "?"
         }
     },
     "name": "Modmail Bot",
