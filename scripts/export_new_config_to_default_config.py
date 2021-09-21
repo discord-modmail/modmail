@@ -72,8 +72,9 @@ def export_env_and_app_json_conf() -> None:
     Export the *required* environment variables to `.env.template`.
     Required environment variables are any Config.default.bot variables that default to marshmallow.missing
 
-    Currently supported environment loading only loads to Config.user.bot, so we only need to worry
-    about those for the time being. Those values are additionally prefixed with `BOT_`.
+    TODO: as of right now, all configuration values can be configured with environment variables.
+    However, this method only exports the MODMAIL_BOT_ *required* varaibles to the template files.
+    This will be rewritten to support full unload and the new modmail.config.ConfigMetadata class.
 
     This means that in the end our exported variables are all prefixed with MODMAIL_BOT_,
     and followed by the uppercase name of each field.
