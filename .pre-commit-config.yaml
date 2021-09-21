@@ -17,6 +17,7 @@ repos:
           - discord.py
           - environs
           - marshmallow~=3.13.0
+          - python-dotenv
           - pyyaml~=5.4.1
 
   - repo: https://github.com/pre-commit/pre-commit-hooks

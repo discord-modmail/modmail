@@ -44,7 +44,7 @@ __all__ = [
 ]
 
 _CWD = pathlib.Path.cwd()
-
+METADATA_TABLE = "modmail_metadata"
 ENV_PREFIX = "MODMAIL_"
 BOT_ENV_PREFIX = "BOT_"
 USER_CONFIG_FILE_NAME = "modmail_config"
@@ -144,6 +144,38 @@ def convert_to_color(col: typing.Union[str, int, discord.Colour]) -> discord.Col
     return _ColourField.ColourConvert().convert(col)
 
 
+@attr.dataclass(frozen=True, kw_only=True)
+class ConfigMetadata:
+    """
+    Cfg metadata. This is intended to be used on the marshmallow and attr metadata dict as 'modmail_metadata'.
+
+    Nearly all of these values are optional, save for the description.
+    All of them are keyword only.
+    In addition, all instances of this class are frozen; they are not meant to be changed after creation.
+
+    These values are meant to be used for the configuration UI and exports.
+    In relation to that, most are optional. However, *all* instances must have a description.
+    """
+
+    # what to refer to for the end user
+    description: str = attr.ib()
+    canconical_name: str = None
+    # for those configuration options where the description just won't cut it.
+    extended_description: str = None
+    # for the variables to export to the environment, what value should be prefilled
+    export_environment_prefill: str = None
+    # comment provided above or beside the default configuration option in exports
+    export_note: str = None
+    # this only has an effect if required is not True
+    # required variables will always be exported, but if this is a commonly changed var, this should be True.
+    export_to_env_template: bool = False
+
+    @description.validator
+    def _validate_description(self, attrib: attr.Attribute, value: typing.Any) -> None:
+        if not isinstance(value, attrib.type):
+            raise ValueError(f"description must be of {attrib.type}") from None
+
+
 @attr.s(auto_attribs=True, slots=True)
 class Bot:
     """
@@ -161,12 +193,24 @@ class Bot:
             "required": True,
             "dump_only": True,
             "allow_none": False,
-            "modmail_export_filler": "MyBotToken",
-            "modmail_env_description": "Discord bot token. This is obtainable from https://discord.com/developers/applications",  # noqa: E501
+            METADATA_TABLE: ConfigMetadata(
+                canconical_name="Bot Token",
+                description="Discord bot token. Required to log in to discord.",
+                export_environment_prefill="Bot Token",
+                extended_description="This is obtainable from https://discord.com/developers/applications",
+                export_to_env_template=True,
+            ),
         },
     )
     prefix: str = attr.ib(
-        default=marshmallow.missing,
+        default="?",
+        metadata={
+            METADATA_TABLE: ConfigMetadata(
+                canconical_name="Command Prefix",
+                description="Command prefix.",
+                export_to_env_template=True,
+            )
+        },
         converter=lambda x: "?" if x is marshmallow.missing else x,
     )
 

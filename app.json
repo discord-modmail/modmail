@@ -1,11 +1,7 @@
 {
     "env": {
         "MODMAIL_BOT_TOKEN": {
-            "description": "Discord bot token. This is obtainable from https://discord.com/developers/applications",
-            "required": true
-        },
-        "MODMAIL_BOT_PREFIX": {
-            "description": "",
+            "description": "Discord bot token. Required to log in to discord.",
             "required": true
         }
     },

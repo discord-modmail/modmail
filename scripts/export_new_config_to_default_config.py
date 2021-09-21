@@ -11,6 +11,7 @@ from collections import defaultdict
 
 import atoml
 import attr
+import dotenv
 import marshmallow
 import yaml
 
@@ -85,9 +86,12 @@ def export_env_and_app_json_conf() -> None:
         if attribute.default is marshmallow.missing:
             req_env_values[env_prefix + attribute.name.upper()] = defaultdict(str, attribute.metadata)
 
-    with open(ENV_EXPORT_FILE, "w") as f:
-        for k, v in req_env_values.items():
-            f.write(k + '="' + v[METADATA_PREFIX + "export_filler"] + '"\n')
+    # dotenv modifies currently existing files, but we want to erase the current file
+    ENV_EXPORT_FILE.unlink(missing_ok=True)
+    ENV_EXPORT_FILE.touch()
+
+    for k, v in req_env_values.items():
+        dotenv.set_key(ENV_EXPORT_FILE, k, v[modmail.config.METADATA_TABLE].export_environment_prefill)
 
     # the rest of this is designated for the app.json file
     with open(APP_JSON_FILE) as f:
@@ -102,7 +106,11 @@ def export_env_and_app_json_conf() -> None:
     app_json_env = defaultdict(str)
     for env_var, meta in req_env_values.items():
         app_json_env[env_var] = defaultdict(
-            str, {"description": meta[METADATA_PREFIX + "env_description"], "required": True}
+            str,
+            {
+                "description": meta[modmail.config.METADATA_TABLE].description,
+                "required": meta.get("required", True),
+            },
         )
     app_json["env"] = app_json_env
     with open(APP_JSON_FILE, "w") as f:
