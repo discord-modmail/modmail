@@ -149,7 +149,7 @@ def convert_to_color(col: typing.Union[str, int, discord.Colour]) -> discord.Col
     return _ColourField.ColourConvert().convert(col)
 
 
-@attr.dataclass(frozen=True, kw_only=True)
+@attr.frozen(kw_only=True)
 class ConfigMetadata:
     """
     Cfg metadata. This is intended to be used on the marshmallow and attr metadata dict as 'modmail_metadata'.
@@ -178,6 +178,10 @@ class ConfigMetadata:
     # app json is slightly different, so there's additional options for them
     app_json_default: str = None
     app_json_required: bool = None
+
+    # hidden, eg log_level
+    # hidden values mean they do not show up in the bot configuration menu
+    hidden: bool = False
 
     @description.validator
     def _validate_description(self, attrib: attr.Attribute, value: typing.Any) -> None:
@@ -241,10 +245,32 @@ class BotModeCfg:
         marshmallow.fields.Constant(True),
         default=True,
         converter=lambda _: True,
-        metadata={"dump_default": True, "dump_only": True},
+        metadata={
+            "dump_default": True,
+            "dump_only": True,
+            METADATA_TABLE: ConfigMetadata(
+                description="Production Mode. This is not changeable.",
+            ),
+        },
     )
-    develop: bool = attr.ib(default=False, metadata={"allow_none": False})
-    plugin_dev: bool = attr.ib(default=False, metadata={"allow_none": False})
+    develop: bool = attr.ib(
+        default=False,
+        metadata={
+            "allow_none": False,
+            METADATA_TABLE: ConfigMetadata(
+                description="Bot developer mode. Enables additional developer specific features.",
+            ),
+        },
+    )
+    plugin_dev: bool = attr.ib(
+        default=False,
+        metadata={
+            "allow_none": False,
+            METADATA_TABLE: ConfigMetadata(
+                description="Plugin developer mode. Enables additional plugin developer specific features.",
+            ),
+        },
+    )
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -256,7 +282,14 @@ class Colours:
     """
 
     base_embed_color: discord.Colour = desert.ib(
-        _ColourField(), default="0x7289DA", converter=convert_to_color
+        _ColourField(),
+        default="0x7289DA",
+        converter=convert_to_color,
+        metadata={
+            METADATA_TABLE: ConfigMetadata(
+                description="Default embed colour for all embeds without a designated colour.",
+            )
+        },
     )
 
 
@@ -265,7 +298,15 @@ class DevCfg:
     """Developer configuration. These values should not be changed unless you know what you're doing."""
 
     mode: BotModeCfg = BotModeCfg()
-    log_level: int = attr.ib(default=logging.INFO)
+    log_level: int = attr.ib(
+        default=logging.INFO,
+        metadata={
+            METADATA_TABLE: ConfigMetadata(
+                description="Logging level.",
+                hidden=True,
+            )
+        },
+    )
 
     @log_level.validator
     def _log_level_validator(self, a: attr.Attribute, value: int) -> None:
@@ -285,7 +326,16 @@ class Cfg:
 
     bot: BotCfg = BotCfg()
     colours: Colours = Colours()
-    dev: DevCfg = DevCfg()
+    dev: DevCfg = attr.ib(
+        default=DevCfg(),
+        metadata={
+            METADATA_TABLE: ConfigMetadata(
+                description="Developer configuration. "
+                "Only change these values if you know what you're doing.",
+                hidden=True,
+            )
+        },
+    )
 
 
 # build configuration
