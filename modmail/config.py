@@ -71,12 +71,17 @@ def _recursive_dict_update(d1: dict, d2: dict) -> defaultdict:
 
     Serves to ensure that all keys from both exist.
     """
-    d1.update(d2)
     for k, v in d1.items():
         if isinstance(v, dict) and isinstance(d2.get(k, None), dict):
             d1[k] = _recursive_dict_update(v, d2[k])
-        elif v is marshmallow.missing and d2.get(k, marshmallow.missing) is not marshmallow.missing:
+        elif (v is marshmallow.missing or v is None) and d2.get(
+            k, marshmallow.missing
+        ) is not marshmallow.missing:
             d1[k] = d2[k]
+    for k, v in d2.items():
+        no = d1.get(k, None)
+        if no is marshmallow.missing or no is None:
+            d1[k] = v
     return defaultdict(lambda: marshmallow.missing, d1)
 
 
