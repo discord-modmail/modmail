@@ -12,7 +12,6 @@ from collections import defaultdict
 import atoml
 import attr
 import dotenv
-import marshmallow
 import yaml
 
 import modmail.config
@@ -21,13 +20,21 @@ import modmail.config
 MODMAIL_CONFIG_DIR = pathlib.Path(modmail.config.__file__).parent
 ENV_EXPORT_FILE = MODMAIL_CONFIG_DIR.parent / ".env.template"
 APP_JSON_FILE = MODMAIL_CONFIG_DIR.parent / "app.json"
-METADATA_PREFIX = "modmail_"
+
+METADATA_TABLE = modmail.config.METADATA_TABLE
+
+
+class MetadataDict(typing.TypedDict):
+    """Typed metadata. This has a possible risk given that the modmail_metadata variable is defined."""
+
+    modmail_metadata: modmail.config.ConfigMetadata
+    required: bool
 
 
 def export_default_conf() -> None:
     """Export default configuration as both toml and yaml to the preconfigured locations."""
-    conf = modmail.config.get_default_config()
-    dump: dict = modmail.config.ConfigurationSchema().dump(conf)
+    default = modmail.config.get_default_config()
+    dump: dict = modmail.config.ConfigurationSchema().dump(default)
 
     # Sort the dictionary configuration.
     # This is the only place where the order of the config should matter, when exporting in a specific style
@@ -70,31 +77,42 @@ def export_env_and_app_json_conf() -> None:
     Does NOT export *all* settable variables!
 
     Export the *required* environment variables to `.env.template`.
-    Required environment variables are any Config.default.bot variables that default to marshmallow.missing
-
-    TODO: as of right now, all configuration values can be configured with environment variables.
-    However, this method only exports the MODMAIL_BOT_ *required* varaibles to the template files.
-    This will be rewritten to support full unload and the new modmail.config.ConfigMetadata class.
-
-    This means that in the end our exported variables are all prefixed with MODMAIL_BOT_,
-    and followed by the uppercase name of each field.
+    Required environment variables are any Config.default variables that default to marshmallow.missing
+    These can also be configured by using the ConfigMetadata options.
     """
-    env_prefix = modmail.config.ENV_PREFIX + modmail.config.BOT_ENV_PREFIX
     default = modmail.config.get_default_config()
-    req_env_values: typing.Dict[str, attr.Attribute.metadata] = dict()
-    fields = attr.fields(default.bot.__class__)
-    for attribute in fields:
-        if attribute.default is marshmallow.missing:
-            req_env_values[env_prefix + attribute.name.upper()] = defaultdict(str, attribute.metadata)
+
+    # find all environment variables to report
+    def get_env_vars(klass: type, env_prefix: str = None) -> typing.Dict[str, MetadataDict]:
+
+        if env_prefix is None:
+            env_prefix = modmail.config.ENV_PREFIX
+
+        # exact name, default value
+        export: typing.Dict[str, MetadataDict] = dict()  # any missing required vars provide as missing
+
+        for var in attr.fields(klass):
+            if attr.has(var.type):
+                # var is an attrs class too, run this on it.
+                export.update(
+                    get_env_vars(
+                        var.type,
+                        env_prefix=env_prefix + var.name.upper() + "_",
+                    )
+                )
+            else:
+                meta: MetadataDict = var.metadata
+                # put all values in the dict, we'll iterate through them later.
+                export[env_prefix + var.name.upper()] = meta
+
+        return export
 
     # dotenv modifies currently existing files, but we want to erase the current file
     ENV_EXPORT_FILE.unlink(missing_ok=True)
     ENV_EXPORT_FILE.touch()
 
-    for k, v in req_env_values.items():
-        dotenv.set_key(ENV_EXPORT_FILE, k, v[modmail.config.METADATA_TABLE].export_environment_prefill)
+    exported = get_env_vars(default.__class__)
 
-    # the rest of this is designated for the app.json file
     with open(APP_JSON_FILE) as f:
         try:
             app_json: typing.Dict = json.load(f)
@@ -104,19 +122,35 @@ def export_env_and_app_json_conf() -> None:
                 "If you've made manual edits, you may want to revert them."
             )
             raise e
-    app_json_env = defaultdict(str)
-    for env_var, meta in req_env_values.items():
-        options = defaultdict(
-            str,
-            {
-                "description": meta[modmail.config.METADATA_TABLE].description,
-                "required": meta[modmail.config.METADATA_TABLE].app_json_required
-                or meta.get("required", False),
-            },
-        )
-        if (value := meta[modmail.config.METADATA_TABLE].app_json_default) is not None:
-            options["value"] = value
-        app_json_env[env_var] = options
+
+    app_json_env = dict()
+
+    for key, meta in exported.items():
+        if meta[METADATA_TABLE].export_to_env_template or meta.get("required", False):
+
+            dotenv.set_key(
+                ENV_EXPORT_FILE,
+                key,
+                meta[METADATA_TABLE].export_environment_prefill or meta["default"],
+            )
+
+        if (
+            meta[METADATA_TABLE].export_to_app_json
+            or meta[METADATA_TABLE].export_to_env_template
+            or meta.get("required", False)
+        ):
+
+            options = defaultdict(
+                str,
+                {
+                    "description": meta[METADATA_TABLE].description,
+                    "required": meta[METADATA_TABLE].app_json_required or meta.get("required", False),
+                },
+            )
+            if (value := meta[modmail.config.METADATA_TABLE].app_json_default) is not None:
+                options["value"] = value
+            app_json_env[key] = options
+
     app_json["env"] = app_json_env
     with open(APP_JSON_FILE, "w") as f:
         json.dump(app_json, f, indent=4)

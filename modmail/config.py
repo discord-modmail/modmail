@@ -23,10 +23,9 @@ except ImportError:
 
 __all__ = [
     "AUTO_GEN_FILE_NAME",
-    "DEFAULT_CONFIG_FILES",
     "ENV_PREFIX",
-    "BOT_ENV_PREFIX",
     "USER_CONFIG_FILE_NAME",
+    "USER_CONFIG_FILES",
     "CfgLoadError",
     "Config",
     "config",
@@ -46,10 +45,9 @@ __all__ = [
 _CWD = pathlib.Path.cwd()
 METADATA_TABLE = "modmail_metadata"
 ENV_PREFIX = "MODMAIL_"
-BOT_ENV_PREFIX = "BOT_"
 USER_CONFIG_FILE_NAME = "modmail_config"
 AUTO_GEN_FILE_NAME = "default_config"
-DEFAULT_CONFIG_FILES = [
+USER_CONFIG_FILES = [
     _CWD / (USER_CONFIG_FILE_NAME + ".yaml"),
     _CWD / (USER_CONFIG_FILE_NAME + ".toml"),
 ]
@@ -156,6 +154,7 @@ class ConfigMetadata:
     export_to_env_template: bool = False
 
     # app json is slightly different, so there's additional options for them
+    export_to_app_json: bool = None
     app_json_default: str = None
     app_json_required: bool = None
 
@@ -505,7 +504,7 @@ def _load_config(*files: os.PathLike, load_env: bool = True) -> Config:
     Supported file types are .toml or .yaml
     """
     if len(files) == 0:
-        files = DEFAULT_CONFIG_FILES
+        files = USER_CONFIG_FILES
 
     loaded_config_dict: dict = None
     for file in files:
