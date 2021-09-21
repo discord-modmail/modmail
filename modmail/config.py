@@ -31,7 +31,7 @@ __all__ = [
     "Config",
     "config",
     "ConfigurationSchema",
-    "Bot",
+    "BotCfg",
     "BotModeCfg",
     "Cfg",
     "Colours",
@@ -186,7 +186,7 @@ class ConfigMetadata:
 
 
 @attr.s(auto_attribs=True, slots=True)
-class Bot:
+class BotCfg:
     """
     Values that are configuration for the bot itself.
 
@@ -283,7 +283,7 @@ class Cfg:
     we can get a clean default variable if we don't pass anything.
     """
 
-    bot: Bot = Bot()
+    bot: BotCfg = BotCfg()
     colours: Colours = Colours()
     dev: DevCfg = DevCfg()
 
