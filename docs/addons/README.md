@@ -2,11 +2,12 @@
 
 Addons are our built-in system to extend the features of the bot in an officially supported manner.
 
-Modmail, in its simplest form, is simple: relay messages to and from users to staff members.
-However, we acknowledge that its not a one size fits all solution. Some communities need a bit more than most.
-That's where the addon system fills the void between additional features that aren't core to our main goal.
+Modmail, in its most basic form, is simple: relay messages to and from users to staff members.
+However, we acknowledge that its not a one-size-fits-all solution.
+Some communities need a few more features than others.
+That's where the addon system fills the void.
 
-The addon system currently supports one kind of addon, plugins.
+The addon system currently supports only one kind of addon, plugins.
 This guide will help you set up a respository to create your own addons.
 Once its set up, please refer to the [plugin creation guide][making-plugins] for more details.
 

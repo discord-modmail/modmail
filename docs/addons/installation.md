@@ -1,7 +1,7 @@
 # Installation
 
 !!!note
-    If you are looking to write addons, check our [writing addons][addon-guide] guide.
+    If you are looking to write addons, check out our [writing addons][addon-guide] guide.
 
 ## Plugins
 

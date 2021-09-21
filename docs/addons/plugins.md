@@ -1,6 +1,10 @@
 # Creating Plugins
 
-Modmail, in its simplest form, is small: relay messages to and from users to staff members. However, we acknowledge that its not a one size fits all solution. Some communities need a bit more than most. That's where the addon system comes in to play.
+If you are looking to write a feature to extend the functionality of your modmail bot, plugins are *the*
+supported way to add additional code to modmail.
+
+In short, plugins are discord.py extensions which expand the functionality of the bot beyond its built-in duties.
+
 
 !!!Tip
     This builds on the [addon structure documentation][addon-guide]. Please ensure you have a solid understanding of the basic repository structure beforehand.
