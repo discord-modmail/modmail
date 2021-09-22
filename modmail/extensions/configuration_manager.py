@@ -1,4 +1,5 @@
 import logging
+import operator
 import string
 import typing
 
@@ -33,6 +34,11 @@ class ConfOptions:
 
     _type: type
 
+    metadata: dict
+
+    modmail_metadata: config.ConfigMetadata
+
+    _field: attr.Attribute = None
     nested: str = None
     frozen: bool = False
 
@@ -44,9 +50,13 @@ class ConfOptions:
         kw["name"] = field.name
         kw["type"] = field.type
 
+        kw["metadata"] = field.metadata
+        kw["field"] = field
+
         kw["frozen"] = field.on_setattr is attr.setters.frozen or frozen
 
         meta: config.ConfigMetadata = field.metadata[config.METADATA_TABLE]
+        kw[config.METADATA_TABLE] = meta
         kw["description"] = meta.description
         kw["canconical_name"] = meta.canconical_name
         kw["extended_description"] = meta.extended_description
@@ -124,6 +134,35 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
             )
 
         await ButtonPaginator.paginate(options.values(), ctx.message)
+
+    @config_group.command(name="set", aliases=("edit",))
+    async def modify_config(self, ctx: Context, option: str, value: str) -> None:
+        """Modify an existing configuration value."""
+        if option not in self.config_fields:
+            raise commands.BadArgument(f"Option must be in {', '.join(self.config_fields.keys())}")
+        meta = self.config_fields[option]
+
+        if meta.frozen:
+            await ctx.send("Can't modify this value.")
+            return
+
+        if meta.modmail_metadata.discord_converter is not None:
+            value = await meta.modmail_metadata.discord_converter().convert(ctx, value)
+        elif meta._field.converter:
+            value = meta._field.converter(value)
+        get_value = operator.attrgetter(option.rsplit(".", -1)[0])
+        setattr(get_value(self.bot.config.user), option.rsplit(".", -1)[-1], value)
+        await ctx.message.reply("ok.")
+
+    @config_group.command(name="get", aliases=("show",))
+    async def get_config(self, ctx: Context, option: str) -> None:
+        """Modify an existing configuration value."""
+        if option not in self.config_fields:
+            raise commands.BadArgument(f"Option must be in {', '.join(self.config_fields.keys())}")
+
+        get_value = operator.attrgetter(option)
+        value = get_value(self.bot.config.user)
+        await ctx.send(f"{option}: `{value}`")
 
 
 def setup(bot: ModmailBot) -> None:
