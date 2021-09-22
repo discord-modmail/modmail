@@ -77,6 +77,13 @@ omit = ["modmail/plugins/**.*"]
 addopts = "--cov --cov-report="
 minversion = "6.0"
 testpaths = ["tests"]
+filterwarnings = [
+    "default",
+    'ignore::DeprecationWarning:marshmallow.fields:173',
+    'ignore::DeprecationWarning:marshmallow.fields:438',
+    'ignore::DeprecationWarning:marshmallow.fields:456',
+]
+
 
 [tool.black]
 line-length = 110

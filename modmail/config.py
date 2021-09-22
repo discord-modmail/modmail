@@ -18,7 +18,7 @@ import marshmallow.validate
 
 try:
     import yaml
-except ImportError:
+except ImportError:  # pragma: nocover
     yaml = None
 
 __all__ = [
@@ -38,6 +38,7 @@ __all__ = [
     "convert_to_color",
     "get_config",
     "get_default_config",
+    "load_env",
     "load_toml",
     "load_yaml",
 ]
@@ -164,7 +165,7 @@ class ConfigMetadata:
 
     @description.validator
     def _validate_description(self, attrib: attr.Attribute, value: typing.Any) -> None:
-        if not isinstance(value, attrib.type):
+        if not isinstance(value, attrib.type):  # pragma: no branch
             raise ValueError(f"description must be of {attrib.type}") from None
 
 
@@ -401,7 +402,7 @@ def _build_class(
     return klass(**kw)
 
 
-def _load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> dict:
+def load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> dict:
     """
     Load a configuration dictionary from the specified env file and environment variables.
 
@@ -494,7 +495,7 @@ def _remove_extra_values(klass: type, dit: DictT) -> DictT:
     return cleared_dict
 
 
-def _load_config(*files: os.PathLike, load_env: bool = True) -> Config:
+def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
     """
     Loads a configuration from the specified files.
 
@@ -526,8 +527,8 @@ def _load_config(*files: os.PathLike, load_env: bool = True) -> Config:
                 "the required dependencies are not installed."
             )
 
-    if load_env:
-        loaded_config_dict = _load_env(existing_cfg_dict=loaded_config_dict)
+    if should_load_env:
+        loaded_config_dict = load_env(existing_cfg_dict=loaded_config_dict)
 
     # HACK remove extra keeps from the configuration dict since marshmallow doesn't know what to do with them
     # CONTRARY to the marshmallow.EXCLUDE below.
