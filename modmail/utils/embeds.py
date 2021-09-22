@@ -6,8 +6,6 @@ from discord.embeds import EmptyEmbed
 from modmail.config import config
 
 
-DEFAULT_COLOR = config().user.colours.base_embed_color
-
 original_init = discord.Embed.__init__
 
 
@@ -42,7 +40,7 @@ def __init__(self: discord.Embed, description: str = None, **kwargs):  # noqa: N
         description=description or content or EmptyEmbed,
         type=kwargs.pop("type", "rich"),
         url=kwargs.pop("url", EmptyEmbed),
-        colour=kwargs.pop("color", kwargs.pop("colour", DEFAULT_COLOR)),
+        colour=kwargs.pop("color", kwargs.pop("colour", config().user.colours.base_embed_color)),
         timestamp=kwargs.pop("timestamp", EmptyEmbed),
     )
 

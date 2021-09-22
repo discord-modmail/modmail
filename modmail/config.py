@@ -9,6 +9,7 @@ import atoml
 import attr
 import desert
 import discord
+import discord.ext.commands
 import discord.ext.commands.converter
 import dotenv
 import marshmallow
@@ -159,6 +160,11 @@ class ConfigMetadata:
     app_json_default: str = None
     app_json_required: bool = None
 
+    # I have no plans to add async to this file, that would make it overly complex.
+    # as a solution, I'm implementing a field which can provide a rich converter object,
+    # in the style that discord.py uses. This will be called like discord py calls.
+    discord_converter: discord.ext.commands.converter.Converter = attr.ib(default=None)
+
     # hidden, eg log_level
     # hidden values mean they do not show up in the bot configuration menu
     hidden: bool = False
@@ -167,6 +173,13 @@ class ConfigMetadata:
     def _validate_description(self, attrib: attr.Attribute, value: typing.Any) -> None:
         if not isinstance(value, attrib.type):  # pragma: no branch
             raise ValueError(f"description must be of {attrib.type}") from None
+
+    @discord_converter.validator
+    def _validate_discord_converter(self, attrib: attr.Attribute, value: typing.Any) -> None:
+        if value is None:
+            return
+        if not hasattr(value, "convert"):  # pragma: no branch
+            raise AttributeError("Converters must have a method named convert.")
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -294,6 +307,35 @@ class DevCfg:
             raise ValueError("log_level must be an integer within 0 to 50, inclusive.")
 
 
+@attr.mutable(slots=True)
+class EmojiCfg:
+    """
+    Emojis used across the entire bot.
+
+    This was a pain to implement.
+    """
+
+    success: typing.Any = attr.ib(
+        default=":thumbsup:",
+        metadata={
+            METADATA_TABLE: ConfigMetadata(
+                description="This is used in most cases when the bot does a successful action.",
+                discord_converter=discord.ext.commands.converter.EmojiConverter,
+            )
+        },
+    )
+
+    failure: typing.Any = attr.ib(
+        default=":x:",
+        metadata={
+            METADATA_TABLE: ConfigMetadata(
+                description="This is used in most cases when the bot fails an action.",
+                discord_converter=discord.ext.commands.converter.EmojiConverter,
+            )
+        },
+    )
+
+
 @attr.s(auto_attribs=True, slots=True)
 class Cfg:
     """
@@ -315,6 +357,7 @@ class Cfg:
             )
         },
     )
+    emojis: EmojiCfg = EmojiCfg()
 
 
 # build configuration

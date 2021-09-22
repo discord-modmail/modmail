@@ -15,3 +15,7 @@ log_level = 20
 develop = false
 plugin_dev = false
 production = true
+
+[emojis]
+failure = ":x:"
+success = ":thumbsup:"
