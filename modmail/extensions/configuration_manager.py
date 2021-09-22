@@ -150,8 +150,15 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
             value = await meta.modmail_metadata.discord_converter().convert(ctx, value)
         elif meta._field.converter:
             value = meta._field.converter(value)
-        get_value = operator.attrgetter(option.rsplit(".", -1)[0])
-        setattr(get_value(self.bot.config.user), option.rsplit(".", -1)[-1], value)
+
+        try:
+            root, name = option.rsplit(".", -1)
+        except ValueError:
+            root = ""
+            name = option
+
+        setattr(operator.attrgetter(root)(self.bot.config.user), name, value)
+
         await ctx.message.reply("ok.")
 
     @config_group.command(name="get", aliases=("show",))
