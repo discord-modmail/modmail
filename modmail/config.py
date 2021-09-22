@@ -196,7 +196,7 @@ class BotCfg:
         },
     )
     prefix: str = attr.ib(
-        default=marshmallow.missing,
+        default="?",
         metadata={
             METADATA_TABLE: ConfigMetadata(
                 canconical_name="Command Prefix",
@@ -207,7 +207,6 @@ class BotCfg:
                 export_to_env_template=True,
             )
         },
-        converter=lambda x: "?" if x is marshmallow.missing else x,
     )
 
 
