@@ -3,6 +3,7 @@ import string
 import typing
 
 import attr
+import attr._make
 import marshmallow
 from discord.ext import commands
 from discord.ext.commands import Context
@@ -33,14 +34,17 @@ class ConfOptions:
     _type: type
 
     nested: str = None
+    frozen: bool = False
 
     @classmethod
-    def from_field(cls, field: attr.Attribute, nested: str = None):
+    def from_field(cls, field: attr.Attribute, *, frozen: bool = False, nested: str = None):
         """Create a ConfOptions from a attr.Attribute."""
         kw = {}
         kw["default"] = field.default if field.default is not marshmallow.missing else None
         kw["name"] = field.name
         kw["type"] = field.type
+
+        kw["frozen"] = field.on_setattr is attr.setters.frozen or frozen
 
         meta: config.ConfigMetadata = field.metadata[config.METADATA_TABLE]
         kw["description"] = meta.description
@@ -62,8 +66,9 @@ def get_all_conf_options(klass: config.ClassT, *, prefix: str = None) -> typing.
         if attr.has(field.type):
             options.update(get_all_conf_options(field.type, prefix=field.name + "."))
         else:
+            is_frozen = klass.__setattr__ is attr._make._frozen_setattrs
             try:
-                conf_opt = ConfOptions.from_field(field, nested=prefix)
+                conf_opt = ConfOptions.from_field(field, frozen=is_frozen, nested=prefix)
             except KeyError as e:
                 if field.type == type:
                     pass
@@ -98,11 +103,14 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
     @config_group.command(name="list")
     async def list_config(self, ctx: Context) -> None:
         """List the valid configuration options."""
-        options = []
-        for opt in self.config_fields.values():
-            if opt.hidden:
+        options = {}
+        for table, opt in self.config_fields.items():
+            if opt.hidden or opt.frozen:
                 continue
-            options.append(
+
+            # we want to merge items from the same config table so they are on the same table
+            key = table.rsplit(".", 1)[0]
+            options[key] = options.get(key, "") + (
                 "\n".join(
                     [
                         f"**{string.capwords(opt.canconical_name or opt.name)}**",
@@ -110,12 +118,12 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
                         if opt.default is not None
                         else "Required. There is no default value for this option.",
                         f"{opt.description}",
-                        f" {opt.extended_description}" if opt.extended_description else "",
+                        f" {opt.extended_description}\n" if opt.extended_description else "",
                     ]
                 )
             )
 
-        await ButtonPaginator.paginate(options, ctx.message)
+        await ButtonPaginator.paginate(options.values(), ctx.message)
 
 
 def setup(bot: ModmailBot) -> None:
