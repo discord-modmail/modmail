@@ -117,34 +117,26 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         """Load, unload, reload, and list loaded extensions."""
         await ctx.send_help(ctx.command)
 
-    @extensions_group.command(name="load", aliases=("l",))
+    @extensions_group.command(name="load", aliases=("l",), require_var_positional=True)
     async def load_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         r"""
         Load extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all unloaded extensions will be loaded.
         """
-        if not extensions:
-            await ctx.send_help(ctx.command)
-            return
-
         if "*" in extensions:
             extensions = sorted(ext for ext in self.all_extensions if ext not in self.bot.extensions.keys())
 
         msg, is_error = self.batch_manage(Action.LOAD, *extensions)
         await responses.send_response(ctx, msg, not is_error)
 
-    @extensions_group.command(name="unload", aliases=("ul",))
+    @extensions_group.command(name="unload", aliases=("ul",), require_var_positional=True)
     async def unload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         r"""
         Unload currently loaded extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all loaded extensions will be unloaded.
         """
-        if not extensions:
-            await ctx.send_help(ctx.command)
-            return
-
         blacklisted = [ext for ext in self.get_black_listed_extensions() if ext in extensions]
 
         if blacklisted:
@@ -164,7 +156,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         msg, is_error = self.batch_manage(Action.UNLOAD, *extensions)
         await responses.send_response(ctx, msg, not is_error)
 
-    @extensions_group.command(name="reload", aliases=("r", "rl"))
+    @extensions_group.command(name="reload", aliases=("r", "rl"), require_var_positional=True)
     async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         r"""
         Reload extensions given their fully qualified or unqualified names.
@@ -173,10 +165,6 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         If '\*' is given as the name, all currently loaded extensions will be reloaded.
         """
-        if not extensions:
-            await ctx.send_help(ctx.command)
-            return
-
         if "*" in extensions:
             extensions = self.bot.extensions.keys() & self.all_extensions
 
@@ -352,6 +340,8 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         if isinstance(error, commands.BadArgument):
             await responses.send_negatory_response(ctx, str(error))
             error.handled = True
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send_help(ctx.command)
         else:
             raise error
 

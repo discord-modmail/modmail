@@ -159,7 +159,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """Manage plugin files directly, rather than whole plugin objects."""
         await ctx.send_help(ctx.command)
 
-    @plugin_dev_group.command(name="load", aliases=("l",))
+    @plugin_dev_group.command(name="load", aliases=("l",), require_var_positional=True)
     async def load_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
         Load singular plugin files given their fully qualified or unqualified names.
@@ -168,7 +168,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.load_extensions.callback(self, ctx, *plugins)
 
-    @plugin_dev_group.command(name="unload", aliases=("u", "ul"))
+    @plugin_dev_group.command(name="unload", aliases=("u", "ul"), require_var_positional=True)
     async def unload_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
         Unoad singular plugin files given their fully qualified or unqualified names.
@@ -177,7 +177,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         """
         await self.unload_extensions.callback(self, ctx, *plugins)
 
-    @plugin_dev_group.command(name="reload", aliases=("r", "rl"))
+    @plugin_dev_group.command(name="reload", aliases=("r", "rl"), require_var_positional=True)
     async def reload_plugins(self, ctx: Context, *plugins: PluginDevPathConverter) -> None:
         r"""
         Reload singular plugin files given their fully qualified or unqualified names.
