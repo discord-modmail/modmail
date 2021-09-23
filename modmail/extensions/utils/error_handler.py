@@ -18,81 +18,58 @@ EXT_METADATA = ExtMetadata()
 ERROR_COLOUR = discord.Colour.red()
 
 
-def _raise(e: BaseException, *arg, **kwargs) -> typing.NoReturn:
-    raise e
-
-
 class ErrorHandler(ModmailCog, name="Error Handler"):
     """Handles all errors across the bot."""
 
     def __init__(self, bot: ModmailBot):
         self.bot = bot
 
-    @commands.check(lambda _: _raise(commands.NotOwner("oy")))
-    @commands.command()
-    async def error(self, ctx: commands.Context) -> None:
-        """."""
-        await ctx.send(5)
-
-    @commands.has_permissions(administrator=False)
-    @commands.command()
-    async def cmd(self, ctx: commands.Context, error: str = None, *args) -> None:
-        """."""
-        if error is not None:
-            raise getattr(commands, error)(*args)
-        else:
-            await ctx.send("oop")
-
     @staticmethod
     def error_embed(message: str, title: str = None) -> discord.Embed:
         """Create an error embed with an error colour and reason and return it."""
-        return discord.Embed(message, colour=ERROR_COLOUR, title=title or "Error occured")
+        return discord.Embed(message, colour=ERROR_COLOUR, title=title or "Error Occured")
+
+    @staticmethod
+    def get_title_from_name(error: typing.Union[Exception, str]) -> str:
+        """
+        Return a message dervived from the exception class name.
+
+        Eg NSFWChannelRequired returns NSFW Channel Required
+        """
+        if not isinstance(error, str):
+            error = error.__class__.__name__
+        return re.sub(r"(?<=[a-z])([A-Z])(?=[a-z])", r" \1", error)
 
     async def handle_user_input_error(
         self, ctx: commands.Context, error: commands.UserInputError
     ) -> discord.Embed:
         """Handling deferred from main error handler to handle UserInputErrors."""
         embed = None
+        msg = None
         title = "User Input Error"
         if isinstance(error, commands.BadUnionArgument):
-            # TODO: complete
-            msg = ""
-            embed = self.error_embed(msg, title="Bad Union Argument")
-        elif isinstance(error, commands.BadLiteralArgument):
-            # TODO: complete
-            msg = ""
-            embed = self.error_embed(msg, title="Bad Literal Argument")
-        elif isinstance(error, commands.ArgumentParsingError):
-            embed = self.error_embed(str(error), title="Argument Parsing Error")
-            if isinstance(error, commands.UnexpectedQuoteError):
-                ...
-            elif isinstance(error, commands.InvalidEndOfQuotedStringError):
-                ...
-            elif isinstance(error, commands.ExpectedClosingQuoteError):
-                ...
-            else:
-                ...
+            msg = self.get_title_from_name(str(error))
+            title = self.get_title_from_name(error)
         else:
-            title = re.sub(r"([A-Z])", r" \1", error.__class__.__name__)
-        return embed or self.error_embed(str(error), title=title)
+            title = self.get_title_from_name(error)
+        return embed or self.error_embed(msg or str(error), title=title)
 
     async def handle_check_failure(
         self, ctx: commands.Context, error: commands.CheckFailure
     ) -> discord.Embed:
         """Handle CheckFailures seperately given that there are many of them."""
         title = "Check Failure"
-        embed = None
+        msg = None
         if isinstance(error, commands.CheckAnyFailure):
-            ...
+            title = self.get_title_from_name(error.checks[-1])
+            msg = str(error)
         elif isinstance(error, commands.PrivateMessageOnly):
             title = "DMs Only"
         elif isinstance(error, commands.NoPrivateMessage):
             title = "Server Only"
-        elif isinstance(error, commands.NSFWChannelRequired):
-            title = "NSFW Channel Required"
         else:
-            title = re.sub(r"([A-Z])", r" \1", error.__class__.__name__)
-        embed = self.error_embed(str(error), title=title)
+            title = self.get_title_from_name(error)
+        embed = self.error_embed(msg or str(error), title=title)
         return embed
 
     @ModmailCog.listener()
@@ -135,11 +112,11 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
 
         elif isinstance(error, commands.CommandInvokeError):
             # generic error
-            logger.error(f"Error occured in {ctx.command}.", exc_info=error.original)
+            logger.error(f'Error occured in command "{ctx.command}".', exc_info=error.original)
             # todo: this should log somewhere else since this is a bot bug.
             embed = self.error_embed(
                 "Oops! Something went wrong internally in the command you were trying to execute. "
-                "Please report this error and what you were trying to do to the developer."
+                "Please report this error and what you were trying to do to the developers."
             )
         elif isinstance(error, commands.CommandOnCooldown):
             ...
