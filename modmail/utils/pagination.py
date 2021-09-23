@@ -54,7 +54,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
     def __init__(
         self,
-        contents: Union[List[str], str],
+        contents: Union[List[str], str] = None,
         /,
         source_message: Optional[discord.Message] = None,
         embed: Embed = None,
@@ -121,8 +121,13 @@ class ButtonPaginator(ui.View, DpyPaginator):
                 footer_text = embed.footer
         self.footer_text = footer_text
         self.clear()
-        for line in contents:
-            self.add_line(line)
+
+        if contents is not None:
+            for line in contents:
+                self.add_line(line)
+        else:
+            contents = ""
+
         self.close_page()
         # create the super so the children attributes are set
         super().__init__()
@@ -132,6 +137,24 @@ class ButtonPaginator(ui.View, DpyPaginator):
         for child in self.children:
             attrs = child.to_component_dict()
             self.states[attrs["custom_id"]] = attrs
+
+    async def _paginate(self, channel: discord.abc.Messageable) -> None:
+        """Paginate an existing paginator."""
+        self.embed.description = self.pages[self.index]
+        self.update_states()
+        if len(self.pages) < 2:
+            await channel.send(embeds=[self.embed])
+            return
+
+        if len(self.pages) < 3:
+            for item in self.children:
+                if getattr(item, "custom_id", None) in ["pag_jump_first", "pag_jump_last"]:
+                    self.remove_item(item)
+
+        msg: discord.Message = await channel.send(embeds=[self.embed], view=self)
+
+        await self.wait()
+        await msg.edit(view=None)
 
     @classmethod
     async def paginate(
