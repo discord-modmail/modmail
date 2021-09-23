@@ -17,6 +17,8 @@ EXT_METADATA = ExtMetadata()
 
 ERROR_COLOUR = discord.Colour.red()
 
+ERROR_TITLE_REGEX = re.compile(r"(?<=[a-zA-Z])([A-Z])(?=[a-z])")
+
 
 class ErrorHandler(ModmailCog, name="Error Handler"):
     """Handles all errors across the bot."""
@@ -38,7 +40,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         """
         if not isinstance(error, str):
             error = error.__class__.__name__
-        return re.sub(r"(?<=[a-z])([A-Z])(?=[a-z])", r" \1", error)
+        return re.sub(ERROR_TITLE_REGEX, r" \1", error)
 
     async def handle_user_input_error(
         self, ctx: commands.Context, error: commands.UserInputError
