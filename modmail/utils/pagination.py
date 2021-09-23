@@ -138,8 +138,18 @@ class ButtonPaginator(ui.View, DpyPaginator):
             attrs = child.to_component_dict()
             self.states[attrs["custom_id"]] = attrs
 
-    async def _paginate(self, channel: discord.abc.Messageable) -> None:
+    async def _paginate(
+        self,
+        channel: discord.abc.Messageable,
+        only_users: Optional[List[Union[discord.Object, discord.abc.User]]] = None,
+        only_roles: Optional[List[Union[discord.Object, discord.Role]]] = None,
+    ) -> None:
         """Paginate an existing paginator."""
+        if only_users is not None:
+            self.only_users = only_users
+        if only_roles is not None:
+            self.only_roles = only_roles
+
         self.embed.description = self.pages[self.index]
         self.update_states()
         if len(self.pages) < 2:

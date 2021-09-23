@@ -5,16 +5,20 @@ from modmail.utils.cogs import ModmailCog
 from modmail.utils.pagination import ButtonPaginator
 
 
-class ModmailHelpCommand(commands.DefaultHelpCommand):
+class ModmailHelpCommand(commands.MinimalHelpCommand):
     """Custom help command implementation."""
 
     def __init__(self, **kw):
-        kw["paginator"] = ButtonPaginator(prefix="", suffix="")
+        kw["paginator"] = ButtonPaginator(
+            prefix="",
+            suffix="",
+            max_size=1000,
+        )
         super().__init__(**kw)
 
     async def send_pages(self) -> None:
         """Send the paginator."""
-        await self.paginator._paginate(self.get_destination())
+        await self.paginator._paginate(self.get_destination(), only_users=[self.context.author])
 
 
 class HelpCog(ModmailCog):
