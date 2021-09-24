@@ -33,6 +33,8 @@ STOP_PAGINATE_EMOJI = "\u274c"  # [:x:] This is an emoji, which is treated diffe
 
 logger: ModmailLogger = logging.getLogger(__name__)
 
+_AUTOGENERATE = object()
+
 
 class ButtonPaginator(ui.View, DpyPaginator):
     """
@@ -57,7 +59,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         contents: Union[List[str], str],
         /,
         source_message: Optional[discord.Message] = None,
-        embed: Embed = None,
+        embed: Optional[Embed] = _AUTOGENERATE,
         timeout: float = 180,
         *,
         footer_text: str = None,
@@ -82,7 +84,13 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self.suffix = suffix
         self.max_size = max_size
         self.linesep = linesep
-        self.embed = embed or Embed()
+        if embed is _AUTOGENERATE:
+            self.embed = Embed()
+        else:
+            self.embed = embed
+
+        # used if embed is None
+        self.content = ""
 
         # temporary to support strings as contents. This will be changed when we added wrapping.
         if isinstance(contents, str):
@@ -116,8 +124,8 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
         # set footer to embed.footer if embed is set
         # this is because we will be modifying the footer of this embed
-        if embed is not None:
-            if not isinstance(embed.footer, EmbedProxy) and footer_text is None:
+        if self.embed is not None:
+            if not isinstance(self.embed.footer, EmbedProxy) and footer_text is None:
                 footer_text = embed.footer
         self.footer_text = footer_text
         self.clear()
@@ -140,7 +148,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         source_message: discord.Message = None,
         /,
         timeout: float = 180,
-        embed: Embed = None,
+        embed: Embed = _AUTOGENERATE,
         *,
         footer_text: str = None,
         only: Optional[discord.abc.User] = None,
@@ -178,10 +186,17 @@ class ButtonPaginator(ui.View, DpyPaginator):
             channel = source_message.channel
 
         paginator.update_states()
-        paginator.embed.description = paginator.pages[paginator.index]
+        if paginator.embed:
+            paginator.embed.description = paginator.pages[paginator.index]
+        else:
+            paginator.content = paginator.pages[paginator.index]
         # if there's only one page, don't send the view
         if len(paginator.pages) < 2:
-            await channel.send(embeds=[paginator.embed])
+            if paginator.embed:
+                await channel.send(embeds=[paginator.embed])
+            else:
+                await channel.send(content=paginator.content)
+
             return
 
         if len(paginator.pages) < (show_jump_buttons_min_pages or 3):
@@ -189,7 +204,10 @@ class ButtonPaginator(ui.View, DpyPaginator):
                 if getattr(item, "custom_id", None) in ["pag_jump_first", "pag_jump_last"]:
                     paginator.remove_item(item)
 
-        msg: discord.Message = await channel.send(embeds=[paginator.embed], view=paginator)
+        if paginator.embed is None:
+            msg: discord.Message = await channel.send(content=paginator.content, view=paginator)
+        else:
+            msg: discord.Message = await channel.send(embeds=[paginator.embed], view=paginator)
 
         await paginator.wait()
         await msg.edit(view=None)
@@ -212,8 +230,11 @@ class ButtonPaginator(ui.View, DpyPaginator):
         )
         return False
 
-    def get_footer(self) -> str:
+    def get_footer(self) -> Optional[str]:
         """Returns the footer text."""
+        if self.embed is None:
+            self.content = self._pages[self.index]
+            return None
         self.embed.description = self._pages[self.index]
         page_indicator = f"Page {self.index+1}/{len(self._pages)}"
         footer_txt = (
@@ -230,7 +251,9 @@ class ButtonPaginator(ui.View, DpyPaginator):
         if the paginator is on the last page, the jump last/move forward buttons will be disabled.
         """
         # update the footer
-        self.embed.set_footer(text=self.get_footer())
+        text = self.get_footer()
+        if self.embed:
+            self.embed.set_footer(text=text)
 
         # determine if the jump buttons should be enabled
         more_than_two_pages = len(self._pages) > 2
@@ -264,7 +287,10 @@ class ButtonPaginator(ui.View, DpyPaginator):
         """Send new page to discord, after updating the view to have properly disabled buttons."""
         self.update_states()
 
-        await interaction.message.edit(embed=self.embed, view=self)
+        if self.embed:
+            await interaction.message.edit(embed=self.embed, view=self)
+        else:
+            await interaction.message.edit(content=self.content, view=self)
 
     @ui.button(label=JUMP_FIRST_LABEL, custom_id="pag_jump_first", style=ButtonStyle.primary)
     async def go_first(self, _: Button, interaction: Interaction) -> None:

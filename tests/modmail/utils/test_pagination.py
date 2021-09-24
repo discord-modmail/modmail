@@ -27,11 +27,10 @@ async def test_paginator_footer(content: Union[str, List[str]], footer_text: str
     pag = ButtonPaginator(content, footer_text=footer_text)
     print("index:", pag.index)
     print("page len: ", len(pag.pages))
-    assert pag.footer_text == footer_text
+    assert footer_text == pag.footer_text
     if isinstance(content, str):
         content = [content]
 
-    print(pag.get_footer())
     if footer_text is not None:
         assert pag.get_footer().endswith(f"{len(content)})")
         assert pag.get_footer().startswith(footer_text)
