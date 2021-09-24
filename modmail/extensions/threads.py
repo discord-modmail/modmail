@@ -966,7 +966,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         )
 
     @is_modmail_thread()
-    @commands.command(enabled=DEV_MODE_ENABLED)
+    @commands.command(name="debug_thread", enabled=DEV_MODE_ENABLED)
     async def debug(self, ctx: Context, attr: str = None) -> None:
         """Debug command. Requires a message reference (reply)."""
         tick = self.get_ticket(ctx.channel.id)
