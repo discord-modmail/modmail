@@ -225,24 +225,25 @@ async def test_bad_eventname_register_dispatch(dispatcher: Dispatcher) -> None:
 @pytest.mark.asyncio
 async def test_class_dispatch() -> None:
     """Ensure the decorator works on class functions as well, and fires only for the instances."""
-    dispatcher = Dispatcher("class_test")
 
     class A:
+        dispatcher = Dispatcher("class_test")
+
         def __init__(self):
-            dispatcher.activate(self)
+            self.dispatcher.activate(self)
 
         async def fire(self) -> None:
-            await dispatcher.dispatch("class_test", 2)
+            await self.dispatcher.dispatch("class_test", 2)
 
         @dispatcher.register("class_test")
         async def on_class_test(self, var1) -> None:
             assert var1 == 2
 
-    assert dispatcher.handlers["class_test"] == []
+    assert A.dispatcher.handlers["class_test"] == []
 
     a = A()
 
-    assert dispatcher.handlers["class_test"] == [a.on_class_test]
+    assert A.dispatcher.handlers["class_test"] == [a.on_class_test]
 
     await a.on_class_test(2)
 
