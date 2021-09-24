@@ -8,7 +8,8 @@ from discord.ext import commands
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import ExtMetadata, ModmailCog
+from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
+from modmail.utils.extensions import BOT_MODE
 
 
 logger: ModmailLogger = logging.getLogger(__name__)
@@ -18,6 +19,8 @@ EXT_METADATA = ExtMetadata()
 ERROR_COLOUR = discord.Colour.red()
 
 ERROR_TITLE_REGEX = re.compile(r"(?<=[a-zA-Z])([A-Z])(?=[a-z])")
+
+ANY_DEV_MODE = BOT_MODE & (BotModes.DEVELOP.value + BotModes.PLUGIN_DEV.value)
 
 
 class ErrorHandler(ModmailCog, name="Error Handler"):
@@ -92,14 +95,14 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             logging.debug(f"Command {ctx.command} had its error already handled locally; ignoring.")
             return
 
-        if not isinstance(error, commands.CommandError):
-            logger.error("What in the world...")
-            return
-        logger.trace(error)
         if isinstance(error, commands.CommandNotFound):
             # ignore every time the user inputs a message that starts with our prefix but isn't a command
             # this will be modified in the future to support prefilled commands
+            if ANY_DEV_MODE:
+                logger.trace(error)
             return
+
+        logger.trace(error)
 
         title = None
         msg = None
