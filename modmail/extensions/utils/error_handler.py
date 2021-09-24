@@ -42,10 +42,21 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             error = error.__class__.__name__
         return re.sub(ERROR_TITLE_REGEX, r" \1", error)
 
+    @staticmethod
+    def _reset_command_cooldown(ctx: commands.Context) -> bool:
+        if return_value := ctx.command.is_on_cooldown(ctx):
+            ctx.command.reset_cooldown(ctx)
+        return return_value
+
     async def handle_user_input_error(
-        self, ctx: commands.Context, error: commands.UserInputError
+        self,
+        ctx: commands.Context,
+        error: commands.UserInputError,
+        reset_cooldown: bool = True,
     ) -> discord.Embed:
         """Handling deferred from main error handler to handle UserInputErrors."""
+        if reset_cooldown:
+            self._reset_command_cooldown(ctx)
         embed = None
         msg = None
         title = "User Input Error"
@@ -90,6 +101,8 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             # this will be modified in the future to support prefilled commands
             return
 
+        title = None
+        msg = None
         embed: typing.Optional[discord.Embed] = None
         should_respond = True
 
@@ -98,10 +111,10 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         elif isinstance(error, commands.CheckFailure):
             embed = await self.handle_check_failure(ctx, error)
         elif isinstance(error, commands.ConversionError):
-            s = object()
-            error.converter.convert.__annotations__.get("return", s)
-            embed = error
-
+            # s = object()
+            # error.converter.convert.__annotations__.get("return", s)
+            # embed = error
+            ...
         elif isinstance(error, commands.DisabledCommand):
             logger.debug("")
             if ctx.command.hidden:
@@ -110,7 +123,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
                 msg = f"Command `{ctx.invoked_with}` is disabled."
                 if reason := ctx.command.extras.get("disabled_reason", None):
                     msg += f"\nReason: {reason}"
-                embed = self.error_embed(msg, title="Command disabled")
+                embed = self.error_embed(msg, title="Command Disabled")
 
         elif isinstance(error, commands.CommandInvokeError):
             # generic error
@@ -120,12 +133,6 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
                 "Oops! Something went wrong internally in the command you were trying to execute. "
                 "Please report this error and what you were trying to do to the developers."
             )
-        elif isinstance(error, commands.CommandOnCooldown):
-            ...
-        elif isinstance(error, commands.MaxConcurrencyReached):
-            ...
-        else:
-            logger.error("An error was made that was unhandlable.")
 
         # TODO: this has a fundamental problem with any BotMissingPermissions error
         # if the issue is the bot does not have permissions to send embeds or send messages...
@@ -135,10 +142,10 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             logger.debug("Not responding to error since should_respond is falsey.")
             return
 
-        if embed is not None:
-            await ctx.send(embeds=[embed])
-        else:
-            await ctx.send("Uhm. Something happened. IDK what.")
+        if embed is None:
+            embed = self.error_embed(msg or str(error), title=title or self.get_title_from_name(error))
+
+        await ctx.send(embeds=[embed])
 
 
 def setup(bot: ModmailBot) -> None:
