@@ -409,8 +409,10 @@ def _build_class(
 
     if env is None:
         if dotenv_file is not None:
-            dotenv.load_dotenv(dotenv_file)
-        env = os.environ.copy()
+            env = dotenv.dotenv_values(dotenv_file)
+            env.update(os.environ)
+        else:
+            env = os.environ.copy()
 
     # get the attributes of the provided class
     if defaults is None:

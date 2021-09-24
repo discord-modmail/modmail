@@ -53,8 +53,16 @@ class TestConfigLoaders:
 
         # we have to run this here since we may have the environment vars in our local env
         # but we want to ensure that they are of the above env for the test
-        dotenv.load_dotenv(test_env, override=True)
-        cfg_dict = config.load_env(test_env)
+        try:
+            os.environ.update(dotenv.dotenv_values(test_env))
+            cfg_dict = config.load_env(test_env)
+        finally:
+            # clean up the loaded values
+            for key in dotenv.dotenv_values(test_env):
+                try:
+                    del os.environ[key]
+                except ValueError:
+                    pass
 
         assert token == cfg_dict["bot"]["token"]
         assert prefix == cfg_dict["bot"]["prefix"]
