@@ -70,9 +70,38 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             title = self.get_title_from_name(error)
         return embed or self.error_embed(msg or str(error), title=title)
 
+    async def handle_bot_missing_perms(
+        self, ctx: commands.Context, error: commands.BotMissingPermissions
+    ) -> bool:
+        """Handles bot missing perms by dming the user if they have a permission which may be to fix this."""
+        embed = self.error_embed(str(error))
+        try:
+            await ctx.send(embeds=[embed])
+        except discord.Forbidden:
+            logger.error(f"Unable to send an error message to {ctx.channel!s}")
+            if ANY_DEV_MODE:
+                # non-general permissions
+                perms = discord.Permissions(
+                    administrator=True,
+                    manage_threads=True,
+                    manage_roles=True,
+                    manage_channels=True,
+                )
+                if perms.value & ctx.channel.permissions_for(ctx.author).value:
+                    logger.info(
+                        f"Attempting to dm {ctx.author} since they have a permission which may be able "
+                        "to give the bot send message permissions."
+                    )
+                    try:
+                        await ctx.author.send(embeds=[embed])
+                    except discord.Forbidden:
+                        logger.notice("Also encountered an error when trying to reply in dms.")
+                        return False
+            return True
+
     async def handle_check_failure(
         self, ctx: commands.Context, error: commands.CheckFailure
-    ) -> discord.Embed:
+    ) -> typing.Optional[discord.Embed]:
         """Handle CheckFailures seperately given that there are many of them."""
         title = "Check Failure"
         msg = None
@@ -83,6 +112,10 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             title = "DMs Only"
         elif isinstance(error, commands.NoPrivateMessage):
             title = "Server Only"
+        elif isinstance(error, commands.BotMissingPermissions):
+            # defer handling BotMissingPermissions to a method, since this can be problematic
+            await self.handle_bot_missing_perms(ctx, error)
+            return None
         else:
             title = self.get_title_from_name(error)
         embed = self.error_embed(msg or str(error), title=title)
@@ -113,6 +146,9 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             embed = await self.handle_user_input_error(ctx, error)
         elif isinstance(error, commands.CheckFailure):
             embed = await self.handle_check_failure(ctx, error)
+            # handle_check_failure may send its own error if its a BotMissingPermissions error.
+            if embed is None:
+                should_respond = False
         elif isinstance(error, commands.ConversionError):
             # s = object()
             # error.converter.convert.__annotations__.get("return", s)
@@ -136,6 +172,9 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
                 "Oops! Something went wrong internally in the command you were trying to execute. "
                 "Please report this error and what you were trying to do to the developers."
             )
+            if isinstance(error.original, discord.Forbidden):
+                await self.handle_bot_missing_perms(ctx, error.original)
+                return
 
         # TODO: this has a fundamental problem with any BotMissingPermissions error
         # if the issue is the bot does not have permissions to send embeds or send messages...
