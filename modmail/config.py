@@ -2,6 +2,7 @@ import inspect
 import logging
 import os
 import pathlib
+import types
 import typing
 from collections import defaultdict
 
@@ -53,6 +54,30 @@ USER_CONFIG_FILES = [
     _CWD / (USER_CONFIG_FILE_NAME + ".yaml"),
     _CWD / (USER_CONFIG_FILE_NAME + ".toml"),
 ]
+
+
+class BetterPartialEmojiConverter(discord.ext.commands.converter.EmojiConverter):
+    """
+    Converts to a :class:`~discord.PartialEmoji`.
+
+    This is done by extracting the animated flag, name and ID from the emoji.
+    """
+
+    async def convert(self, _: discord.ext.commands.context.Context, argument: str) -> discord.PartialEmoji:
+        # match = self._get_id_match(argument) or re.match(
+        #     r"<a?:[a-zA-Z0-9\_]{1,32}:([0-9]{15,20})>$", argument
+        # )
+
+        match = discord.PartialEmoji._CUSTOM_EMOJI_RE.match(argument)
+        if match is not None:
+            groups = match.groupdict()
+            animated = bool(groups["animated"])
+            emoji_id = int(groups["id"])
+            name = groups["name"]
+            return discord.PartialEmoji(name=name, animated=animated, id=emoji_id)
+
+        return discord.PartialEmoji(name=argument)
+
 
 # load env before we do *anything*
 # TODO: Convert this to a function and check the parent directory too, if the CWD is within the bot.
@@ -164,6 +189,9 @@ class ConfigMetadata:
     # as a solution, I'm implementing a field which can provide a rich converter object,
     # in the style that discord.py uses. This will be called like discord py calls.
     discord_converter: discord.ext.commands.converter.Converter = attr.ib(default=None)
+    discord_converter_attribute: typing.Optional[
+        types.FunctionType
+    ] = None  # if we want an attribute off of the converted value
 
     # hidden, eg log_level
     # hidden values mean they do not show up in the bot configuration menu
@@ -320,7 +348,8 @@ class EmojiCfg:
         metadata={
             METADATA_TABLE: ConfigMetadata(
                 description="This is used in most cases when the bot does a successful action.",
-                discord_converter=discord.ext.commands.converter.EmojiConverter,
+                discord_converter=BetterPartialEmojiConverter,
+                discord_converter_attribute=lambda x: x.id or f"{x.name}",
             )
         },
     )
@@ -330,7 +359,8 @@ class EmojiCfg:
         metadata={
             METADATA_TABLE: ConfigMetadata(
                 description="This is used in most cases when the bot fails an action.",
-                discord_converter=discord.ext.commands.converter.EmojiConverter,
+                discord_converter=BetterPartialEmojiConverter,
+                discord_converter_attribute=lambda x: x.id or f"{x.name}",
             )
         },
     )

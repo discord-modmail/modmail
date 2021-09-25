@@ -1,6 +1,7 @@
 import logging
 import operator
 import string
+import types
 import typing
 
 import attr
@@ -8,6 +9,7 @@ import attr._make
 import marshmallow
 from discord.ext import commands
 from discord.ext.commands import Context
+from discord.ext.commands import converter as commands_converter
 
 from modmail import config
 from modmail.bot import ModmailBot
@@ -19,6 +21,8 @@ from modmail.utils.pagination import ButtonPaginator
 EXT_METADATA = ExtMetadata()
 
 logger: ModmailLogger = logging.getLogger(__name__)
+
+KeyT = str
 
 
 @attr.mutable
@@ -68,13 +72,13 @@ class ConfOptions:
         return cls(**kw)
 
 
-def get_all_conf_options(klass: config.ClassT, *, prefix: str = None) -> typing.Dict[str, ConfOptions]:
+def get_all_conf_options(klass: config.ClassT, *, prefix: str = "") -> typing.Dict[str, ConfOptions]:
     """Get a dict of ConfOptions for a designated configuration field recursively."""
     options = dict()
     for field in attr.fields(klass):
         # make conf option list
         if attr.has(field.type):
-            options.update(get_all_conf_options(field.type, prefix=field.name + "."))
+            options.update(get_all_conf_options(field.type, prefix=prefix + field.name + "."))
         else:
             is_frozen = klass.__setattr__ is attr._make._frozen_setattrs
             try:
@@ -92,6 +96,38 @@ def get_all_conf_options(klass: config.ClassT, *, prefix: str = None) -> typing.
                 options[prefix + field.name] = conf_opt
 
     return options
+
+
+class KeyConverter(commands.Converter):
+    """Convert argument into a configuration key."""
+
+    async def convert(self, ctx: Context, arg: str) -> KeyT:
+        """Ensure that a key is of the valid format, allowing a user to input other formats."""
+        # basically we're converting an argument to a key.
+        # config keys are delimited by `.`, and always lowercase, which means that we can make a few passes
+        # before actually trying to make any guesses.
+        # the problems are twofold. a: we want to suggest other keys
+        # and b: the interface needs to be easy to use.
+
+        # as a partial solution for this, `/`, `-`, `.` are all valid delimiters and are converted to `.`
+        # depending on common problems, it is *possible* to add `_` but would require fuzzy matching over
+        # all of the keys since that can also be a valid character name.
+
+        fields = get_all_conf_options(config.default().__class__)
+
+        new_arg = ""
+        for c in arg.lower():
+            if c in " /`":
+                new_arg += "."
+            else:
+                new_arg += c
+
+        if new_arg in fields:
+            return new_arg
+        else:
+            raise commands.BadArgument(
+                f"{ctx.current_parameter.name} {arg} is not a valid configuration key."
+            )
 
 
 class ConfigurationManager(ModmailCog, name="Configuration Manager"):
@@ -136,18 +172,26 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
         await ButtonPaginator.paginate(options.values(), ctx.message)
 
     @config_group.command(name="set", aliases=("edit",))
-    async def modify_config(self, ctx: Context, option: str, value: str) -> None:
+    async def modify_config(self, ctx: Context, option: KeyConverter, value: str) -> None:
         """Modify an existing configuration value."""
         if option not in self.config_fields:
             raise commands.BadArgument(f"Option must be in {', '.join(self.config_fields.keys())}")
         meta = self.config_fields[option]
 
         if meta.frozen:
+            # TODO: replace with responses module.
             await ctx.send("Can't modify this value.")
             return
 
         if meta.modmail_metadata.discord_converter is not None:
             value = await meta.modmail_metadata.discord_converter().convert(ctx, value)
+            if meta.modmail_metadata.discord_converter_attribute is not None:
+                if isinstance(meta.modmail_metadata.discord_converter_attribute, types.FunctionType):
+                    value = meta.modmail_metadata.discord_converter_attribute(value)
+        if meta._type in commands_converter.CONVERTER_MAPPING:
+            value = await commands_converter.CONVERTER_MAPPING[meta._type]().convert(ctx, value)
+            if isinstance(meta.modmail_metadata.discord_converter_attribute, types.FunctionType):
+                value = meta.modmail_metadata.discord_converter_attribute(value)
         elif meta._field.converter:
             value = meta._field.converter(value)
 
@@ -162,7 +206,7 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
         await ctx.message.reply("ok.")
 
     @config_group.command(name="get", aliases=("show",))
-    async def get_config(self, ctx: Context, option: str) -> None:
+    async def get_config(self, ctx: Context, option: KeyConverter) -> None:
         """Modify an existing configuration value."""
         if option not in self.config_fields:
             raise commands.BadArgument(f"Option must be in {', '.join(self.config_fields.keys())}")
