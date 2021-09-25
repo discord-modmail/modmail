@@ -11,15 +11,17 @@ repos:
         files: '(app\.json|\.env\.template|modmail\/(config\.py|default_config(\.toml|\.yaml)))$'
         require_serial: true
         additional_dependencies:
-          - atoml~=1.0.3
-          - attrs~=21.2.0
+          # so apparently these are needed, but the versions don't have to be pinned since it uses the local env
+          # go figure.
+          - atoml
+          - attrs
           - coloredlogs
           - desert
           - discord.py
           - environs
-          - marshmallow~=3.13.0
+          - marshmallow
           - python-dotenv
-          - pyyaml~=5.4.1
+          - pyyaml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
