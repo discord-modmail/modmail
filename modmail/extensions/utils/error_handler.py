@@ -32,7 +32,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
     @staticmethod
     def error_embed(message: str, title: str = None) -> discord.Embed:
         """Create an error embed with an error colour and reason and return it."""
-        return discord.Embed(message, colour=ERROR_COLOUR, title=title or "Error Occured")
+        return discord.Embed(message, colour=ERROR_COLOUR, title=title or "Error Occurred")
 
     @staticmethod
     def get_title_from_name(error: typing.Union[Exception, str]) -> str:
@@ -73,7 +73,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
     async def handle_bot_missing_perms(
         self, ctx: commands.Context, error: commands.BotMissingPermissions
     ) -> bool:
-        """Handles bot missing perms by dming the user if they have a permission which may be to fix this."""
+        """Handles bot missing permissing by dming the user if they have a permission which may be able to fix this."""  # noqa: E501
         embed = self.error_embed(str(error))
         try:
             await ctx.send(embeds=[embed])
@@ -166,7 +166,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
 
         elif isinstance(error, commands.CommandInvokeError):
             # generic error
-            logger.error(f'Error occured in command "{ctx.command}".', exc_info=error.original)
+            logger.error(f'Error occurred in command "{ctx.command}".', exc_info=error.original)
             # todo: this should log somewhere else since this is a bot bug.
             embed = self.error_embed(
                 "Oops! Something went wrong internally in the command you were trying to execute. "
