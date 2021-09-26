@@ -30,9 +30,9 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         self.bot = bot
 
     @staticmethod
-    def error_embed(message: str, title: str = None) -> discord.Embed:
+    def error_embed(title: str, message: str) -> discord.Embed:
         """Create an error embed with an error colour and reason and return it."""
-        return discord.Embed(message, colour=ERROR_COLOUR, title=title or "Error Occurred")
+        return discord.Embed(title=title, description=message, colour=ERROR_COLOUR)
 
     @staticmethod
     def get_title_from_name(error: typing.Union[Exception, str]) -> str:
@@ -60,25 +60,22 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         """Handling deferred from main error handler to handle UserInputErrors."""
         if reset_cooldown:
             self._reset_command_cooldown(ctx)
-        embed = None
         msg = None
-        title = "User Input Error"
         if isinstance(error, commands.BadUnionArgument):
             msg = self.get_title_from_name(str(error))
-            title = self.get_title_from_name(error)
-        else:
-            title = self.get_title_from_name(error)
-        return embed or self.error_embed(msg or str(error), title=title)
+        title = self.get_title_from_name(error)
+        return self.error_embed(title, msg or str(error))
 
     async def handle_bot_missing_perms(
         self, ctx: commands.Context, error: commands.BotMissingPermissions
     ) -> bool:
         """Handles bot missing permissing by dming the user if they have a permission which may be able to fix this."""  # noqa: E501
-        embed = self.error_embed(str(error))
+        embed = self.error_embed("Permissions Failure", str(error))
         try:
             await ctx.send(embeds=[embed])
         except discord.Forbidden:
             logger.error(f"Unable to send an error message to {ctx.channel!s}")
+
             if ANY_DEV_MODE:
                 # non-general permissions
                 perms = discord.Permissions(
@@ -104,10 +101,8 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
     ) -> typing.Optional[discord.Embed]:
         """Handle CheckFailures seperately given that there are many of them."""
         title = "Check Failure"
-        msg = None
         if isinstance(error, commands.CheckAnyFailure):
             title = self.get_title_from_name(error.checks[-1])
-            msg = str(error)
         elif isinstance(error, commands.PrivateMessageOnly):
             title = "DMs Only"
         elif isinstance(error, commands.NoPrivateMessage):
@@ -118,14 +113,14 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             return None
         else:
             title = self.get_title_from_name(error)
-        embed = self.error_embed(msg or str(error), title=title)
+        embed = self.error_embed(title, str(error))
         return embed
 
     @ModmailCog.listener()
     async def on_command_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
         """Activates when a command raises an error."""
         if getattr(error, "handled", False):
-            logging.debug(f"Command {ctx.command} had its error already handled locally; ignoring.")
+            logging.debug(f"Command {ctx.command} had its error already handled locally, ignoring.")
             return
 
         if isinstance(error, commands.CommandNotFound):
@@ -137,8 +132,6 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
 
         logger.trace(error)
 
-        title = None
-        msg = None
         embed: typing.Optional[discord.Embed] = None
         should_respond = True
 
@@ -150,10 +143,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             if embed is None:
                 should_respond = False
         elif isinstance(error, commands.ConversionError):
-            # s = object()
-            # error.converter.convert.__annotations__.get("return", s)
-            # embed = error
-            ...
+            pass
         elif isinstance(error, commands.DisabledCommand):
             logger.debug("")
             if ctx.command.hidden:
@@ -162,30 +152,34 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
                 msg = f"Command `{ctx.invoked_with}` is disabled."
                 if reason := ctx.command.extras.get("disabled_reason", None):
                     msg += f"\nReason: {reason}"
-                embed = self.error_embed(msg, title="Command Disabled")
+                embed = self.error_embed("Command Disabled", msg or str(error))
 
         elif isinstance(error, commands.CommandInvokeError):
             # generic error
             logger.error(f'Error occurred in command "{ctx.command}".', exc_info=error.original)
             # todo: this should log somewhere else since this is a bot bug.
             embed = self.error_embed(
+                "Error Occurred",
                 "Oops! Something went wrong internally in the command you were trying to execute. "
-                "Please report this error and what you were trying to do to the developers."
+                "Please report this error and what you were trying to do to the developers.",
             )
             if isinstance(error.original, discord.Forbidden):
                 await self.handle_bot_missing_perms(ctx, error.original)
-                return
+                should_respond = False
 
         # TODO: this has a fundamental problem with any BotMissingPermissions error
         # if the issue is the bot does not have permissions to send embeds or send messages...
         # yeah, problematic.
 
         if not should_respond:
-            logger.debug("Not responding to error since should_respond is falsey.")
+            logger.debug(
+                "Not responding to error since should_respond is falsey because either "
+                "the embed has already been sent or belongs to a hidden command and thus should be hidden."
+            )
             return
 
         if embed is None:
-            embed = self.error_embed(msg or str(error), title=title or self.get_title_from_name(error))
+            embed = self.error_embed(self.get_title_from_name(error), str(error))
 
         await ctx.send(embeds=[embed])
 
