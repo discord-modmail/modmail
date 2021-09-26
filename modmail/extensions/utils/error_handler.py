@@ -72,10 +72,10 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         """Handles bot missing permissing by dming the user if they have a permission which may be able to fix this."""  # noqa: E501
         embed = self.error_embed("Permissions Failure", str(error))
         bot_perms = ctx.channel.permissions_for(ctx.me)
-        responded = None
+        not_responded = True
         if bot_perms >= discord.Permissions(send_messages=True, embed_links=True):
             await ctx.send(embeds=[embed])
-            responded = True
+            not_responded = False
         elif bot_perms >= discord.Permissions(send_messages=True):
             # make a message as similar to the embed, using as few permissions as possible
             # this is the only place we send a standard message instead of an embed, so no helper methods
@@ -91,7 +91,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         else:
             logger.error(f"Unable to send an error message to channel {ctx.channel}")
 
-        if responded is not True and ANY_DEV_MODE:
+        if not_responded and ANY_DEV_MODE:
             # non-general permissions
             perms = discord.Permissions(
                 administrator=True,
@@ -167,7 +167,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
                 msg = f"Command `{ctx.invoked_with}` is disabled."
                 if reason := ctx.command.extras.get("disabled_reason", None):
                     msg += f"\nReason: {reason}"
-                embed = self.error_embed("Command Disabled", msg or str(error))
+                embed = self.error_embed("Command Disabled", msg)
 
         elif isinstance(error, commands.CommandInvokeError):
             if isinstance(error.original, discord.Forbidden):
