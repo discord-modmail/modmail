@@ -175,14 +175,28 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
                 await self.handle_bot_missing_perms(ctx, error.original)
                 should_respond = False
             else:
+                # todo: this should properly handle plugin errors and note that they are not bot bugs
+                # todo: this should log somewhere else since this is a bot bug.
                 # generic error
                 logger.error(f'Error occurred in command "{ctx.command}".', exc_info=error.original)
-                # todo: this should log somewhere else since this is a bot bug.
-                embed = self.error_embed(
-                    "Error Occurred",
-                    "Oops! Something went wrong internally in the command you were trying to execute. "
-                    "Please report this error and what you were trying to do to the developers.",
-                )
+                if ctx.command.cog.__module__.startswith("modmail.plugins"):
+                    # plugin msg
+                    title = "Plugin Internal Error Occurred"
+                    msg = (
+                        "Something went wrong internally in the plugin contributed command you were trying "
+                        "to execute. Please report this error and what you were trying to do to the "
+                        "respective plugin developers.\n\n**PLEASE NOTE**: Modmail developers will not help "
+                        "you with this issue and will refer you to the plugin developers."
+                    )
+                else:
+                    # built in command msg
+                    title = "Internal Error"
+                    msg = (
+                        "Something went wrong internally in the command you were trying to execute. "
+                        "Please report this error and what you were trying to do to the bot developers."
+                    )
+                logger.debug(ctx.command.callback.__module__)
+                embed = self.error_embed(title, msg)
 
         # TODO: this has a fundamental problem with any BotMissingPermissions error
         # if the issue is the bot does not have permissions to send embeds or send messages...
