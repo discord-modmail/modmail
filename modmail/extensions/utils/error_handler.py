@@ -71,29 +71,44 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
     ) -> bool:
         """Handles bot missing permissing by dming the user if they have a permission which may be able to fix this."""  # noqa: E501
         embed = self.error_embed("Permissions Failure", str(error))
-        try:
+        bot_perms = ctx.channel.permissions_for(ctx.me)
+        responded = None
+        if bot_perms >= discord.Permissions(send_messages=True, embed_links=True):
             await ctx.send(embeds=[embed])
-        except discord.Forbidden:
-            logger.error(f"Unable to send an error message to {ctx.channel!s}")
+            responded = True
+        elif bot_perms >= discord.Permissions(send_messages=True):
+            # make a message as similar to the embed, using as few permissions as possible
+            # this is the only place we send a standard message instead of an embed, so no helper methods
+            await ctx.send(
+                "**Permissions Failure**\n\n"
+                "I am missing the permissions required to properly execute your command."
+            )
+            # intentionally not setting responded to True, since we want to attempt to dm the user
+            logger.warning(
+                f"Missing partial required permissions for {ctx.channel}. "
+                "I am able to send messages, but not embeds."
+            )
+        else:
+            logger.error(f"Unable to send an error message to channel {ctx.channel}")
 
-            if ANY_DEV_MODE:
-                # non-general permissions
-                perms = discord.Permissions(
-                    administrator=True,
-                    manage_threads=True,
-                    manage_roles=True,
-                    manage_channels=True,
+        if responded is not True and ANY_DEV_MODE:
+            # non-general permissions
+            perms = discord.Permissions(
+                administrator=True,
+                manage_threads=True,
+                manage_roles=True,
+                manage_channels=True,
+            )
+            if perms.value & ctx.channel.permissions_for(ctx.author).value:
+                logger.info(
+                    f"Attempting to dm {ctx.author} since they have a permission which may be able "
+                    "to give the bot send message permissions."
                 )
-                if perms.value & ctx.channel.permissions_for(ctx.author).value:
-                    logger.info(
-                        f"Attempting to dm {ctx.author} since they have a permission which may be able "
-                        "to give the bot send message permissions."
-                    )
-                    try:
-                        await ctx.author.send(embeds=[embed])
-                    except discord.Forbidden:
-                        logger.notice("Also encountered an error when trying to reply in dms.")
-                        return False
+                try:
+                    await ctx.author.send(embeds=[embed])
+                except discord.Forbidden:
+                    logger.notice("Also encountered an error when trying to reply in dms.")
+                    return False
             return True
 
     async def handle_check_failure(
@@ -155,17 +170,19 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
                 embed = self.error_embed("Command Disabled", msg or str(error))
 
         elif isinstance(error, commands.CommandInvokeError):
-            # generic error
-            logger.error(f'Error occurred in command "{ctx.command}".', exc_info=error.original)
-            # todo: this should log somewhere else since this is a bot bug.
-            embed = self.error_embed(
-                "Error Occurred",
-                "Oops! Something went wrong internally in the command you were trying to execute. "
-                "Please report this error and what you were trying to do to the developers.",
-            )
             if isinstance(error.original, discord.Forbidden):
+                logger.warn(f"Permissions error occurred in {ctx.command}.")
                 await self.handle_bot_missing_perms(ctx, error.original)
                 should_respond = False
+            else:
+                # generic error
+                logger.error(f'Error occurred in command "{ctx.command}".', exc_info=error.original)
+                # todo: this should log somewhere else since this is a bot bug.
+                embed = self.error_embed(
+                    "Error Occurred",
+                    "Oops! Something went wrong internally in the command you were trying to execute. "
+                    "Please report this error and what you were trying to do to the developers.",
+                )
 
         # TODO: this has a fundamental problem with any BotMissingPermissions error
         # if the issue is the bot does not have permissions to send embeds or send messages...
