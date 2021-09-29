@@ -78,7 +78,8 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
             not_responded = False
         elif bot_perms >= discord.Permissions(send_messages=True):
             # make a message as similar to the embed, using as few permissions as possible
-            # this is the only place we send a standard message instead of an embed, so no helper methods
+            # this is the only place we send a standard message instead of an embed
+            # so no helper methods are necessary
             await ctx.send(
                 "**Permissions Failure**\n\n"
                 "I am missing the permissions required to properly execute your command."
@@ -123,7 +124,9 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         elif isinstance(error, commands.NoPrivateMessage):
             title = "Server Only"
         elif isinstance(error, commands.BotMissingPermissions):
-            # defer handling BotMissingPermissions to a method, since this can be problematic
+            # defer handling BotMissingPermissions to a method
+            # the error could be that the bot is unable to send messages, which would cause
+            # the error handling to fail
             await self.handle_bot_missing_perms(ctx, error)
             return None
         else:
