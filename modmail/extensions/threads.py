@@ -31,7 +31,7 @@ BASE_JUMP_URL = "https://discord.com/channels"
 USER_NOT_ABLE_TO_BE_DMED_MESSAGE = (
     "**{0}** is not able to be dmed! This is because they have either blocked the bot, "
     "or they are only accepting direct messages from friends.\n"
-    "It is also possible that they are not in the same server as the bot. "
+    "It is also possible that they do not share a server with the bot"
 )
 ON_SUCCESS_EMOJI = "\u2705"  # ✅
 FAILURE_EMOJI = "\u274c"  # :x:
