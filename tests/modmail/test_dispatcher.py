@@ -259,6 +259,7 @@ async def test_class_dispatch_latemethod() -> None:
         dispatcher = Dispatcher("class_test")
 
         def __init__(self):
+            self.dispatcher.register_events("class_test")
             self.dispatcher.register("class_test", self.on_class_test)
 
         async def fire(self) -> None:

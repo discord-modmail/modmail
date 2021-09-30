@@ -66,14 +66,14 @@ class Dispatcher:
             if not hasattr(value, "__func__"):
                 continue
 
-            value = value.__func__
+            underlying_function = value.__func__
 
-            if value not in self.pending_handlers:
+            if underlying_function not in self.pending_handlers:
                 continue
 
-            for (event_name, priority) in self.pending_handlers[value]:
+            for (event_name, priority) in self.pending_handlers[underlying_function]:
                 self._register_handler(event_name, priority, value)
-            self.pending_handlers[value].clear()
+            self.pending_handlers[underlying_function].clear()
 
     def _register_handler(
         self,
@@ -98,18 +98,24 @@ class Dispatcher:
                     "You must pass an event name if the function name doesn't follow the on_eventname format."
                 )
 
-        if func not in self.pending_handlers:
-            self.pending_handlers[func] = []
-
         # Check for `self` as first argument to tell if we're in a class
         # There unfortunately appears to be no better way to do this
         func_args = inspect.getfullargspec(func).args
         if func_args and func_args[0] == "self":
-            in_class = True
+            if hasattr(func, "__self__") and func.__self__:
+                # This is an already bound method
+                in_class = False
+            else:
+                # This is an unbound class method
+                in_class = True
         else:
+            # This method doesn't have self, so it's probably not a class method
+            # And this is the best we can do
             in_class = False
 
         if in_class:
+            if func not in self.pending_handlers:
+                self.pending_handlers[func] = []
             # We've been given an unbound method. We're registering on a class, so this will be re-called
             # later during __init__. We store all the event names it should be registered under on
             # in our pending_handlers for use at that time.
