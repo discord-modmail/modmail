@@ -2,7 +2,7 @@ import asyncio
 import bisect
 import inspect
 import logging
-from typing import Callable, Coroutine, Dict, List, Optional, Union
+from typing import Callable, Coroutine, Dict, List, Optional, Tuple, Union
 
 from modmail import ModmailLogger
 
@@ -23,11 +23,13 @@ class Dispatcher:
     blocking_handlers: Dict[str, List[CoroutineFunction]]
     blocking_priorities: Dict[str, List[int]]
     handlers: Dict[str, List[CoroutineFunction]]
+    pending_handlers: Dict[Callable, List[Tuple[str, float]]]
 
     def __init__(self, *event_names: str):
         self.handlers = {}
         self.blocking_handlers = {}
         self.blocking_priorities = {}
+        self.pending_handlers = {}
 
         self.register_events(*event_names)
 
@@ -46,12 +48,29 @@ class Dispatcher:
             self.blocking_priorities[event_name] = []
 
     def activate(self, instance: object) -> None:
-        """Register all the handlers on a given class instance on instance initialization."""
+        """
+        Register all bound method handlers on a given class instance.
+
+        Should be called during __init__.
+        """
         for attr in dir(instance):
             value = getattr(instance, attr)
-            if hasattr(value, "_dispatchable") and value._dispatchable:
-                for (event_name, priority) in value._dispatchable:
-                    self._register_handler(event_name, priority, value)
+            if not callable(value):
+                continue
+
+            # Bound methods have __func__, which returns the actual function
+            # we use that to determine which method was actually registered.
+            if not hasattr(value, "__func__"):
+                continue
+
+            value = value.__func__
+
+            if value not in self.pending_handlers:
+                continue
+
+            for (event_name, priority) in self.pending_handlers[value]:
+                self._register_handler(event_name, priority, value)
+            self.pending_handlers[value].clear()
 
     def _register_handler(
         self,
@@ -76,8 +95,8 @@ class Dispatcher:
                     "You must pass an event name if the function name doesn't follow the on_eventname format."
                 )
 
-        if not hasattr(func, "_dispatchable"):
-            func._dispatchable = []
+        if func not in self.pending_handlers:
+            self.pending_handlers[func] = []
 
         # Check for `self` as first argument to tell if we're in a class
         # There unfortunately appears to be no better way to do this
@@ -88,10 +107,10 @@ class Dispatcher:
             in_class = False
 
         if in_class:
-            func._dispatchable.append((event_name, priority))
             # We've been given an unbound method. We're registering on a class, so this will be re-called
             # later during __init__. We store all the event names it should be registered under on
-            # _dispatchable for use at that time.
+            # in our pending_handlers for use at that time.
+            self.pending_handlers[func].append((event_name, priority))
             return
 
         if event_name not in self.handlers:

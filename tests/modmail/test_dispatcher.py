@@ -248,3 +248,30 @@ async def test_class_dispatch() -> None:
     await a.on_class_test(2)
 
     await a.fire()
+
+
+@pytest.mark.asyncio
+async def test_class_dispatch_latemethod() -> None:
+    """Ensure we can register methods after class definition."""
+
+    class A:
+        dispatcher = Dispatcher("class_test")
+
+        def __init__(self):
+            self.dispatcher.register("class_test", self.on_class_test)
+
+        async def fire(self) -> None:
+            await self.dispatcher.dispatch("class_test", 2)
+
+        async def on_class_test(self, var1) -> None:
+            assert var1 == 2
+
+    assert A.dispatcher.handlers["class_test"] == []
+
+    a = A()
+
+    assert A.dispatcher.handlers["class_test"] == [a.on_class_test]
+
+    await a.on_class_test(2)
+
+    await a.fire()
