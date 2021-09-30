@@ -43,6 +43,9 @@ class Dispatcher:
         significantly easier.
         """
         for event_name in event_names:
+            if event_name in self.handlers:
+                # Do not clear registers if a name is already registered
+                continue
             self.handlers[event_name] = []
             self.blocking_handlers[event_name] = []
             self.blocking_priorities[event_name] = []
