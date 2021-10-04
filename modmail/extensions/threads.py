@@ -50,6 +50,9 @@ NO_REPONSE_COLOUR = discord.Colour.red()
 HAS_RESPONSE_COLOUR = discord.Colour.yellow()
 CLOSED_COLOUR = discord.Colour.green()
 
+RECEIVE_COLOUR = discord.Colour.dark_teal()  # messages received from dms
+SEND_COLOUR = discord.Colour.teal()  # messages sent, shown in thread
+
 logger: "ModmailLogger" = logging.getLogger(__name__)
 
 
@@ -342,6 +345,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # also relay it in the thread channel
         embeds[0].set_footer(text=f"User ID: {message.author.id}")
+        embeds[0].colour = SEND_COLOUR
         guild_message = await ticket.thread.send(embeds=embeds, reference=guild_reference_message)
 
         if delete:
@@ -385,6 +389,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             author=message.author,
             timestamp=message.created_at,
             footer_text=f"Message ID: {message.id}",
+            colour=RECEIVE_COLOUR,
         )
         if contents is None:
             embed.description = contents = str(f"{message.content}")
