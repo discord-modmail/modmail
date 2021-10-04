@@ -13,18 +13,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - At a later point in time, this will be additionally included in a configuration command.
 
 ### Added
+- Threads system (#53)
+    - Messages can now be relayed between a user and a server.
+    - NOTE: There is not a database yet, so none of these messages are stored.
+
+
+### Changed
+
+- Embedified the meta commands so they have a nicer UI (#78)
+
+
+## [0.2.0] - 2021-09-29
+
+### Added
 
 - Interaction Paginator that uses discord buttons (#50)
 - docker-compose.yml (#13)
     - Running the bot after configuring the env vars is now as simple as `docker-compose up`
 - Automatic docker image creation: `ghcr.io/discord-modmail/modmail` (#19)
 - Dockerfile support for all supported hosting providers. (#58)
-- Threads system (#53)
-    - Messages can now be relayed between a user and a server.
-    - NOTE: There is not a database yet, so none of these messages are stored.
-
-### Changed
-
 - Refactored bot creation and bot running (#56)
     - Running the bot is still the same method, but it loads extensions and plugins now.
     - `bot.start()` can also be used if already in a running event loop. Keep in mind using it will require
@@ -77,4 +84,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make the bot `http_session` within an event loop.
 
 [0.1.0]: https://github.com/discord-modmail/modmail/releases/tag/v0.1.0
+[0.2.0]: https://github.com/discord-modmail/modmail/compare/v0.1.0...v0.2.0
 [unreleased]: https://github.com/discord-modmail/modmail/compare/v0.1.0...main

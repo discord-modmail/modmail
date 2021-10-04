@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Modmail"
-version = "0.1.0"
+version = "0.2.0"
 description = "A modmail bot for Discord. Python 3.8+ compatiable"
 license = "MIT"
 authors = ["aru <genericusername414@gmail.com>", "bast <bast@fastmail.com"]
@@ -90,7 +90,7 @@ help = "Export installed packages in requirements.txt format"
 
 [tool.taskipy.tasks]
 # Documentation
-docs = { cmd = "mkdocs serve", help = "Run the docs on a local automatically reloading server"}
+docs = { cmd = "mkdocs serve", help = "Run the docs on a local automatically reloading server" }
 
 # Bot
 start = { cmd = "python -m modmail", help = "Run bot" }
@@ -103,7 +103,7 @@ lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI err
 
 # Testing
 codecov-validate = { cmd = "curl --data-binary @.codecov.yml https://codecov.io/validate", help = "Validate `.codecov.yml` with their api." }
-cov-server = { cmd = "coverage html", help = "Start an http.server for viewing coverage data."}
-post-cov-server = "python -m http.server 8012 --bind 127.0.0.1 --directory htmlcov"
+cov-server = { cmd = "coverage html", help = "Start an http.server for viewing coverage data." }
+post_cov-server = "python -m http.server 8012 --bind 127.0.0.1 --directory htmlcov"
 report = { cmd = "coverage report", help = "Show coverage report from previously run tests." }
 test = { cmd = "pytest -n auto --dist loadfile", help = "Runs tests and save results to a coverage report" }
