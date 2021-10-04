@@ -258,9 +258,8 @@ class TicketsCog(ModmailCog, name="Threads"):
         if description is None:
             description = message.content
         description = description.strip()
-        description += f"\n\nOpened <t:{int(datetime.datetime.now().timestamp())}:R>"
         if creator:
-            description += f" by {creator!s}"
+            description += f"Opened by {creator!s}"
 
         embed = discord.Embed(
             title=f"{discord.utils.escape_markdown(recipient.name,ignore_links=False)}"
@@ -269,6 +268,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             timestamp=datetime.datetime.now(),
             color=NO_REPONSE_COLOUR,
         )
+        embed.add_field(name="Opened since", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>")
         relayed_msg = await self.relay_channel.send(
             content=mention,
             embed=embed,
