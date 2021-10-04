@@ -134,7 +134,7 @@ class _ColourField(marshmallow.fields.Field):
                 raise discord.ext.commands.converter.BadColourArgument(arg)
             return method()
 
-    def _serialize(self, value: discord.Colour, attr: str, obj: typing.Any, **kwargs) -> discord.Colour:
+    def _serialize(self, value: discord.Colour, attr: str, obj: typing.Any, **kwargs) -> str:
         return "#" + hex(value.value)[2:].lower()
 
     def _deserialize(
@@ -143,7 +143,7 @@ class _ColourField(marshmallow.fields.Field):
         attr: typing.Optional[str],
         data: typing.Optional[typing.Mapping[str, typing.Any]],
         **kwargs,
-    ) -> str:
+    ) -> discord.Colour:
         if not isinstance(value, discord.Colour):
             value = self.ColourConvert().convert(value)
         return value
@@ -381,8 +381,9 @@ class Cfg:
         default=DevCfg(),
         metadata={
             METADATA_TABLE: ConfigMetadata(
-                description="Developer configuration. "
-                "Only change these values if you know what you're doing.",
+                description=(
+                    "Developer configuration. Only change these values if you know what you're doing."
+                ),
                 hidden=True,
             )
         },
@@ -432,7 +433,7 @@ def _build_class(
 
     Defaults to getting the environment variables with dotenv.
     Also can parse from a provided dictionary of environment variables.
-    If defaults is provided, uses a value from there if the environment variable is not set or is None.
+    If `defaults` is provided, uses a value from there if the environment variable is not set or is None.
     """
     if env_prefix is None:
         env_prefix = ENV_PREFIX
@@ -464,9 +465,7 @@ def _build_class(
         else:
             kw[var.name] = env.get(env_prefix + var.name.upper(), None)
             if kw[var.name] is None:
-                if defaults is not None and (
-                    (defa := defaults.get(var.name, None)) is not None and defa is not marshmallow.missing
-                ):
+                if (defa := defaults.get(var.name, None)) is not None and defa is not marshmallow.missing:
                     kw[var.name] = defaults[var.name]
                 elif var.default is not attr.NOTHING:  # check for var default
                     kw[var.name] = var.default
