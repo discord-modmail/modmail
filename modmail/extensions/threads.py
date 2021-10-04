@@ -29,7 +29,7 @@ DEV_MODE_ENABLED = BOT_MODE & BotModes.DEVELOP
 
 BASE_JUMP_URL = "https://discord.com/channels"
 USER_NOT_ABLE_TO_BE_DMED_MESSAGE = (
-    "**{0}** is not able to be dmed! This is because they have either blocked the bot, "
+    "**{0}** is not able to be DMed! This is because they have either blocked the bot, "
     "or they are only accepting direct messages from friends.\n"
     "It is also possible that they do not share a server with the bot"
 )
@@ -40,6 +40,10 @@ FAILURE_EMOJI = "\u274c"  # :x:
 ENABLE_DM_TO_GUILD_TYPING = False  # Library bug prevents this form working right now
 ENABLE_GUILD_TO_DM_TYPING = False
 
+# NOTE: Since discord removed `threads.archiver_id`, it would always be `None`, and the
+# only way to get the user who archived the thread is to use the Audit logs.
+# however, this permission is not required to have basic functionality.
+# this permission
 USE_AUDIT_LOGS = True
 
 NO_REPONSE_COLOUR = discord.Colour.red()
@@ -54,7 +58,6 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     def __init__(self, bot: "ModmailBot"):
         self.bot = bot
-        # user id, Ticket
         self.relay_channel: Union[
             discord.TextChannel, discord.PartialMessageable
         ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
@@ -102,7 +105,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     # the reason we're checking for a user here rather than a member is because of future support for
     # a designated server to handle threads and a server where the community resides,
-    # so its possible that the user isn't in the server where this command is run.
+    # so it's possible that the user isn't in the server where this command is run.
     @commands.command()
     async def contact(
         self,
@@ -116,7 +119,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         This will create a new ticket with the recipient, if a ticket does not already exist.
             If a ticket already exists, a message will be sent in reply with a link to the existing ticket.
-        If the user is not able to be dmed, a message will be sent to the channel.
+        If the user is not able to be DMed, a message will be sent to the channel.
         """
         if recipient.bot:
             if recipient == self.bot.user:
@@ -165,7 +168,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         """
         Creates a bot ticket with a user. Also adds it to the tickets dict.
 
-        At least one of recipient and initial_message must be required.
+        One of recipient and initial_message must be provided.
         If recipient is not provided, it will be determined from the initial_message.
 
         Parameters
@@ -230,7 +233,11 @@ class TicketsCog(ModmailCog, name="Threads"):
         creator: Union[discord.User, discord.Member] = None,
         **send_kwargs,
     ) -> Tuple[discord.Thread, discord.Message]:
-        """Create a discord thread."""
+        """
+        Create a thread in discord off of a provided message.
+
+        Sends an initial message, and returns the thread and the first message sent in the thread.
+        """
         await self.init_relay_channel()
 
         send_kwargs = {}
@@ -651,7 +658,7 @@ class TicketsCog(ModmailCog, name="Threads"):
                 try:
                     await ticket.recipient.send(embed=thread_close_embed)
                 except discord.HTTPException:
-                    logger.debug(f"{ticket.recipient} is unable to be dmed. Skipping.")
+                    logger.debug(f"{ticket.recipient} is unable to be DMed. Skipping.")
                     pass
 
             try:
@@ -893,7 +900,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             try:
                 ticket = self.bot.tickets[user.id]
             except KeyError:
-                # User doesn't have a ticket, so no where to relay the event.
+                # User doesn't have a ticket, so nowhere to relay the event.
                 return
             else:
                 logger.debug(f"Relaying typing event from {user!s} in {channel!s} to {ticket.recipient!s}.")
@@ -915,7 +922,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             return
 
         # channel must have the parent of the relay channel
-        # while this should never change, I'm using before in case for some reason
+        # while this should never change, I'm using `before` in case for some reason
         # threads get the support to change their parent channel, which would be great.
         if before.parent_id != self.relay_channel.id:
             return
