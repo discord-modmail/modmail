@@ -6,7 +6,6 @@ import types
 import typing
 from collections import defaultdict
 
-import atoml
 import attr
 import desert
 import discord
@@ -19,8 +18,12 @@ import marshmallow.validate
 
 
 try:
+    import atoml
+except ModuleNotFoundError:  # pragma: nocover
+    atoml = None
+try:
     import yaml
-except ImportError:  # pragma: nocover
+except ModuleNotFoundError:  # pragma: nocover
     yaml = None
 
 __all__ = [
@@ -577,6 +580,13 @@ def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
 
     Supported file types are .toml or .yaml
     """
+
+    def raise_missing_dep(file_type: str, dependency: str = None) -> typing.NoReturn:
+        raise CfgLoadError(
+            f"The required dependency for reading {file_type} configuration files is not installed. "
+            f"Please install {dependency or file_type} to allow reading these files."
+        )
+
     if len(files) == 0:
         files = USER_CONFIG_FILES
 
@@ -588,17 +598,18 @@ def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
             # file does not exist
             continue
 
-        if file.suffix == ".toml" and atoml is not None:
+        if file.suffix == ".toml":
+            if atoml is None:
+                raise_missing_dep("toml", "atoml")
             loaded_config_dict = load_toml(file)
             break
-        elif file.suffix == ".yaml" and yaml is not None:
+        elif file.suffix == ".yaml":
+            if yaml is None:
+                raise_missing_dep("yaml", "pyyaml")
             loaded_config_dict = load_yaml(file)
             break
         else:
-            raise Exception(
-                "Provided configuration file is not of a supported type or "
-                "the required dependencies are not installed."
-            )
+            raise CfgLoadError("Provided configuration file is not of a supported type.")
 
     if should_load_env:
         loaded_config_dict = load_env(existing_cfg_dict=loaded_config_dict)
