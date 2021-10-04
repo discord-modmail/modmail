@@ -169,7 +169,7 @@ class ConfigMetadata:
 
     # what to refer to for the end user
     description: str = attr.ib()
-    canconical_name: str = None
+    canonical_name: str = None
     # for those configuration options where the description just won't cut it.
     extended_description: str = None
     # for the variables to export to the environment, what value should be prefilled
@@ -228,7 +228,7 @@ class BotCfg:
             "dump_only": True,
             "allow_none": False,
             METADATA_TABLE: ConfigMetadata(
-                canconical_name="Bot Token",
+                canonical_name="Bot Token",
                 description="Discord bot token. Required to log in to discord.",
                 export_environment_prefill="Bot Token",
                 extended_description="This is obtainable from https://discord.com/developers/applications",
@@ -240,7 +240,7 @@ class BotCfg:
         default="?",
         metadata={
             METADATA_TABLE: ConfigMetadata(
-                canconical_name="Command Prefix",
+                canonical_name="Command Prefix",
                 description="Command prefix.",
                 export_environment_prefill="?",
                 app_json_default="?",
@@ -257,7 +257,7 @@ class BotModeCfg:
     The three bot modes for the bot. Enabling some of these may enable other bot features.
 
     `production` is used internally and is always True.
-    `develop` enables additonal features which are useful for bot developers.
+    `develop` enables additional features which are useful for bot developers.
     `plugin_dev` enables additional commands which are useful when working with plugins.
     """
 

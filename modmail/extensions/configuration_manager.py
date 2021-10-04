@@ -32,7 +32,7 @@ class ConfOptions:
     default: str
     name: str
     description: str
-    canconical_name: str
+    canonical_name: str
     extended_description: str
     hidden: bool
 
@@ -62,7 +62,7 @@ class ConfOptions:
         meta: config.ConfigMetadata = field.metadata[config.METADATA_TABLE]
         kw[config.METADATA_TABLE] = meta
         kw["description"] = meta.description
-        kw["canconical_name"] = meta.canconical_name
+        kw["canonical_name"] = meta.canonical_name
         kw["extended_description"] = meta.extended_description
         kw["hidden"] = meta.hidden
 
@@ -159,7 +159,7 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
             options[key] = options.get(key, "") + (
                 "\n".join(
                     [
-                        f"**{string.capwords(opt.canconical_name or opt.name)}**",
+                        f"**{string.capwords(opt.canonical_name or opt.name)}**",
                         f"Default: `{opt.default}`"
                         if opt.default is not None
                         else "Required. There is no default value for this option.",
