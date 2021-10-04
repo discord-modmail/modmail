@@ -1,5 +1,6 @@
 import logging
 
+import discord
 from discord.ext import commands
 
 from modmail.bot import ModmailBot
@@ -21,18 +22,30 @@ class Meta(ModmailCog):
     @commands.command(name="ping", aliases=("pong",))
     async def ping(self, ctx: commands.Context) -> None:
         """Ping the bot to see its latency and state."""
-        await ctx.send(f"{round(self.bot.latency * 1000)}ms")
+        await ctx.send(
+            embed=discord.Embed(
+                title=("ping" if ctx.invoked_with.lower() == "pong" else "pong").capitalize() + "!",
+                description=f"`{round(self.bot.latency * 1000)}`ms",
+            )
+        )
 
     @commands.command(name="uptime")
     async def uptime(self, ctx: commands.Context) -> None:
         """Get the current uptime of the bot."""
         timestamp = round(float(self.bot.start_time.format("X")))
-        await ctx.send(f"Start time: <t:{timestamp}:R>")
+        await ctx.send(
+            embed=discord.Embed(title="Up since:", description=f"<t:{timestamp}:F> (<t:{timestamp}:R>)")
+        )
 
     @commands.command(name="prefix")
     async def prefix(self, ctx: commands.Context) -> None:
         """Return the configured prefix."""
-        await ctx.send(f"My current prefix is `{self.bot.config.bot.prefix}`")
+        await ctx.send(
+            embed=discord.Embed(
+                title="Current Prefix",
+                description=f"My currently configured prefix is `{self.bot.config.bot.prefix}`.",
+            )
+        )
 
 
 def setup(bot: ModmailBot) -> None:
