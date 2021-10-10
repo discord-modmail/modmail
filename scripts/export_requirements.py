@@ -6,6 +6,7 @@ Used for several purposes.
 WARN: When upgrading the version of poetry used in the dockerfile and workflows,
 ensure that this is still compatiable.
 """
+import copy
 import hashlib
 import json
 import os
@@ -19,8 +20,9 @@ import tomli
 
 
 GENERATED_FILE = pathlib.Path("requirements.txt")
-PYTHON_VERSIONS_REGEX = re.compile(r"(?P<sign>\D{2})(?P<version>\d+\.\d+?)(?P<patch>\.\d+?|\.\*)?")
 
+PYTHON_VERSIONS_REGEX = re.compile(r"(?P<sign>\D{2})(?P<version>\d+\.\d+?)(?P<patch>\.\d+?|\.\*)?")
+PLATFORM_MARKERS_REGEX = re.compile(r'sys_platform\s?==\s"(?P<platform>\w+)"')
 
 # fmt: off
 MESSAGE = '# ' + textwrap.dedent(
@@ -82,10 +84,10 @@ def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Opt
 
     # NOTE: git dependencies are not supported. If a source requires git, this will fail.
     req_txt = MESSAGE + "\n" * 2
-    dependency_lines = set()
-
+    dependency_lines = {}
+    to_add_markers = {}
     for dep in main_deps.values():
-        line = dep["name"]
+        line = ""
         if (pyproject_dep := pyproject_deps.get(dep["name"], None)) is not None and hasattr(
             pyproject_dep, "get"
         ):
@@ -112,7 +114,7 @@ def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Opt
                     version_kind = "python_full_version"
                 else:
                     version_kind = "python_version"
-                # print(patch, version_kind)
+
                 patch = patch if patch is not None else ""
                 patch = patch if not patch.endswith("*") else ""
                 line += version_kind + " "
@@ -122,12 +124,32 @@ def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Opt
                 if count < total_version_markers:
                     line += "and "
 
-            # line += " ;" + " python_version " + pyvers.split(", ")[0]
-
         # TODO: add sys_platform support
+        if (dep_deps := dep.get("dependencies", None)) is not None:
+            # print(dep_deps)
+            for k, v in copy.copy(dep_deps).items():
+                if hasattr(v, "get") and v.get("markers", None) is not None:
+                    pass
+                else:
+                    del dep_deps[k]
+            if len(dep_deps):
+                to_add_markers.update(dep_deps)
 
-        dependency_lines.add(line)
-    req_txt += "\n".join(sorted([x.strip() for x in dependency_lines])) + "\n"
+        dependency_lines[dep["name"]] = line
+
+    # add the sys_platform lines
+    for k, v in to_add_markers.items():
+        line = dependency_lines[k]
+        markers = PLATFORM_MARKERS_REGEX.match(v["markers"])
+        if markers is not None:
+            if "python_" in line:
+                line += "and "
+            elif ";" not in line:
+                line += " ; "
+            line += 'sys_platform == "' + markers.group("platform") + '"'
+        dependency_lines[k] = line
+
+    req_txt += "\n".join(sorted(k + v.rstrip() for k, v in dependency_lines.items())) + "\n"
     if req_path.exists():
         with open(req_path, "r") as f:
             if req_txt == f.read():
