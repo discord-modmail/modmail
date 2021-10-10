@@ -2,27 +2,27 @@
 # This is also automatically regenerated when an edit to pyproject.toml or poetry.lock is commited.
 
 aiodns==3.0.0
-aiohttp==3.7.4.post0
-arrow==1.1.1
-async-timeout==3.0.1
-attrs==21.2.0
+aiohttp==3.7.4.post0 ; python_version >= "3.6"
+arrow==1.1.1 ; python_version >= "3.6"
+async-timeout==3.0.1 ; python_full_version >= "3.5.3"
+attrs==21.2.0 ; python_version >= "2.7" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2" and python_version != "3.3" and python_version != "3.4"
 brotlipy==0.7.0
 cchardet==2.1.7
 cffi==1.14.6
-chardet==4.0.0
-colorama==0.4.4
-coloredlogs==15.0.1
-discord.py @ https://github.com/Rapptz/discord.py/archive/master.zip
-humanfriendly==9.2
-idna==3.2
-multidict==5.1.0
+chardet==4.0.0 ; python_version >= "2.7" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2" and python_version != "3.3" and python_version != "3.4"
+colorama==0.4.4 ; python_version >= "2.7" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2" and python_version != "3.3" and python_version != "3.4"
+coloredlogs==15.0.1 ; python_version >= "2.7" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2" and python_version != "3.3" and python_version != "3.4"
+discord.py @ https://github.com/Rapptz/discord.py/archive/master.zip ; python_full_version >= "3.8.0"
+humanfriendly==9.2 ; python_version >= "2.7" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2" and python_version != "3.3" and python_version != "3.4"
+idna==3.2 ; python_version >= "3.5"
+multidict==5.1.0 ; python_version >= "3.6"
 pycares==4.0.0
-pycparser==2.20
-pydantic==1.8.2
+pycparser==2.20 ; python_version >= "2.7" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2" and python_version != "3.3"
+pydantic==1.8.2 ; python_full_version >= "3.6.1"
 pyreadline==2.1
-python-dateutil==2.8.2
-python-dotenv==0.19.0
-six==1.16.0
-toml==0.10.2
+python-dateutil==2.8.2 ; python_version != "3.0"
+python-dotenv==0.19.0 ; python_version >= "3.5"
+six==1.16.0 ; python_version >= "2.7" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2"
+toml==0.10.2 ; python_version >= "2.6" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2"
 typing-extensions==3.10.0.2
-yarl==1.6.3
+yarl==1.6.3 ; python_version >= "3.6"

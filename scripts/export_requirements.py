@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import sys
 import textwrap
 import typing
@@ -18,6 +19,8 @@ import tomli
 
 
 GENERATED_FILE = pathlib.Path("requirements.txt")
+PYTHON_VERSIONS_REGEX = re.compile(r"(?P<sign>\D{2})(?P<version>\d+\.\d+?)(?P<patch>\.\d+?|\.\*)?")
+
 
 # fmt: off
 MESSAGE = '# ' + textwrap.dedent(
@@ -50,6 +53,11 @@ def check_hash(hash: str, content: dict) -> bool:
     return hash == get_hash(content)
 
 
+def get_markers(python_versions: str) -> str:
+
+    return None
+
+
 def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Optional[int]:
     """Read and export all required packages to their pinned version in requirements.txt format."""
     req_path = pathlib.Path(req_path)
@@ -74,8 +82,10 @@ def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Opt
 
     # NOTE: git dependencies are not supported. If a source requires git, this will fail.
     req_txt = MESSAGE + "\n" * 2
+    dependency_lines = set()
+
     for dep in main_deps.values():
-        req_txt += dep["name"]
+        line = dep["name"]
         if (pyproject_dep := pyproject_deps.get(dep["name"], None)) is not None and hasattr(
             pyproject_dep, "get"
         ):
@@ -83,22 +93,41 @@ def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Opt
                 raise NotImplementedError("git sources are not supported")
 
             elif pyproject_dep.get("url", None) is not None:
-                req_txt += " @ " + pyproject_dep["url"]
+                line += " @ " + pyproject_dep["url"]
             else:
-                req_txt += "=="
-                req_txt += dep["version"]
+                line += "=="
+                line += dep["version"]
         else:
-            req_txt += "=="
-            req_txt += dep["version"]
+            line += "=="
+            line += dep["version"]
 
-        # if (pyvers := dep["python-versions"]) != "*":
-        #     # TODO: add support for all python version markers
-        #     req_txt += " ;" + " python_version " + pyvers.split(", ")[0]
+        if (pyvers := dep["python-versions"]) != "*":
+            # TODO: add support for platform and python combined version markers
+            line += " ; "
+            total_version_markers = len(pyvers.split(", ")) - 1
+            for count, version in enumerate(pyvers.split(", ")):
+                match = PYTHON_VERSIONS_REGEX.match(version)
+
+                if (patch := match.groupdict().get("patch", None)) is not None and not patch.endswith("*"):
+                    version_kind = "python_full_version"
+                else:
+                    version_kind = "python_version"
+                # print(patch, version_kind)
+                patch = patch if patch is not None else ""
+                patch = patch if not patch.endswith("*") else ""
+                line += version_kind + " "
+                line += match.group("sign") + " "
+                line += '"' + match.group("version") + patch + '"'
+                line += " "
+                if count < total_version_markers:
+                    line += "and "
+
+            # line += " ;" + " python_version " + pyvers.split(", ")[0]
 
         # TODO: add sys_platform support
 
-        req_txt += "\n"
-
+        dependency_lines.add(line)
+    req_txt += "\n".join(sorted([x.strip() for x in dependency_lines])) + "\n"
     if req_path.exists():
         with open(req_path, "r") as f:
             if req_txt == f.read():
