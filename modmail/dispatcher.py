@@ -124,7 +124,7 @@ class Dispatcher:
 
         if event_name not in self.handlers:
             logger.warning(
-                "Warning: event handler %r registered for event name '%s' that was not registered.",
+                "event handler %r registered for event name '%s' that was not registered.",
                 func,
                 event_name,
             )
