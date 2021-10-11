@@ -16,6 +16,6 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # install the package using pep 517
-RUN pip install . --no-dev --use-feature=in-tree-build
+RUN pip install . --no-deps --use-feature=in-tree-build
 
 CMD ["python", "-m", "modmail"]
