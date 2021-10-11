@@ -52,6 +52,8 @@ pytest-cov = "^2.12.1"
 pytest-dependency = "^0.5.1"
 pytest-sugar = "^0.9.4"
 pytest-xdist = { version = "^2.3.0", extras = ["psutil"] }
+# Changelog
+towncrier = "^21.3.0"
 # Documentation
 mkdocs = ">=1.1.2,<2.0.0"
 mkdocs-material = ">=7.1.9,<8.0.0"
@@ -75,6 +77,15 @@ testpaths = ["tests"]
 line-length = 110
 target-version = ['py38']
 include = '\.pyi?$'
+
+[tool.towncrier]
+directory = 'changelog_fragments'
+package = "modmail"
+package_dir = "."
+template = 'changelog_fragments/_template.md'
+name = "Modmail"
+title_format = "{name} {version} ({project_date})"
+filename = "CHANGELOG.md"
 
 [tool.taskipy.tasks]
 start = { cmd = "python -m modmail", help = "Run bot" }

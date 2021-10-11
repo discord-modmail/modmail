@@ -1,3 +1,4 @@
+import importlib.metadata
 import logging
 import logging.handlers
 from pathlib import Path
@@ -5,6 +6,9 @@ from pathlib import Path
 import coloredlogs
 
 from modmail.log import ModmailLogger
+
+
+__version__ = importlib.metadata.version(__package__)
 
 
 logging.TRACE = 5
