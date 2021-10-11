@@ -6,6 +6,8 @@ ENV PIP_NO_CACHE_DIR=false
 # Create the working directory
 WORKDIR /modmail
 
+# copy requirements so they can be installed
+COPY requirements.txt .
 
 # Install project dependencies
 RUN pip install -r requirements.txt
@@ -14,6 +16,6 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # install the package using pep 517
-RUN pip install .
+RUN pip install . --no-dev --use-feature=in-tree-build
 
 CMD ["python", "-m", "modmail"]
