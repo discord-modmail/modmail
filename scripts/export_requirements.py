@@ -55,11 +55,6 @@ def check_hash(hash: str, content: dict) -> bool:
     return hash == get_hash(content)
 
 
-def get_markers(python_versions: str) -> str:
-
-    return None
-
-
 def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Optional[int]:
     """Read and export all required packages to their pinned version in requirements.txt format."""
     req_path = pathlib.Path(req_path)
