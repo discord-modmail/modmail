@@ -12,7 +12,6 @@ import json
 import os
 import pathlib
 import re
-import sys
 import textwrap
 import typing
 
@@ -163,8 +162,25 @@ def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Opt
 
 
 if __name__ == "__main__":
-    try:
-        skip_hash = bool(int(sys.argv[1]))
-    except IndexError:
-        skip_hash = False
-    sys.exit(main(GENERATED_FILE, should_validate_hash=not skip_hash))
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(description="Export requirements to requirements.txt")
+    parser.add_argument(
+        "--ignore-hash",
+        dest="skip_hash_check",
+        action="store_true",
+        default=False,
+        help="skip checking the poetry.lock file is up to date with changes in pyproject.toml",
+    )
+
+    parser.add_argument(
+        "-o",
+        "--output",
+        dest="output_file",
+        default=GENERATED_FILE,
+        help="File to export to.",
+    )
+
+    args = parser.parse_args()
+    sys.exit(main(args.output_file, should_validate_hash=not args.skip_hash_check))
