@@ -171,7 +171,7 @@ if __name__ == "__main__":
         dest="skip_hash_check",
         action="store_true",
         default=False,
-        help="skip checking the poetry.lock file is up to date with changes in pyproject.toml",
+        help="Skip checking if the poetry.lock file is up to date with changes in pyproject.toml",
     )
 
     parser.add_argument(
