@@ -134,14 +134,18 @@ def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Opt
         dependency_lines[dep["name"]] = line
 
     # add the sys_platform lines
+    # platform markers only matter based on what requires the dependency
+    # in order to support these properly, they have to be added to an already existing line
+    # for example, humanfriendly requires pyreadline on windows only,
+    # so sys_platform == win needs to be added to pyreadline
     for k, v in to_add_markers.items():
         line = dependency_lines[k]
         markers = PLATFORM_MARKERS_REGEX.match(v["markers"])
         if markers is not None:
-            if "python_" in line:
-                line += "and "
-            elif ";" not in line:
+            if ";" not in line:
                 line += " ; "
+            elif "python_" in line or "sys_platform" in line:
+                line += "and "
             line += 'sys_platform == "' + markers.group("platform") + '"'
         dependency_lines[k] = line
 
