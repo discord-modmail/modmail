@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic docker image creation: `ghcr.io/discord-modmail/modmail` (#19)
 - Dockerfile support for all supported hosting providers. (#58)
 - Errors no longer happen silently and notify the user when they make a mistake. (#77)
-- Added Dispatcher system, although it is not hooked in yet. (#71)
+- Added Dispatcher system, although it is not hooked into important features like thread creation yet. (#71)
 
 ### Changed
 
