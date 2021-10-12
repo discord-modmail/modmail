@@ -279,3 +279,37 @@ async def test_class_dispatch_latemethod() -> None:
     await a.fire()
 
     assert called
+
+
+@pytest.mark.asyncio
+async def test_class_dispatch_latemethod_deregister() -> None:
+    """Ensure lingering handlers are not kept beyond cog reload."""
+    calls = 0
+
+    class A:
+        dispatcher = Dispatcher("class_test")
+
+        def __init__(self):
+            self.dispatcher.register_events("class_test")
+            self.dispatcher.register("class_test", self.on_class_test)
+
+        async def fire(self) -> None:
+            await self.dispatcher.dispatch("class_test")
+
+        async def on_class_test(self) -> None:
+            nonlocal calls
+            calls += 1
+
+    a = A()
+
+    await a.fire()
+
+    assert calls == 1
+
+    del a
+
+    a = A()
+
+    await a.fire()
+
+    assert calls == 2
