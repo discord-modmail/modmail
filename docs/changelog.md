@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Embedified the meta commands so they have a nicer UI (#78)
+
+
+## [0.2.0] - 2021-09-29
+
 ### Added
 
 - Interaction Paginator that uses discord buttons (#50)
@@ -14,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Running the bot after configuring the env vars is now as simple as `docker-compose up`
 - Automatic docker image creation: `ghcr.io/discord-modmail/modmail` (#19)
 - Dockerfile support for all supported hosting providers. (#58)
+- Errors no longer happen silently and notify the user when they make a mistake. (#77)
 - Added Dispatcher system, although it is not hooked in yet. (#71)
 
 ### Changed
@@ -70,4 +78,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make the bot `http_session` within an event loop.
 
 [0.1.0]: https://github.com/discord-modmail/modmail/releases/tag/v0.1.0
+[0.2.0]: https://github.com/discord-modmail/modmail/compare/v0.1.0...v0.2.0
 [unreleased]: https://github.com/discord-modmail/modmail/compare/v0.1.0...main
