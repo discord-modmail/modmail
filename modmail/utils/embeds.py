@@ -32,17 +32,20 @@ def __init__(self: discord.Embed, description: str = None, **kwargs):  # noqa: N
     * description
     * timestamp
     """
-    content = kwargs.pop("content", None)
-    if description is not None and content is not None:
+    if ("description" in kwargs or description is not None) and "content" in kwargs:
         raise TypeError("Description and content are aliases for the same field, but both were provided.")
+
+    colour = kwargs.pop("color", kwargs.pop("colour", DEFAULT_COLOR))
+    if colour is None:
+        colour = 0x2F3136
 
     original_init(
         self,
         title=kwargs.pop("title", EmptyEmbed),
-        description=description or content or EmptyEmbed,
+        description=description or kwargs.pop("description", kwargs.pop("content", EmptyEmbed)),
         type=kwargs.pop("type", "rich"),
         url=kwargs.pop("url", EmptyEmbed),
-        colour=kwargs.pop("color", kwargs.pop("colour", DEFAULT_COLOR)),
+        colour=colour,
         timestamp=kwargs.pop("timestamp", EmptyEmbed),
     )
 
@@ -58,10 +61,13 @@ def __init__(self: discord.Embed, description: str = None, **kwargs):  # noqa: N
     author_url = kwargs.pop("author_url", EmptyEmbed)
     author: discord.User = kwargs.pop("author", None)
     if author is not None or author_name is not None:
+        if isinstance(author, str):
+            author_name = author
+            author = None
         self.set_author(
             name=author_name if author_name is not None else author.name,
             url=author_url,
-            icon_url=author_icon or str(author.avatar.url),
+            icon_url=author_icon or (str(author.avatar_url) if author else EmptyEmbed),
         )
 
     fields: List[Union[Tuple[str, str], Tuple[str, str, bool]]] = kwargs.pop("fields", [])
