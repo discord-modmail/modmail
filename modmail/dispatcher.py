@@ -5,11 +5,20 @@ import logging
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple, Union
 
 from modmail import ModmailLogger
+from modmail.utils.general import module_function_disidenticality
 
 
 logger: ModmailLogger = logging.getLogger(__name__)
 
 CoroutineFunction = Callable[..., Coroutine]
+
+HANDLER_DISIDENTICALITY_WARNING = (
+    "Event handler %r registered for event name '%s' a second time,"
+    " but it is _not the same function_. Have you forgotten to add deregistration"
+    " to cog_unload? By default I've deregistered the old handler to prevent duplication."
+    " If you actually intend to register two functions with the same name from the same module,"
+    " assign their __name__ and __qualname__ attributes so they are easily distinguishable."
+)
 
 
 class Dispatcher:
@@ -133,8 +142,40 @@ class Dispatcher:
             self.blocking_priorities[event_name] = []
 
         if priority is None:
+            if func in self.handlers[event_name]:
+                logger.error(
+                    "Event handler was already registered as async: handler %s, event name %s."
+                    " Second registration ignored." % (func, event_name)
+                )
+                self._remove_handler(func, event_name, False)
+
+            for handler in self.handlers[event_name]:
+                if handler.__qualname__ == func.__qualname__:
+                    if module_function_disidenticality(handler, func):
+                        logger.warning(
+                            HANDLER_DISIDENTICALITY_WARNING,
+                            handler,
+                            event_name,
+                        )
+                        self._remove_handler(handler, event_name, False)
             self.handlers[event_name].append(func)
         else:
+            for handler in self.blocking_handlers[event_name]:
+                if handler.__qualname__ == func.__qualname__:
+                    if module_function_disidenticality(handler, func):
+                        logger.warning(HANDLER_DISIDENTICALITY_WARNING, handler, event_name)
+
+                        self._remove_handler(handler, event_name, True)
+
+                    if handler == func:
+                        logger.error(
+                            "Event handler was already registered as blocking: handler %s, event name %s."
+                            " Second registration ignored." % (func, event_name)
+                        )
+
+                        self._remove_handler(handler, event_name, True)
+
+            self.handlers[event_name].append(func)
             index = bisect.bisect_left(self.blocking_priorities[event_name], priority)
             self.blocking_priorities[event_name].insert(index, priority)
             self.blocking_handlers[event_name].insert(index, func)
