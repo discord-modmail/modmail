@@ -195,14 +195,20 @@ class Dispatcher:
                 continue
 
             if func in self.handlers[event_name]:
-                self.handlers[event_name].remove(func)
+                self._remove_handler(func, event_name, False)
 
             if func in self.blocking_handlers[event_name]:
-                # blocking handlers are two separate lists because it makes searching for items
-                # (and thus bisect) a hundred times easier. But that does mean we have to keep them in sync.
-                index = self.blocking_handlers[event_name].index(func)
-                del self.blocking_handlers[event_name][index]
-                del self.blocking_priorities[event_name][index]
+                self._remove_handler(func, event_name, True)
+
+    def _remove_handler(self, func: CoroutineFunction, event_name: str, blocking: bool = False) -> None:
+        if blocking:
+            # blocking handlers are two separate lists because it makes searching for items
+            # (and thus bisect) a hundred times easier. But that does mean we have to keep them in sync.
+            index = self.blocking_handlers[event_name].index(func)
+            del self.blocking_handlers[event_name][index]
+            del self.blocking_priorities[event_name][index]
+        else:
+            self.handlers[event_name].remove(func)
 
     async def dispatch(self, event_name: str, *args, **kwargs) -> None:
         """
