@@ -186,19 +186,19 @@ async def test_unregister_priority(dispatcher: Dispatcher) -> None:
     """Test that priority events are successfully unregistered."""
     high_priority_calls = 0
 
-    @dispatcher.register("thread_create", priority=1)
-    async def high_priority_handler(*args) -> bool:
+    @dispatcher.register("thread_create_two", priority=1)
+    async def high_priority_handler(*_args) -> bool:
         nonlocal high_priority_calls
         high_priority_calls += 1
         return False
 
-    await dispatcher.dispatch("thread_create", False)
+    await dispatcher.dispatch("thread_create_two", False)
 
     assert high_priority_calls == 1
 
     dispatcher.unregister(high_priority_handler)
 
-    await dispatcher.dispatch("thread_create", False)
+    await dispatcher.dispatch("thread_create_two", False)
 
     assert high_priority_calls == 1
 
