@@ -175,7 +175,6 @@ class Dispatcher:
 
                         self._remove_handler(handler, event_name, True)
 
-            self.handlers[event_name].append(func)
             index = bisect.bisect_left(self.blocking_priorities[event_name], priority)
             self.blocking_priorities[event_name].insert(index, priority)
             self.blocking_handlers[event_name].insert(index, func)
