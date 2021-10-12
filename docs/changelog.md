@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Embedified the meta commands so they have a nicer UI (#78)
 
+### Added
+- Added Dispatcher system, although it is not hooked into important features like thread creation yet. (#71)
 
 ## [0.2.0] - 2021-09-29
 
@@ -22,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic docker image creation: `ghcr.io/discord-modmail/modmail` (#19)
 - Dockerfile support for all supported hosting providers. (#58)
 - Errors no longer happen silently and notify the user when they make a mistake. (#77)
-- Added Dispatcher system, although it is not hooked into important features like thread creation yet. (#71)
 
 ### Changed
 
