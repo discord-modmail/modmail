@@ -67,7 +67,7 @@ def __init__(self: discord.Embed, description: str = None, **kwargs):  # noqa: N
         self.set_author(
             name=author_name if author_name is not None else author.name,
             url=author_url,
-            icon_url=author_icon or (str(author.avatar_url) if author else EmptyEmbed),
+            icon_url=author_icon or (str(author.display_avatar.url) if author else EmptyEmbed),
         )
 
     fields: List[Union[Tuple[str, str], Tuple[str, str, bool]]] = kwargs.pop("fields", [])
