@@ -246,7 +246,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         send_kwargs = {}
         if recipient is None:
             recipient = message.author
-        if send_kwargs.get("allowed_mentions", None) is not None:
+        if send_kwargs.get("allowed_mentions") is not None:
             send_kwargs["allowed_mentions"] = discord.AllowedMentions(
                 everyone=False, users=False, roles=True, replied_user=False
             )
@@ -446,8 +446,8 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         if (
             0 == len(embed.description) == len(embed.image) == len(embed.fields)
-            and kw.get("attachments", None) is None
-            and kw.get("stickers", None) is None
+            and kw.get("attachments") is None
+            and kw.get("stickers") is None
         ):
             logger.info(
                 f"SKIPPING relay of message id {message.id} from {message.author!s} due to nothing to relay."
@@ -781,7 +781,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         new_embed = guild_msg.embeds[0]
 
         data = payload.data
-        if data.get("content", None) is not None:
+        if data.get("content") is not None:
             new_embed.insert_field_at(0, name="Former contents", value=new_embed.description)
             new_embed.description = data["content"]
 
