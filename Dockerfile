@@ -9,15 +9,16 @@ RUN pip install -U pip
 # Create the working directory
 WORKDIR /modmail
 
-# Copy requirements so they can be installed
-COPY ./modmail/constraints.txt ./requirements.txt
+# copy requirements so they can be installed
+COPY requirements.txt .
 
-# Install dependencies
-RUN pip install -r ./requirements.txt
+# Install project dependencies
+RUN pip install -r requirements.txt
 
-
-# Copy the source code in last to optimize rebuilding the image
+# Copy the source code in next to last to optimize rebuilding the image
 COPY . .
 
+# install the package using pep 517
+RUN pip install . --no-deps --use-feature=in-tree-build
 
 CMD ["python", "-m", "modmail"]
