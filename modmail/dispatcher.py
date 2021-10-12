@@ -141,6 +141,7 @@ class Dispatcher:
             self.blocking_handlers[event_name] = []
             self.blocking_priorities[event_name] = []
 
+        # Nonblocking (gathered)
         if priority is None:
             if func in self.handlers[event_name]:
                 logger.error(
@@ -158,26 +159,29 @@ class Dispatcher:
                             event_name,
                         )
                         self._remove_handler(handler, event_name, False)
+
             self.handlers[event_name].append(func)
-        else:
-            for handler in self.blocking_handlers[event_name]:
-                if handler.__qualname__ == func.__qualname__:
-                    if module_function_disidenticality(handler, func):
-                        logger.warning(HANDLER_DISIDENTICALITY_WARNING, handler, event_name)
+            return
 
-                        self._remove_handler(handler, event_name, True)
+        # Blocking (run in sequence)
+        for handler in self.blocking_handlers[event_name]:
+            if handler.__qualname__ == func.__qualname__:
+                if module_function_disidenticality(handler, func):
+                    logger.warning(HANDLER_DISIDENTICALITY_WARNING, handler, event_name)
 
-                    if handler == func:
-                        logger.error(
-                            "Event handler was already registered as blocking: handler %s, event name %s."
-                            " Second registration ignored." % (func, event_name)
-                        )
+                    self._remove_handler(handler, event_name, True)
 
-                        self._remove_handler(handler, event_name, True)
+                if handler == func:
+                    logger.error(
+                        "Event handler was already registered as blocking: handler %s, event name %s."
+                        " Second registration ignored." % (func, event_name)
+                    )
 
-            index = bisect.bisect_left(self.blocking_priorities[event_name], priority)
-            self.blocking_priorities[event_name].insert(index, priority)
-            self.blocking_handlers[event_name].insert(index, func)
+                    self._remove_handler(handler, event_name, True)
+
+        index = bisect.bisect_left(self.blocking_priorities[event_name], priority)
+        self.blocking_priorities[event_name].insert(index, priority)
+        self.blocking_handlers[event_name].insert(index, func)
 
     def register(
         self,
