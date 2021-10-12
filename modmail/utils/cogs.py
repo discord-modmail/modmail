@@ -3,7 +3,7 @@ from enum import IntEnum, auto
 
 from discord.ext import commands
 
-import modmail
+import modmail.bot
 
 
 class BitwiseAutoEnum(IntEnum):
