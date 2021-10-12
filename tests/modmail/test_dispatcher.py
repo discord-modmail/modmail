@@ -313,3 +313,41 @@ async def test_class_dispatch_latemethod_deregister() -> None:
     await a.fire()
 
     assert calls == 2
+
+
+@pytest.mark.asyncio
+async def test_class_dispatch_classmethod_deregister() -> None:
+    """Ensure deletion of a class instance unregisters it's class method handlers."""
+    calls = 0
+
+    class A:
+        dispatcher = Dispatcher("class_test")
+
+        def __init__(self):
+            self.dispatcher.register_events("class_test_deactivate")
+            self.dispatcher.activate(self)
+
+        async def fire(self) -> None:
+            await self.dispatcher.dispatch("class_test_deactivate")
+
+        @dispatcher.register()
+        async def on_class_test_deactivate(self) -> None:
+            nonlocal calls
+            calls += 1
+
+        def __del__(self):
+            self.dispatcher.deactivate(self)
+
+    a = A()
+
+    await a.fire()
+
+    assert calls == 1
+
+    del a
+
+    a = A()
+
+    await a.fire()
+
+    assert calls == 2

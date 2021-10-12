@@ -57,3 +57,7 @@ class ModmailCog(commands.Cog):
     def __init__(self, bot: "modmail.bot.ModmailBot"):
         self.dispatcher = bot.dispatcher
         self.dispatcher.activate(self)
+
+    def cog_unload(self) -> None:
+        """Ensure dispatched class methods are unloaded when the cog is unloaded."""
+        self.dispatcher.deactivate(self)

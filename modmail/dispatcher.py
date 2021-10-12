@@ -84,6 +84,39 @@ class Dispatcher:
                 self._register_handler(event_name, priority, value)
             self.pending_handlers[underlying_function].clear()
 
+    def deactivate(self, instance: object) -> None:
+        """
+        Unregister all bound method handlers on a given class instance.
+
+        Should be called during __del__.
+        """
+        unregisterables = set()
+        for attr in dir(instance):
+            value = getattr(instance, attr)
+            if not callable(value):
+                continue
+
+            # Bound methods have __func__, which returns the actual function
+            # we use that to determine which method was actually registered.
+            if not hasattr(value, "__func__"):
+                continue
+
+            underlying_function = value.__func__
+
+            if underlying_function in self.pending_handlers:
+                # Was never registered
+                continue
+
+            unregisterables.add(value)
+
+        for event_name in self.handlers:
+            for unregisterable in unregisterables.intersection(self.handlers[event_name]):
+                self._remove_handler(unregisterable, event_name, False)
+
+        for event_name in self.blocking_handlers:
+            for unregisterable in unregisterables.intersection(self.blocking_handlers[event_name]):
+                self._remove_handler(unregisterable, event_name, True)
+
     def _register_handler(
         self,
         event_name: Optional[str],
