@@ -1027,6 +1027,11 @@ class TicketsCog(ModmailCog, name="Threads"):
             con = getattr(dm_msg, attr, "UNSET")
         await ctx.send(f"```py\n{con}```")
 
+    async def cog_command_error(self, ctx: Context, error: commands.CommandError) -> None:
+        """Ignore all dm command errors since commands are not allowed in dms."""
+        if isinstance(error, commands.CheckFailure) and isinstance(ctx.channel, discord.DMChannel):
+            error.handled = True
+
 
 def setup(bot: "ModmailBot") -> None:
     """Adds the Tickets cog to the bot."""
