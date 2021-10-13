@@ -28,7 +28,7 @@ EXT_METADATA = ExtMetadata()
 DEV_MODE_ENABLED = BOT_MODE & BotModes.DEVELOP
 
 BASE_JUMP_URL = "https://discord.com/channels"
-USER_NOT_ABLE_TO_BE_DMED_MESSAGE = (
+DM_FAILURE_MESSAGE = (
     "**{0}** is not able to be DMed! This is because they have either blocked the bot, "
     "or they are only accepting direct messages from friends.\n"
     "It is also possible that they do not share a server with the bot."
@@ -37,10 +37,10 @@ ON_SUCCESS_EMOJI = "\u2705"  # ✅
 FAILURE_EMOJI = "\u274c"  # :x:
 
 # This will be part of configuration later, so its stored in globals for now
-ENABLE_DM_TO_GUILD_TYPING = False  # Library bug prevents this form working right now
-ENABLE_GUILD_TO_DM_TYPING = False
+FORWARD_USER_TYPING = False  # Library bug prevents this form working right now
+FORWARD_MODERATOR_TYPING = False
 
-# NOTE: Since discord removed `threads.archiver_id`, it would always be `None`, and the
+# NOTE: Since discord removed `threads.archiver_id`, (it will always be `None` now), and the
 # only way to get the user who archived the thread is to use the Audit logs.
 # however, this permission is not required to have basic functionality.
 # this permission
@@ -61,11 +61,14 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     def __init__(self, bot: "ModmailBot"):
         self.bot = bot
+        # validation for this configuration variable is be defered to fully implementing
+        # a new configuration system
         self.relay_channel: Union[
             discord.TextChannel, discord.PartialMessageable
         ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
 
-        # message deletion events are messed up
+        # message deletion events are messed up, so we have to use these dictionaries
+        # to track if we deleted a message, and if we have already relayed it or not.
         self.dms_to_users: Dict[int, int] = dict()
         self.dm_deleted_messages: Set[int] = set()
         self.thread_deleted_messages: Set[int] = set()
@@ -84,17 +87,23 @@ class TicketsCog(ModmailCog, name="Threads"):
     async def fetch_necessary_values(self) -> None:
         """Fetch the audit log permission."""
         self.relay_channel: discord.TextChannel = await self.bot.fetch_channel(self.relay_channel.id)
+        # a little bit of hackery because for some odd reason, the guild object is not always complete
         self.relay_channel.guild = await self.bot.fetch_guild(self.relay_channel.guild.id)
         me = await self.relay_channel.guild.fetch_member(self.bot.user.id)
-        self.use_audit_logs = USE_AUDIT_LOGS & me.guild_permissions.view_audit_log
+        self.use_audit_logs = USE_AUDIT_LOGS and me.guild_permissions.view_audit_log
         logger.debug("Fetched relay channel and use_audit_log perms")
 
     def cog_unload(self) -> None:
         """Cancel any tasks that may be running on unload."""
         self.fetch_necessary_values.cancel()
+        super().cog_unload()
 
-    def get_ticket(self, id: int, /) -> Ticket:
-        """Fetch a ticket from the tickets dict."""
+    def get_ticket(self, id: int, /) -> Optional[Ticket]:
+        """
+        Fetch a ticket from the tickets dict.
+
+        In the future this will be hooked into the database.
+        """
         try:
             ticket = self.bot.tickets[id]
         except KeyError:
@@ -152,9 +161,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         if not await check_can_dm_user(recipient):
             await ticket.thread.send(
-                USER_NOT_ABLE_TO_BE_DMED_MESSAGE.format(
-                    escape_markdown(f"{recipient.name}#{recipient.discriminator}")
-                )
+                DM_FAILURE_MESSAGE.format(f"{escape_markdown(recipient.name)}#{recipient.discriminator}")
             )
 
     async def create_ticket(
@@ -180,7 +187,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         initial_message: discord.Message
 
-        check_for_existing_thread: bool = True
+        raise_for_preexisting_ticket: bool = True
             Whether to check if there is an existing ticket for the user.
             If there is an existing thread, this method will raise a ThreadAlreadyExistsError exception.
 
@@ -190,8 +197,8 @@ class TicketsCog(ModmailCog, name="Threads"):
         """
         if initial_message is None:
             raise ValueError("initial_message must be provided.")
-        if recipient is None:
-            recipient = initial_message.author
+
+        recipient = recipient or initial_message.author
 
         # lock this next session, since we're checking if a thread already exists here
         # we want to ensure that anything entering this section can get validated.
@@ -240,12 +247,11 @@ class TicketsCog(ModmailCog, name="Threads"):
         Create a thread in discord off of a provided message.
 
         Sends an initial message, and returns the thread and the first message sent in the thread.
+        Any kwargs not defined in the method signature are forwarded to the
         """
         await self.init_relay_channel()
 
-        send_kwargs = {}
-        if recipient is None:
-            recipient = message.author
+        recipient = recipient or message.author
         if send_kwargs.get("allowed_mentions") is not None:
             send_kwargs["allowed_mentions"] = discord.AllowedMentions(
                 everyone=False, users=False, roles=True, replied_user=False
@@ -259,7 +265,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             description = message.content
         description = description.strip()
         if creator:
-            description += f"Opened by {creator!s}"
+            description += f"\nOpened by {creator!s}"
 
         embed = discord.Embed(
             title=f"{discord.utils.escape_markdown(recipient.name,ignore_links=False)}"
@@ -274,10 +280,20 @@ class TicketsCog(ModmailCog, name="Threads"):
             embed=embed,
             **send_kwargs,
         )
-        thread_channel = await relayed_msg.create_thread(
-            name=f"{recipient!s}".replace("#", "-"),
-            auto_archive_duration=relayed_msg.channel.default_auto_archive_duration,
-        )
+        try:
+            thread_channel = await relayed_msg.create_thread(
+                name=f"{recipient!s}".replace("#", "-"),
+                auto_archive_duration=relayed_msg.channel.default_auto_archive_duration,
+            )
+        except discord.HTTPException as e:
+            if e.code != 50_035:
+                raise
+            # repeat the request but using the user id and discrim
+            # 50035 means that the user has some banned characters or phrases in their name
+            thread_channel = await relayed_msg.create_thread(
+                name=recipient.id,
+                auto_archive_duration=relayed_msg.channel.default_auto_archive_duration,
+            )
 
         return thread_channel, relayed_msg
 
@@ -890,7 +906,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # only work in dms or a thread channel
 
-        if ENABLE_GUILD_TO_DM_TYPING and isinstance(channel, discord.Thread):
+        if FORWARD_MODERATOR_TYPING and isinstance(channel, discord.Thread):
             try:
                 ticket = self.bot.tickets[channel.id]
             except KeyError:
@@ -901,7 +917,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # ! Due to a library bug this tree will never be run
         # it can be tracked here: https://github.com/Rapptz/discord.py/issues/7432
-        elif ENABLE_DM_TO_GUILD_TYPING and isinstance(channel, discord.DMChannel):
+        elif FORWARD_USER_TYPING and isinstance(channel, discord.DMChannel):
             try:
                 ticket = self.bot.tickets[user.id]
             except KeyError:
