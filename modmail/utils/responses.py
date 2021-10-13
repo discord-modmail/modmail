@@ -14,10 +14,12 @@ from modmail.log import ModmailLogger
 
 
 __all__ = (
-    "default_success_color",
-    "success_headers",
-    "default_error_color",
-    "error_headers",
+    "DEFAULT_SUCCESS_COLOUR",
+    "DEFAULT_SUCCESS_COLOR",
+    "SUCCESS_HEADERS",
+    "DEFAULT_ERROR_COLOUR",
+    "DEFAULT_ERROR_COLOR",
+    "ERROR_HEADERS",
     "send_positive_response",
     "send_negatory_response",
     "send_response",
@@ -28,8 +30,9 @@ _UNSET = object()
 logger: ModmailLogger = logging.getLogger(__name__)
 
 
-default_success_color = discord.Colour.green()
-success_headers: List[str] = [
+DEFAULT_SUCCESS_COLOUR = discord.Colour.green()
+DEFAULT_SUCCESS_COLOR = DEFAULT_SUCCESS_COLOUR
+SUCCESS_HEADERS: List[str] = [
     "You got it.",
     "Done.",
     "Affirmative.",
@@ -41,8 +44,9 @@ success_headers: List[str] = [
     "Your wish is my command.",
 ]
 
-default_error_color = discord.Colour.red()
-error_headers: List[str] = [
+DEFAULT_ERROR_COLOUR = discord.Colour.red()
+DEFAULT_ERROR_COLOR = DEFAULT_ERROR_COLOUR
+ERROR_HEADERS: List[str] = [
     "Abort!",
     "FAIL.",
     "I cannot do that.",
@@ -95,11 +99,11 @@ async def send_positive_response(
             return await message.edit(response, **kwargs)
 
     if colour is _UNSET:
-        colour = default_success_color
+        colour = DEFAULT_SUCCESS_COLOUR
 
     if embed is _UNSET:
         embed = discord.Embed(colour=colour)
-    embed.title = choice(success_headers)
+    embed.title = choice(SUCCESS_HEADERS)
     embed.description = response
 
     if message is None:
@@ -138,11 +142,11 @@ async def send_negatory_response(
             return await message.edit(response, **kwargs)
 
     if colour is _UNSET:
-        colour = default_error_color
+        colour = DEFAULT_ERROR_COLOUR
 
     if embed is _UNSET:
         embed = discord.Embed(colour=colour)
-    embed.title = choice(error_headers)
+    embed.title = choice(ERROR_HEADERS)
     embed.description = response
 
     if message is None:
