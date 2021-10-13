@@ -53,6 +53,8 @@ CLOSED_COLOUR = discord.Colour.green()
 RECEIVE_COLOUR = discord.Colour.dark_teal()  # messages received from dms
 SEND_COLOUR = discord.Colour.teal()  # messages sent, shown in thread
 
+MAX_CACHED_MESSAGES_PER_THREAD = 10
+
 logger: "ModmailLogger" = logging.getLogger(__name__)
 
 
@@ -323,7 +325,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         dm_reference_message = None
         guild_reference_message = None
         if message.reference is not None:
-            # don't want to fail a reference
+            # don't error if the paired message on the server end was deleted
             message.reference.fail_if_not_exists = False
             guild_reference_message = message.reference
             try:
@@ -333,10 +335,13 @@ class TicketsCog(ModmailCog, name="Threads"):
             except KeyError:
                 pass
         if len(message.attachments) > 0:
+            # don't delete when forwarding a message that has attachments,
+            # as that will invalidate the attachments
             delete = False
             for a in message.attachments:
-                if a.url.endswith((".png", ".apng", ".gif", ".webm", "jpg", ".jpeg")):
-                    if not len(embeds[0].image):
+                # featuring the first image attachment as the embed image
+                if a.url.lower().endswith((".png", ".apng", ".gif", ".webm", "jpg", ".jpeg")):
+                    if not embeds[0].image:
                         embeds[0].set_image(url=a.url)
                         continue
                 embeds[0].add_field(name=a.filename, value=a.proxy_url, inline=False)
@@ -369,15 +374,15 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # add last sent message to the list
         ticket.last_sent_messages.append(guild_message)
-        if len(ticket.last_sent_messages) > 10:
-            ticket.last_sent_messages.pop(0)  # keep list length to 10
+        if len(ticket.last_sent_messages) > MAX_CACHED_MESSAGES_PER_THREAD:
+            ticket.last_sent_messages.pop(0)  # keep list length to MAX_CACHED_MESSAGES_PER_THREAD
 
         # add messages to the dict
         ticket.messages[guild_message] = sent_message
         return sent_message
 
     async def _relay_message_to_guild(
-        self, ticket: Ticket, message: discord.Message, contents: str = None
+        self, ticket: Ticket, message: discord.Message, contents: Optional[str] = None
     ) -> discord.Message:
         """Relay a message from user to guild."""
         if ticket.recipient.dm_channel is None:
@@ -480,7 +485,7 @@ class TicketsCog(ModmailCog, name="Threads"):
     @commands.command(aliases=("r",))
     async def reply(self, ctx: Context, *, message: str = None) -> None:
         """Send a reply to the user."""
-        if message is None and 0 == len(ctx.message.attachments) == len(ctx.message.stickers):
+        if message is None and not ctx.message.attachments and not ctx.message.stickers:
             param = inspect.Parameter("message", 3)
             raise commands.MissingRequiredArgument(param)
         ticket = self.get_ticket(ctx.channel.id)
@@ -509,7 +514,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             await ticket.log_message.edit(embeds=log_embeds)
 
     @is_modmail_thread()
-    @commands.command(aliases=("e",))
+    @commands.command(aliases=("e", "ed"))
     async def edit(self, ctx: Context, message: Optional[discord.Message] = None, *, content: str) -> None:
         """Edit a message in the thread."""
         ticket = self.get_ticket(ctx.channel.id)
@@ -657,7 +662,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         if notify_user is None:
             notify_user = bool(ticket.has_sent_initial_message or len(ticket.messages) > 0)
 
-        if closer is not None:
+        if not closer:
             thread_close_embed = discord.Embed(
                 title="Thread Closed",
                 description=contents or f"{closer.mention} has closed this Modmail thread.",
@@ -704,7 +709,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         await ticket.thread.edit(archived=True, locked=False)
 
-        if closer is not None:
+        if not closer:
             logger.debug(f"{closer!s} has closed thread {ticket.thread!s}.")
         else:
             logger.debug(f"{ticket.thread!s} has been closed. A user was not provided.")
