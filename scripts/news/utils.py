@@ -1,9 +1,21 @@
-import os
-import shutil
-import sys
-from typing import Any, Optional
+import base64
+import hashlib
+from typing import Any, List, Mapping, Optional
 
-from click import Option, UsageError, echo, style
+import click
+from click import Option, echo, style
+
+
+def nonceify(body: str) -> str:
+    """
+    Nonceify the changelog body!
+
+    Generate hopefully-unique string of characters meant to prevent filename collisions. by computing the
+    MD5 hash of the text, converting it to base64 (using the "urlsafe" alphabet), and taking the first
+    6 characters of that.
+    """
+    digest = hashlib.md5(body.encode("utf-8")).digest()  # noqa: S303
+    return base64.urlsafe_b64encode(digest)[0:6].decode("ascii")
 
 
 def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
@@ -23,43 +35,26 @@ def _err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
 
 
 def out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
+    """Utility function to output a styled message to console."""
     _out(message, nl=nl, **styles)
 
 
 def err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
+    """Utility function to output a styled error message to console."""
     _err(message, nl=nl, **styles)
-
-
-def find_editor():
-    for var in "GIT_EDITOR", "EDITOR":
-        editor = os.environ.get(var)
-        if editor is not None:
-            return editor
-    if sys.platform == "win32":
-        fallbacks = ["notepad.exe"]
-    else:
-        fallbacks = ["/etc/alternatives/editor", "nano"]
-    for fallback in fallbacks:
-        if os.path.isabs(fallback):
-            found_path = fallback
-        else:
-            found_path = shutil.which(fallback)
-        if found_path and os.path.exists(found_path):
-            return found_path
-    err("Oh no! 💥 💔 💥 Could not find an editor! Set the EDITOR environment variable.", fg="red")
 
 
 class NotRequiredIf(Option):
     def __init__(self, *args, **kwargs):
         self.not_required_if = kwargs.pop("not_required_if")
-        assert self.not_required_if, "'not_required_if' parameter required"
+        assert self.not_required_if, "'not_required_if' parameter required"  # noqa: S101
         kwargs["help"] = (
             kwargs.get("help", "")
             + " NOTE: This argument is mutually exclusive with %s" % self.not_required_if
         ).strip()
         super(NotRequiredIf, self).__init__(*args, **kwargs)
 
-    def handle_parse_result(self, ctx, opts, args):
+    def handle_parse_result(self, ctx: click.Context, opts: Mapping[str, Any], args: List[str]):
         we_are_present = self.name in opts
         other_present = self.not_required_if in opts
 
