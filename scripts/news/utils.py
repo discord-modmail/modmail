@@ -5,6 +5,8 @@ from typing import Any, List, Mapping, Optional
 import click
 from click import Option, echo, style
 
+from . import ERROR_MSG_PREFIX
+
 
 def nonceify(body: str) -> str:
     """
@@ -61,7 +63,7 @@ class NotRequiredIf(Option):
         if other_present:
             if we_are_present:
                 err(
-                    "Oh no! 💥 💔 💥 Illegal usage. `%s` is mutually exclusive with `%s`"
+                    f"{ERROR_MSG_PREFIX} Illegal usage. `%s` is mutually exclusive with `%s`"
                     % (self.name, self.not_required_if),
                     fg="red",
                 )
