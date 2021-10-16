@@ -1,13 +1,16 @@
 import os
+import subprocess
+from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
+from pprint import pprint
 from typing import Optional
 
 import click
 import requests
 
-from scripts.news.utils import NotRequiredIf, err, nonceify, out
-
 from . import ERROR_MSG_PREFIX, __version__
+from .utils import NotRequiredIf, err, get_metadata_from_file, glob_fragments, nonceify, out
 
 
 PR_ENDPOINT = "https://api.github.com/repos/discord-modmail/modmail/pulls/{number}"
@@ -22,6 +25,13 @@ TEMPLATE = """
 # Lines starting with \"#\" are ignored.
 
 """.lstrip()
+NO_NEWS_PATH_ERROR = (
+    f"{ERROR_MSG_PREFIX} `news/next/` doesn't exist.\nYou are either in the wrong directory while"
+    " running this command (should be in the project root) or the path doesn't exist, if it "
+    "doesn't exist please create it and run this command again :) Happy change-logging!"
+)
+
+SECTIONS = ["Security", "Documentation", "Tests", "Features", "Internal", "BugFixes"]
 
 
 class NewsFragment:
@@ -31,18 +41,23 @@ class NewsFragment:
         self.nonce = nonce
         self.news_entry = news_entry
         self.news_type = _type
+        self.date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     def save_file(self) -> None:
         """Save received changelog data to a news file."""
-        path = Path(Path.cwd(), f"news/next/pr-{self.gh_pr}.{self.news_type}.{self.nonce}.md")
-        if not path.parent.exists():
-            err(
-                f"{ERROR_MSG_PREFIX} `news/next/` doesn't exist.\nYou are either in the wrong directory while "
-                "running this command (should be in the project root) or the path doesn't exist, if it "
-                "doesn't exist please create it and run this command again :) Happy change-logging!",
-                fg="blue",
-            )
+        path = Path(
+            Path.cwd(),
+            f"news/next/{self.news_type}/{self.date}.pr-{self.gh_pr}.{self.news_type}.{self.nonce}.md",
+        )
+        if not path.parents[1].exists():
+            err(NO_NEWS_PATH_ERROR, fg="blue")
             self.ctx.exit(1)
+        elif not path.parents[0].exists():
+            make_news_type_dir = click.confirm(
+                f"Should I make the new type DIR for the news type at {path.parents[0]}"
+            )
+            if make_news_type_dir:
+                path.parents[0].mkdir(exist_ok=True)
         elif path.exists():
             # The file exists
             err(f"{ERROR_MSG_PREFIX} {Path(os.path.relpath(path, start=Path.cwd()))} already exists")
@@ -52,7 +67,13 @@ class NewsFragment:
         with open(path, "wt", encoding="utf-8") as file:
             file.write(text)
 
-        out(f"All done! ✨ 🍰 ✨ Created news fragment at {Path(os.path.relpath(path, start=Path.cwd()))}")
+        # Add news fragment to git stage
+        subprocess.run(["git", "add", "--force", path]).check_returncode()
+
+        out(
+            f"All done! ✨ 🍰 ✨ Created news fragment at {Path(os.path.relpath(path, start=Path.cwd()))}"
+            "\nYou are now ready for commit!"
+        )
 
 
 def validate_pull_request_number(
@@ -108,7 +129,7 @@ def cli_main(ctx: click.Context, verbose: bool) -> None:
 @click.option(
     "-t",
     "--type",
-    type=click.Choice(["feature", "bug", "maintenance"]),
+    type=click.Choice([section.lower() for section in SECTIONS]),
     prompt=True,
 )
 @click.option(
@@ -150,6 +171,60 @@ def cli_add_news(ctx: click.Context, message: str, editor: str, type: str, pr_nu
 
     news_fragment = NewsFragment(ctx, pr_number, nonceify(message), message, type)
     news_fragment.save_file()
+
+
+@cli_main.command("build")
+@click.option(
+    "--version",
+    type=str,
+)
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Do not ask for confirmation to remove news fragments.",
+)
+@click.option(
+    "-t",
+    "--template",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        allow_dash=False,
+        path_type=str,
+    ),
+    is_eager=True,
+    help="Read JINJA2 template from FILE path.",
+)
+@click.pass_context
+def cli_build_news(ctx: click.Context, version: str, force: bool, template: str) -> None:
+    """Build a combined news file 📜 from news fragments."""
+    filenames = glob_fragments("next", SECTIONS)
+    _file_metadata = {}
+    file_metadata = defaultdict(list)
+    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    if not filenames:
+        err(f"No news fragments found. Exiting")
+        ctx.exit()
+    else:
+        for filename in filenames:
+            if not filename.endswith(".md"):
+                continue
+            _file_metadata[filename] = get_metadata_from_file(Path(filename))
+
+    # Group metadata according to news_type
+    for path, fragment in _file_metadata.items():
+        news_type = fragment["news_type"]
+        del fragment["news_type"]
+        fragment["path"] = path
+        file_metadata[news_type].append(fragment)
+
+    file_metadata["release date"] = date
+    pprint(file_metadata)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,12 @@
 import base64
+import glob
 import hashlib
-from typing import Any, List, Mapping, Optional
+import os
+from pathlib import Path
+from typing import Any, List, Mapping, Optional, Tuple
 
 import click
+import tomli
 from click import Option, echo, style
 
 from . import ERROR_MSG_PREFIX
@@ -72,3 +76,49 @@ class NotRequiredIf(Option):
                 self.prompt = None
 
         return super(NotRequiredIf, self).handle_parse_result(ctx, opts, args)
+
+
+def sanitize_section(section):
+    """Cleans up a section string, making it viable as a directory name."""
+    return section.replace("/", "-").lower()
+
+
+def glob_fragments(version: str, sections: List[str]) -> List[str]:
+    filenames = []
+    base = os.path.join("news", version)
+
+    if version != "next":
+        wildcard = base + ".md"
+        filenames.extend(glob.glob(wildcard))
+    else:
+        for section in sections:
+            wildcard = os.path.join(base, sanitize_section(section), "*.md")
+            entries = glob.glob(wildcard)
+            entries.sort(reverse=True)
+            deletables = [x for x in entries if x.endswith("/README.md")]
+            for filename in deletables:
+                entries.remove(filename)
+            filenames.extend(entries)
+
+    return filenames
+
+
+def get_metadata_from_file(path: Path) -> dict:
+    #  path = Path(Path.cwd(), f"news/next/pr-{self.gh_pr}.{self.news_type}.{self.nonce}.md")
+    new_fragment_file = path.stem
+    date, gh_pr, news_type, nonce = new_fragment_file.split(".")
+
+    with open(path, "r", encoding="utf-8") as file:
+        news_entry = file.read()
+
+    metadata = {"date": date, "gh_pr": gh_pr, "news_type": news_type, "nonce": nonce, "new_entry": news_entry}
+    return metadata
+
+
+def get_project_meta() -> Tuple[str, str]:
+    with open("pyproject.toml", "rb") as pyproject:
+        file_contents = tomli.load(pyproject)
+
+    version = file_contents["tool"]["poetry"]["version"]
+    name = file_contents["tool"]["poetry"]["name"]
+    return name, version
