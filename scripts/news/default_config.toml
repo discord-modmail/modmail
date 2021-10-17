@@ -1,9 +1,5 @@
 [core]
-sections = ["Security", "Documentation", "Tests", "Features", "Internal", "BugFixes"]
 template = "default_template.rst"
-start_string = "# Changelog\nAll notable changes to this project will be documented in this file."
-title_format = "{name} {version} ({project_date})"
-pr_format = "#{pr} <https://github.com/discord-modmail/modmail/pull/{pr}>"
 
 [types]
 feature = { name = "Features" }

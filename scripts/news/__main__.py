@@ -9,7 +9,17 @@ import click
 import requests
 
 from . import ERROR_MSG_PREFIX, __version__
-from .utils import NotRequiredIf, err, get_metadata_from_file, glob_fragments, load_toml_config, nonceify, out
+from .utils import (
+    NotRequiredIf,
+    err,
+    get_metadata_from_file,
+    get_project_meta,
+    glob_fragments,
+    load_toml_config,
+    nonceify,
+    out,
+    render_fragments,
+)
 
 
 PR_ENDPOINT = "https://api.github.com/repos/discord-modmail/modmail/pulls/{number}"
@@ -32,7 +42,7 @@ NO_NEWS_PATH_ERROR = (
 
 
 CONFIG = load_toml_config()
-SECTIONS = [config["name"] for _type, config in CONFIG.get("types").items()]
+SECTIONS = [_type for _type, _ in CONFIG.get("types").items()]
 
 
 class NewsFragment:
@@ -223,7 +233,33 @@ def cli_build_news(ctx: click.Context, version: str, force: bool, template: str)
         fragment["path"] = path
         file_metadata[news_type].append(fragment)
 
-    file_metadata["release date"] = date
+    template = CONFIG["core"].get("template")
+    if not template:
+        template = Path(Path.cwd(), "scripts/news/default_template.rst.jinja")
+    else:
+        template = Path(Path.cwd(), f"scripts/news/{template}")
+
+    if not template.exists():
+        err(
+            f"{ERROR_MSG_PREFIX} Template at {template.relative_to(Path.cwd())} not found :(. Make sure "
+            f"your path is relative to `scripts/news`!"
+        )
+
+    name, version = get_project_meta()
+    changelog = render_fragments(
+        section_names=CONFIG["types"],
+        template=template,
+        metadata=file_metadata,
+        wrap=True,
+        version_data=(name, version),
+        date=date,
+    )
+    changelog_path = Path(Path.cwd(), f"news/{version}.md")
+
+    with open(changelog_path, mode="w") as filename:
+        filename.write(changelog)
+
+    out(f"All done! ✨ 🍰 ✨ Created changelog at {changelog_path}")
 
 
 if __name__ == "__main__":

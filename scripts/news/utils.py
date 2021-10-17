@@ -1,15 +1,17 @@
 import base64
+import datetime
 import glob
 import hashlib
 import os
 import sys
+import textwrap
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
-import click
 import tomli
-from click import Option, echo, style
+from click import Context, Option, echo, style
+from jinja2 import Template
 
 from . import ERROR_MSG_PREFIX
 
@@ -62,7 +64,7 @@ class NotRequiredIf(Option):
         ).strip()
         super(NotRequiredIf, self).__init__(*args, **kwargs)
 
-    def handle_parse_result(self, ctx: click.Context, opts: Mapping[str, Any], args: List[str]):
+    def handle_parse_result(self, ctx: Context, opts: Mapping[str, Any], args: List[str]):
         we_are_present = self.name in opts
         other_present = self.not_required_if in opts
 
@@ -113,7 +115,13 @@ def get_metadata_from_file(path: Path) -> dict:
     with open(path, "r", encoding="utf-8") as file:
         news_entry = file.read()
 
-    metadata = {"date": date, "gh_pr": gh_pr, "news_type": news_type, "nonce": nonce, "new_entry": news_entry}
+    metadata = {
+        "date": date,
+        "gh_pr": gh_pr,
+        "news_type": news_type,
+        "nonce": nonce,
+        "news_entry": news_entry,
+    }
     return metadata
 
 
@@ -148,3 +156,41 @@ def load_toml_config() -> Dict[str, Any]:
         sys.exit(1)
     else:
         return toml_dict
+
+
+def render_fragments(
+    section_names: Dict[str, dict],
+    template: Path,
+    metadata: Dict[str, list],
+    wrap: bool,
+    version_data: Tuple[str, str],
+    date: Union[str, datetime.datetime],
+):
+    """Render the fragments into a news file."""
+    print(template)
+    with open(template, mode="r") as template_file:
+        jinja_template = Template(template_file.read(), trim_blocks=True)
+
+    version_data = {"name": version_data[0], "version": version_data[1], "date": date}
+    res = jinja_template.render(
+        section_names={_type: config["name"] for _type, config in section_names.items()},
+        version_data=version_data,
+        metadata=metadata,
+    )
+
+    done = []
+    for line in res.split("\n"):
+        if wrap:
+            done.append(
+                textwrap.fill(
+                    line,
+                    width=79,
+                    subsequent_indent=" ",
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                )
+            )
+        else:
+            done.append(line)
+
+    return "\n".join(done).rstrip() + "\n"
