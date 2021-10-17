@@ -218,7 +218,7 @@ def cli_build_news(ctx: click.Context, version: str, force: bool, template: str)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     if not filenames:
-        err(f"No news fragments found. Exiting")
+        err("No news fragments found. Exiting")
         ctx.exit()
     else:
         for filename in filenames:
@@ -260,6 +260,12 @@ def cli_build_news(ctx: click.Context, version: str, force: bool, template: str)
         filename.write(changelog)
 
     out(f"All done! ✨ 🍰 ✨ Created changelog at {changelog_path}")
+
+    files = Path(Path.cwd(), "scripts/news/next")
+    for news_fragment in files.glob("*.md"):
+        os.remove(news_fragment)
+
+    out("🍰 Cleared existing `scripts/news/next` changelogs!")
 
 
 if __name__ == "__main__":
