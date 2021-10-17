@@ -30,16 +30,16 @@ SOFTWARE.
 """
 from __future__ import annotations
 
+import asyncio
 import collections
 import itertools
 import logging
 import unittest.mock
-from asyncio import AbstractEventLoop
 from typing import TYPE_CHECKING, Iterable, Optional
 
+import aiohttp
 import discord
 import discord.mixins
-from aiohttp import ClientSession
 from discord.ext.commands import Context
 
 import modmail.bot
@@ -325,7 +325,7 @@ class MockUser(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
 
 def _get_mock_loop() -> unittest.mock.Mock:
     """Return a mocked asyncio.AbstractEventLoop."""
-    loop = unittest.mock.create_autospec(spec=AbstractEventLoop, spec_set=True)
+    loop = unittest.mock.create_autospec(spec=asyncio.AbstractEventLoop, spec_set=True)
 
     # Since calling `create_task` on our MockBot does not actually schedule the coroutine object
     # as a task in the asyncio loop, this `side_effect` calls `close()` on the coroutine object
@@ -357,7 +357,7 @@ class MockBot(CustomMockMixin, unittest.mock.MagicMock):
         super().__init__(**kwargs)
 
         self.loop = _get_mock_loop()
-        self.http_session = unittest.mock.create_autospec(spec=ClientSession, spec_set=True)
+        self.http_session = unittest.mock.create_autospec(spec=aiohttp.ClientSession, spec_set=True)
 
 
 # Create a TextChannel instance to get a realistic MagicMock of `discord.TextChannel`
