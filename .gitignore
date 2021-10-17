@@ -137,6 +137,7 @@ logs
 
 # Configuration
 *config.toml
+!scripts/news/default_config.toml
 
 # Custom docker compose override
 docker-compose.override.yml

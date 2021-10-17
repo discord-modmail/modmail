@@ -3,14 +3,13 @@ import subprocess
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from pprint import pprint
 from typing import Optional
 
 import click
 import requests
 
 from . import ERROR_MSG_PREFIX, __version__
-from .utils import NotRequiredIf, err, get_metadata_from_file, glob_fragments, nonceify, out
+from .utils import NotRequiredIf, err, get_metadata_from_file, glob_fragments, load_toml_config, nonceify, out
 
 
 PR_ENDPOINT = "https://api.github.com/repos/discord-modmail/modmail/pulls/{number}"
@@ -31,7 +30,9 @@ NO_NEWS_PATH_ERROR = (
     "doesn't exist please create it and run this command again :) Happy change-logging!"
 )
 
-SECTIONS = ["Security", "Documentation", "Tests", "Features", "Internal", "BugFixes"]
+
+CONFIG = load_toml_config()
+SECTIONS = [config["name"] for _type, config in CONFIG.get("types").items()]
 
 
 class NewsFragment:
@@ -96,11 +97,10 @@ def validate_pull_request_number(
     return value
 
 
-@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
-@click.option("-v", "--verbose", is_flag=True, help="Enables verbose mode")
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]), invoke_without_command=True)
 @click.version_option(version=__version__)
 @click.pass_context
-def cli_main(ctx: click.Context, verbose: bool) -> None:
+def cli_main(ctx: click.Context) -> None:
     """
     Modmail News 📜🤖.
 
@@ -224,7 +224,6 @@ def cli_build_news(ctx: click.Context, version: str, force: bool, template: str)
         file_metadata[news_type].append(fragment)
 
     file_metadata["release date"] = date
-    pprint(file_metadata)
 
 
 if __name__ == "__main__":

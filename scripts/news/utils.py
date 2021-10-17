@@ -2,8 +2,10 @@ import base64
 import glob
 import hashlib
 import os
+import sys
+import traceback
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import click
 import tomli
@@ -122,3 +124,27 @@ def get_project_meta() -> Tuple[str, str]:
     version = file_contents["tool"]["poetry"]["version"]
     name = file_contents["tool"]["poetry"]["name"]
     return name, version
+
+
+def load_toml_config() -> Dict[str, Any]:
+    config_path = Path(Path.cwd(), "scripts/news/config.toml")
+    default_config_url = "URL HERE PLEASE"
+
+    if not config_path.exists():
+        err(
+            f"Configuration not found. Create a config file at '{config_path}', and see "
+            f"'{default_config_url}' for an example configuration. "
+        )
+        sys.exit(1)
+    try:
+        with open(config_path, mode="r") as file:
+            toml_dict = tomli.loads(file.read())
+    except tomli.TOMLDecodeError as e:
+        message = "Invalid changelog news configuration at {}\n{}".format(
+            config_path,
+            "".join(traceback.format_exception_only(type(e), e)),
+        )
+        err(message)
+        sys.exit(1)
+    else:
+        return toml_dict
