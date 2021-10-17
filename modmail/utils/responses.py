@@ -4,11 +4,11 @@ Helper methods for responses from the bot to the user.
 These help ensure consistency between errors, as they will all be consistent between different uses.
 """
 import logging
-from random import choice
-from typing import List
+import random
+import typing
 
 import discord
-from discord.ext.commands import Context
+from discord.ext import commands
 
 from modmail.log import ModmailLogger
 
@@ -32,7 +32,7 @@ logger: ModmailLogger = logging.getLogger(__name__)
 
 DEFAULT_SUCCESS_COLOUR = discord.Colour.green()
 DEFAULT_SUCCESS_COLOR = DEFAULT_SUCCESS_COLOUR
-SUCCESS_HEADERS: List[str] = [
+SUCCESS_HEADERS: typing.List[str] = [
     "You got it.",
     "Done.",
     "Affirmative.",
@@ -46,7 +46,7 @@ SUCCESS_HEADERS: List[str] = [
 
 DEFAULT_ERROR_COLOUR = discord.Colour.red()
 DEFAULT_ERROR_COLOR = DEFAULT_ERROR_COLOUR
-ERROR_HEADERS: List[str] = [
+ERROR_HEADERS: typing.List[str] = [
     "Abort!",
     "FAIL.",
     "I cannot do that.",
@@ -87,7 +87,7 @@ async def send_positive_response(
     """
     kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", discord.AllowedMentions.none())
 
-    if isinstance(channel, Context):
+    if isinstance(channel, commands.Context):
         channel = channel.channel
 
     logger.debug(f"Requested to send affirmative message to {channel!s}. Response: {response!s}")
@@ -103,7 +103,7 @@ async def send_positive_response(
 
     if embed is _UNSET:
         embed = discord.Embed(colour=colour)
-    embed.title = choice(SUCCESS_HEADERS)
+    embed.title = random.choice(SUCCESS_HEADERS)
     embed.description = response
 
     if message is None:
@@ -130,7 +130,7 @@ async def send_negatory_response(
     """
     kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", discord.AllowedMentions.none())
 
-    if isinstance(channel, Context):
+    if isinstance(channel, commands.Context):
         channel = channel.channel
 
     logger.debug(f"Requested to send negatory message to {channel!s}. Response: {response!s}")
@@ -146,7 +146,7 @@ async def send_negatory_response(
 
     if embed is _UNSET:
         embed = discord.Embed(colour=colour)
-    embed.title = choice(ERROR_HEADERS)
+    embed.title = random.choice(ERROR_HEADERS)
     embed.description = response
 
     if message is None:
