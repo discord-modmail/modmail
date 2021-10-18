@@ -136,14 +136,7 @@ def get_project_meta() -> Tuple[str, str]:
 
 def load_toml_config() -> Dict[str, Any]:
     config_path = Path(Path.cwd(), "scripts/news/config.toml")
-    default_config_url = "URL HERE PLEASE"
 
-    if not config_path.exists():
-        err(
-            f"Configuration not found. Create a config file at '{config_path}', and see "
-            f"'{default_config_url}' for an example configuration. "
-        )
-        sys.exit(1)
     try:
         with open(config_path, mode="r") as file:
             toml_dict = tomli.loads(file.read())
