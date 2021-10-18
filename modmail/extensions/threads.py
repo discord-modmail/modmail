@@ -12,7 +12,6 @@ from discord.ext.commands import Context, Greedy
 from discord.utils import escape_markdown
 
 from modmail.utils.cogs import ExtMetadata, ModmailCog
-from modmail.utils.converters import Duration
 from modmail.utils.extensions import BOT_MODE, BotModes
 from modmail.utils.threads import Ticket, is_modmail_thread
 from modmail.utils.threads.errors import ThreadAlreadyExistsError, ThreadNotFoundError
@@ -716,7 +715,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     @is_modmail_thread()
     @commands.group(invoke_without_command=True)
-    async def close(self, ctx: Context, _: Optional[Duration] = None, *, contents: str = None) -> None:
+    async def close(self, ctx: Context, *, contents: str = None) -> None:
         """Close the current thread after `after` time from now."""
         # TODO: Implement after duration
         try:
