@@ -97,7 +97,14 @@ class TicketsCog(ModmailCog, name="Threads"):
     def cog_unload(self) -> None:
         """Cancel any tasks that may be running on unload."""
         self.fetch_necessary_values.cancel()
+
         super().cog_unload()
+
+    async def add_ticket(self, ticket: Ticket, /) -> Ticket:
+        """Save a newly created ticket."""
+        self.bot._tickets[ticket.recipient.id] = ticket
+        self.bot._tickets[ticket.thread.id] = ticket
+        return Ticket
 
     def get_ticket(self, id: int, /) -> Optional[Ticket]:
         """
@@ -106,7 +113,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         In the future this will be hooked into the database.
         """
         try:
-            ticket = self.bot.tickets[id]
+            ticket = self.bot._tickets[id]
         except KeyError:
             raise ThreadNotFoundError(f"Could not find thread from id {id}.") from None
         else:
@@ -204,11 +211,11 @@ class TicketsCog(ModmailCog, name="Threads"):
         # lock this next session, since we're checking if a thread already exists here
         # we want to ensure that anything entering this section can get validated.
         async with self.thread_create_delete_lock:
-            if recipient.id in self.bot.tickets.keys():
+            if recipient.id in self.bot._tickets.keys():
                 if raise_for_preexisting_ticket:
                     raise ThreadAlreadyExistsError(recipient.id)
                 else:
-                    return self.bot.tickets[recipient.id]
+                    return self.get_ticket(recipient.id)
 
             thread_channel, thread_msg = await self._start_discord_thread(
                 initial_message,
@@ -224,8 +231,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             )
             # add the ticket as both the recipient and the thread ids so
             # the tickets can be retrieved from both users or threads.
-            self.bot.tickets[recipient.id] = ticket
-            self.bot.tickets[thread_channel.id] = ticket
+            await self.add_ticket(ticket)
 
             # also save user dm channel id
             if recipient.dm_channel is None:
@@ -305,6 +311,7 @@ class TicketsCog(ModmailCog, name="Threads"):
     ) -> discord.Message:
         """Relay a message from guild to user."""
         if ticket.recipient.dm_channel is None:
+            # note, this is
             await ticket.recipient.create_dm()
 
         # thread -> dm
@@ -689,8 +696,8 @@ class TicketsCog(ModmailCog, name="Threads"):
                     pass
 
             try:
-                del self.bot.tickets[ticket.thread.id]
-                del self.bot.tickets[ticket.recipient.id]
+                del self.bot._tickets[ticket.thread.id]
+                del self.bot._tickets[ticket.recipient.id]
             except KeyError:
                 logger.warning("Ticket not found in tickets dict when attempting removal.")
             # ensure we get rid of the ticket messages, as this can be an extremely large dict
@@ -721,7 +728,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         """Close the current thread after `after` time from now."""
         # TODO: Implement after duration
         try:
-            ticket = self.bot.tickets[ctx.channel.id]
+            ticket = self.get_ticket(ctx.channel.id)
         except KeyError:
             await ctx.send("Error: this thread is not in the list of tickets.")
             return
@@ -740,8 +747,8 @@ class TicketsCog(ModmailCog, name="Threads"):
             return
 
         try:
-            ticket = self.bot.tickets[author.id]
-        except KeyError:
+            ticket = self.get_ticket(author.id)
+        except ThreadNotFoundError:
             # Thread doesn't exist, so create one.
             async with self.thread_create_lock:
                 try:
@@ -749,7 +756,7 @@ class TicketsCog(ModmailCog, name="Threads"):
                 except ThreadAlreadyExistsError:
                     # the thread already exists, so we still need to relay the message
                     # thankfully a keyerror should NOT happen now
-                    ticket = self.bot.tickets[author.id]
+                    ticket = self.get_ticket(author.id)
                     msg = await self.relay_message_to_guild(ticket, message)
                 else:
                     msg = await self.relay_message_to_guild(ticket, message)
@@ -914,8 +921,8 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         if FORWARD_MODERATOR_TYPING and isinstance(channel, discord.Thread):
             try:
-                ticket = self.bot.tickets[channel.id]
-            except KeyError:
+                ticket = self.get_ticket(channel.id)
+            except ThreadNotFoundError:
                 # Thread doesn't exist, so there's nowhere to relay the typing event.
                 return
             logger.debug(f"Relaying typing event from {user!s} in {channel!s} to {ticket.recipient!s}.")
@@ -925,8 +932,8 @@ class TicketsCog(ModmailCog, name="Threads"):
         # it can be tracked here: https://github.com/Rapptz/discord.py/issues/7432
         elif FORWARD_USER_TYPING and isinstance(channel, discord.DMChannel):
             try:
-                ticket = self.bot.tickets[user.id]
-            except KeyError:
+                ticket = self.get_ticket(user.id)
+            except ThreadNotFoundError:
                 # User doesn't have a ticket, so nowhere to relay the event.
                 return
             else:
@@ -985,8 +992,8 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # checks passed, closing the ticket
         try:
-            ticket = self.bot.tickets[after.id]
-        except KeyError:
+            ticket = self.get_ticket(after.id)
+        except ThreadNotFoundError:
             logger.debug(
                 "While closing a ticket, somehow checks passed but the thread did not exist... "
                 "This is likely due to missing audit log permissions."

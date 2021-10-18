@@ -36,13 +36,12 @@ class ModmailBot(commands.Bot):
     """
 
     logger: ModmailLogger = logging.getLogger(__name__)
-    tickets: t.Dict[int, Ticket] = dict()
+    _tickets: t.Dict[int, Ticket] = dict()
 
     def __init__(self, **kwargs):
         self.config = CONFIG
         self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
         self.http_session: t.Optional[ClientSession] = None
-        self._guild_available = asyncio.Event()
         self.start_time = arrow.utcnow()
 
         status = discord.Status.online
