@@ -257,6 +257,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             send_kwargs["allowed_mentions"] = discord.AllowedMentions(
                 everyone=False, users=False, roles=True, replied_user=False
             )
+        # TODO: !CONFIG add to configuration system.
         if self.bot.config.thread.thread_mention_role_id is not None:
             mention = f"<@&{self.bot.config.thread.thread_mention_role_id}>"
         else:
@@ -276,6 +277,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             color=NO_REPONSE_COLOUR,
         )
         embed.add_field(name="Opened since", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>")
+
         relayed_msg = await self.relay_channel.send(
             content=mention,
             embed=embed,
@@ -298,7 +300,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         return thread_channel, relayed_msg
 
-    async def _relay_message_to_user(
+    async def relay_message_to_user(
         self, ticket: Ticket, message: discord.Message, contents: str = None, *, delete: bool = True
     ) -> discord.Message:
         """Relay a message from guild to user."""
@@ -380,7 +382,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         ticket.messages[guild_message] = sent_message
         return sent_message
 
-    async def _relay_message_to_guild(
+    async def relay_message_to_guild(
         self, ticket: Ticket, message: discord.Message, contents: Optional[str] = None
     ) -> discord.Message:
         """Relay a message from user to guild."""
@@ -506,7 +508,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             await ctx.trigger_typing()
             await asyncio.sleep(1)
 
-        await self._relay_message_to_user(ticket, ctx.message, message)
+        await self.relay_message_to_user(ticket, ctx.message, message)
 
         if (log_embeds := ticket.log_message.embeds)[0].colour == NO_REPONSE_COLOUR:
             log_embeds[0].colour = HAS_RESPONSE_COLOUR
@@ -642,7 +644,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         else:
             await ctx.message.add_reaction(FAILURE_EMOJI)
 
-    async def _close_thread(
+    async def close_thread(
         self,
         ticket: Ticket,
         closer: Optional[Union[discord.User, discord.Member]] = None,
@@ -724,7 +726,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             await ctx.send("Error: this thread is not in the list of tickets.")
             return
 
-        await self._close_thread(ticket, ctx.author, contents=contents)
+        await self.close_thread(ticket, ctx.author, contents=contents)
 
     @ModmailCog.listener(name="on_message")
     async def on_dm_message(self, message: discord.Message) -> None:
@@ -748,9 +750,9 @@ class TicketsCog(ModmailCog, name="Threads"):
                     # the thread already exists, so we still need to relay the message
                     # thankfully a keyerror should NOT happen now
                     ticket = self.bot.tickets[author.id]
-                    msg = await self._relay_message_to_guild(ticket, message)
+                    msg = await self.relay_message_to_guild(ticket, message)
                 else:
-                    msg = await self._relay_message_to_guild(ticket, message)
+                    msg = await self.relay_message_to_guild(ticket, message)
                     if msg is None:
                         return
                     await message.channel.send(
@@ -764,7 +766,7 @@ class TicketsCog(ModmailCog, name="Threads"):
                         ]
                     )
         else:
-            msg = await self._relay_message_to_guild(ticket, message)
+            msg = await self.relay_message_to_guild(ticket, message)
             if msg is None:
                 return
 
@@ -832,7 +834,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             # get the user id
             author_id = self.dms_to_users[payload.channel_id]
         except KeyError:
-            channel = await self.bot.fetch_channel(payload.channel_id)
+            channel: discord.DMChannel = await self.bot.fetch_channel(payload.channel_id)
             author_id = channel.recipient.id
             # add user to dict
             self.dms_to_users[payload.channel_id] = author_id
@@ -991,7 +993,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             )
             return
 
-        await self._close_thread(
+        await self.close_thread(
             ticket,
             archiver,
             automatically_archived=automatically_archived,
