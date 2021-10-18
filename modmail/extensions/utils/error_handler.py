@@ -18,7 +18,7 @@ EXT_METADATA = ExtMetadata()
 
 ERROR_COLOUR = discord.Colour.red()
 
-ERROR_TITLE_REGEX = re.compile(r"(?<=[a-zA-Z])([A-Z])(?=[a-z])")
+ERROR_TITLE_REGEX = re.compile(r"((?<=[a-z])[A-Z]|(?<=[a-zA-Z])[A-Z](?=[a-z]))")
 
 ANY_DEV_MODE = BOT_MODE & (BotModes.DEVELOP.value + BotModes.PLUGIN_DEV.value)
 
