@@ -21,6 +21,7 @@ coloredlogs = "^15.0"
 "discord.py" = { url = "https://github.com/Rapptz/discord.py/archive/master.zip" }
 pydantic = { version = "^1.8.2", extras = ["dotenv"] }
 toml = "^0.10.2"
+rich = "^10.12.0"
 
 
 [tool.poetry.extras]
@@ -58,6 +59,7 @@ mkdocs-material = ">=7.1.9,<8.0.0"
 mkdocs-markdownextradata-plugin = ">=0.1.7,<0.2.0"
 click = "^8.0.3"
 Jinja2 = "^3.0.2"
+gidgethub = "^5.0.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

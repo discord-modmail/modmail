@@ -9,3 +9,4 @@ bugfix = { name = "Bug Fixes" }
 doc = { name = "Improved Documentation" }
 deprecation = { name = "Deprecations" }
 breaking = { name = "Breaking Changes" }
+internal = { name = "Internal" }
