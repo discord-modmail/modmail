@@ -8,6 +8,7 @@ Test modmail basics.
 import pytest
 
 from modmail.bot import ModmailBot
+from tests import mocks
 
 
 @pytest.mark.dependency(name="create_bot")
@@ -26,7 +27,7 @@ def bot() -> ModmailBot:
 
     ModmailBot instance.
     """
-    bot: ModmailBot = ModmailBot()
+    bot: ModmailBot = mocks.MockBot()
     return bot
 
 
@@ -42,9 +43,3 @@ async def test_bot_close(bot: ModmailBot) -> None:
         await bot.close()
     resp = stdout.getvalue()
     assert resp == ""
-
-
-@pytest.mark.dependency(depends=["create_bot"])
-def test_bot_main() -> None:
-    """Import modmail.__main__."""
-    from modmail.__main__ import main
