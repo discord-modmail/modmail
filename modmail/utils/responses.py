@@ -17,12 +17,12 @@ __all__ = (
     "DEFAULT_SUCCESS_COLOUR",
     "DEFAULT_SUCCESS_COLOR",
     "SUCCESS_HEADERS",
-    "DEFAULT_ERROR_COLOUR",
-    "DEFAULT_ERROR_COLOR",
-    "ERROR_HEADERS",
+    "DEFAULT_FAILURE_COLOUR",
+    "DEFAULT_FAILURE_COLOR",
+    "FAILURE_HEADERS",
+    "send_general_response",
     "send_positive_response",
     "send_negatory_response",
-    "send_response",
 )
 
 _UNSET = object()
@@ -44,9 +44,9 @@ SUCCESS_HEADERS: typing.List[str] = [
     "Your wish is my command.",
 ]
 
-DEFAULT_ERROR_COLOUR = discord.Colour.red()
-DEFAULT_ERROR_COLOR = DEFAULT_ERROR_COLOUR
-ERROR_HEADERS: typing.List[str] = [
+DEFAULT_FAILURE_COLOUR = discord.Colour.red()
+DEFAULT_FAILURE_COLOR = DEFAULT_FAILURE_COLOUR
+FAILURE_HEADERS: typing.List[str] = [
     "Abort!",
     "FAIL.",
     "I cannot do that.",
@@ -67,12 +67,55 @@ ERROR_HEADERS: typing.List[str] = [
 ]
 
 
+async def send_general_response(
+    channel: discord.abc.Messageable,
+    response: str,
+    *,
+    message: discord.Message = None,
+    embed: discord.Embed = _UNSET,
+    colour: discord.Colour = None,
+    title: str = None,
+    _kind: typing.Literal["general", "affirmative", "negatory"] = "general",
+    **kwargs,
+) -> discord.Message:
+    """
+    Helper method to send a response.
+
+    Shortcuts are provided as `send_positive_response` and `send_negatory_response` which
+    fill in the title and colour automatically.
+    """
+    kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", discord.AllowedMentions.none())
+
+    if isinstance(channel, commands.Context):  # pragma: nocover
+        channel = channel.channel
+
+    logger.debug(f"Requested to send {_kind} message to {channel!s}. Response: {response!s}")
+
+    if embed is None:
+        if message is None:
+            return await channel.send(response, **kwargs)
+        else:
+            return await message.edit(response, **kwargs)
+
+    if embed is _UNSET:  # pragma: no branch
+        embed = discord.Embed(colour=colour or discord.Embed.Empty)
+
+    if title is not None:
+        embed.title = title
+
+    embed.description = response
+
+    if message is None:
+        return await channel.send(embed=embed, **kwargs)
+    else:
+        return await message.edit(embed=embed, **kwargs)
+
+
 async def send_positive_response(
     channel: discord.abc.Messageable,
     response: str,
-    embed: discord.Embed = _UNSET,
+    *,
     colour: discord.Colour = _UNSET,
-    message: discord.Message = None,
     **kwargs,
 ) -> discord.Message:
     """
@@ -85,39 +128,25 @@ async def send_positive_response(
 
     If message is provided, it will attempt to edit that message rather than sending a new one.
     """
-    kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", discord.AllowedMentions.none())
-
-    if isinstance(channel, commands.Context):
-        channel = channel.channel
-
-    logger.debug(f"Requested to send affirmative message to {channel!s}. Response: {response!s}")
-
-    if embed is None:
-        if message is None:
-            return await channel.send(response, **kwargs)
-        else:
-            return await message.edit(response, **kwargs)
-
-    if colour is _UNSET:
+    if colour is _UNSET:  # pragma: no branch
         colour = DEFAULT_SUCCESS_COLOUR
 
-    if embed is _UNSET:
-        embed = discord.Embed(colour=colour)
-    embed.title = random.choice(SUCCESS_HEADERS)
-    embed.description = response
+    kwargs["title"] = kwargs.get("title", random.choice(SUCCESS_HEADERS))
 
-    if message is None:
-        return await channel.send(embed=embed, **kwargs)
-    else:
-        return await message.edit(embed=embed, **kwargs)
+    return await send_general_response(
+        channel=channel,
+        response=response,
+        colour=colour,
+        _kind="affirmative",
+        **kwargs,
+    )
 
 
 async def send_negatory_response(
     channel: discord.abc.Messageable,
     response: str,
-    embed: discord.Embed = _UNSET,
+    *,
     colour: discord.Colour = _UNSET,
-    message: discord.Message = None,
     **kwargs,
 ) -> discord.Message:
     """
@@ -128,51 +157,15 @@ async def send_negatory_response(
     If embed is provided, this method will send a response using the provided embed, edited in place.
     Extra kwargs are passed to Messageable.send()
     """
-    kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", discord.AllowedMentions.none())
+    if colour is _UNSET:  # pragma: no branch
+        colour = DEFAULT_FAILURE_COLOUR
 
-    if isinstance(channel, commands.Context):
-        channel = channel.channel
+    kwargs["title"] = kwargs.get("title", random.choice(FAILURE_HEADERS))
 
-    logger.debug(f"Requested to send negatory message to {channel!s}. Response: {response!s}")
-
-    if embed is None:
-        if message is None:
-            return await channel.send(response, **kwargs)
-        else:
-            return await message.edit(response, **kwargs)
-
-    if colour is _UNSET:
-        colour = DEFAULT_ERROR_COLOUR
-
-    if embed is _UNSET:
-        embed = discord.Embed(colour=colour)
-    embed.title = random.choice(ERROR_HEADERS)
-    embed.description = response
-
-    if message is None:
-        return await channel.send(embed=embed, **kwargs)
-    else:
-        return await message.edit(embed=embed, **kwargs)
-
-
-async def send_response(
-    channel: discord.abc.Messageable,
-    response: str,
-    success: bool,
-    embed: discord.Embed = _UNSET,
-    colour: discord.Colour = _UNSET,
-    message: discord.Message = None,
-    **kwargs,
-) -> discord.Message:
-    """
-    Send a response based on success or failure.
-
-    Requires a messageable, and a response.
-    If embed is set to None, this will send response as a plaintext message, with no allowed_mentions.
-    If embed is provided, this method will send a response using the provided embed, edited in place.
-    Extra kwargs are passed to Messageable.send()
-    """
-    if success:
-        return await send_positive_response(channel, response, embed, colour, message, **kwargs)
-    else:
-        return await send_negatory_response(channel, response, embed, colour, message, **kwargs)
+    return await send_general_response(
+        channel=channel,
+        response=response,
+        colour=colour,
+        _kind="negatory",
+        **kwargs,
+    )
