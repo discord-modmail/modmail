@@ -1,17 +1,34 @@
-import enum
 import pathlib
 import re
+import sys
+import traceback
+from typing import Tuple
 
-import click
 import requests
-
-from ..utils import load_toml_config
-
+import tomli
 
 NEWS_NEXT_DIR = "news/next/"
 SKIP_NEWS_LABEL = "skip changelog"
 GH_API_URL = "https://api.github.com/"
 HEADERS = {"accept": "application/vnd.github.v3+json"}
+
+
+def load_toml_config() -> dict:
+    config_path = pathlib.Path(pathlib.Path.cwd(), "scripts/news/config.toml")
+
+    try:
+        with open(config_path, mode="r") as file:
+            toml_dict = tomli.loads(file.read())
+    except tomli.TOMLDecodeError as e:
+        message = "Invalid changelog news configuration at {}\n{}".format(
+            config_path,
+            "".join(traceback.format_exception_only(type(e), e)),
+        )
+        print(message)
+        sys.exit(1)
+    else:
+        return toml_dict
+
 
 CONFIG = load_toml_config()
 SECTIONS = [_type for _type, _ in CONFIG.get("types").items()]
@@ -21,17 +38,9 @@ FILENAME_RE = re.compile(
     r"pr-\d+(?:,\d+)*\."  # Issue number(s)
     fr"({'|'.join(SECTIONS)})\."  # Section type
     r"[A-Za-z0-9_=-]+\."  # Nonce (URL-safe base64)
-    r"md",  # File extension"""
+    r"md",  # File extension
     re.VERBOSE,
 )
-
-
-class StatusState(enum.Enum):
-    """Status state for the changelog checking."""
-
-    SUCCESS = "success"
-    ERROR = "error"
-    FAILURE = "failure"
 
 
 def is_news_dir(filename: str) -> bool:
@@ -39,14 +48,11 @@ def is_news_dir(filename: str) -> bool:
     return filename.startswith(NEWS_NEXT_DIR)
 
 
-@click.command()
-@click.argument("pr", nargs=1, type=int)
-def main(pr: int) -> None:
+def main(pr: int) -> Tuple[str, bool]:
     """Main function to check for a changelog entry."""
     r = requests.get(f"{GH_API_URL}repos/discord-modmail/modmail/pulls/{pr}/files", headers=HEADERS)
     files_changed = r.json()
     in_next_dir = file_found = False
-    status = None
 
     for file in files_changed:
         if not is_news_dir(file["filename"]):
@@ -57,7 +63,7 @@ def main(pr: int) -> None:
             continue
         file_found = True
         if FILENAME_RE.match(file_path.name) and len(file["patch"]) >= 1:
-            status = (f"News entry found in {NEWS_NEXT_DIR}", StatusState.SUCCESS)
+            status = (f"News entry found in {NEWS_NEXT_DIR}", True)
             break
     else:
         _r = requests.get(f"{GH_API_URL}repos/discord-modmail/modmail/pulls/{pr}", headers=HEADERS)
@@ -73,10 +79,12 @@ def main(pr: int) -> None:
             else:
                 description = "News entry file name incorrectly formatted"
 
-        status = (description, StatusState.ERROR)
+        status = (description, False)
 
-    print(status)
+    return status
 
 
 if __name__ == "__main__":
-    main()
+    message, status = main(int(sys.argv[1]))
+    print(message)
+    sys.exit(0 if status else 1)
