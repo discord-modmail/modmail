@@ -4,7 +4,6 @@ import re
 
 import click
 import requests
-from rich import print
 
 from ..utils import load_toml_config
 
