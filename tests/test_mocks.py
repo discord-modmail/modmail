@@ -171,6 +171,10 @@ class TestDiscordMocks:
         assert isinstance(context.author, test_mocks.MockMember)
         assert isinstance(context.message, test_mocks.MockMessage)
 
+        # ensure that the mocks are the same attributes, like discord.py
+        assert context.message.channel is context.channel
+        assert context.channel.guild is context.guild
+
     @pytest.mark.parametrize(
         ["mock", "valid_attribute"],
         [
