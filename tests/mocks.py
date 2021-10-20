@@ -34,6 +34,7 @@ import asyncio
 import collections
 import itertools
 import logging
+import typing
 import unittest.mock
 from typing import TYPE_CHECKING, Iterable, Optional
 
@@ -543,12 +544,16 @@ class MockContext(CustomMockMixin, unittest.mock.MagicMock):
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.me = kwargs.get("me", MockMember())
-        self.bot = kwargs.get("bot", MockBot())
-        self.guild = kwargs.get("guild", MockGuild())
-        self.author = kwargs.get("author", MockMember())
-        self.channel = kwargs.get("channel", MockTextChannel())
-        self.message = kwargs.get("message", MockMessage())
+        self.me: typing.Union[MockMember, MockUser] = kwargs.get("me", MockMember())
+        self.bot: MockBot = kwargs.get("bot", MockBot())
+        self.guild: typing.Optional[MockGuild] = kwargs.get("guild", MockGuild())
+        self.author: typing.Union[MockMember, MockUser] = kwargs.get("author", MockMember())
+        self.channel: typing.Union[MockTextChannel, MockThread, MockDMChannel] = kwargs.get(
+            "channel", MockTextChannel(guild=self.guild)
+        )
+        self.message: MockMessage = kwargs.get(
+            "message", MockMessage(author=self.author, channel=self.channel)
+        )
         self.invoked_from_error_handler = kwargs.get("invoked_from_error_handler", False)
 
 
