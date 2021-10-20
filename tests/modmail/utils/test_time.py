@@ -9,8 +9,9 @@ from modmail.utils.time import TimeStampEnum
     ["timestamp", "expected", "mode"],
     [
         [arrow.get(1634593650), "<t:1634593650:f>", TimeStampEnum.SHORT_DATE_TIME],
-        [arrow.get(1), "<t:1:f>", TimeStampEnum.SHORT_DATE_TIME],
+        [arrow.get(1), "<t:1:f>", TimeStampEnum.DEFAULT],
         [arrow.get(12356941), "<t:12356941:R>", TimeStampEnum.RELATIVE_TIME],
+        [arrow.get(8675309).datetime, "<t:8675309:D>", TimeStampEnum.LONG_DATE],
     ],
 )
 def test_timestamp(timestamp, expected: str, mode: utils_time.TimeStampEnum):
