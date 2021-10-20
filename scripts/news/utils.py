@@ -18,7 +18,7 @@ from . import ERROR_MSG_PREFIX
 
 def nonceify(body: str) -> str:
     """
-    Nonceify the changelog body!
+    Nonceify the news body!
 
     Generate hopefully-unique string of characters meant to prevent filename collisions. by computing the
     MD5 hash of the text, converting it to base64 (using the "urlsafe" alphabet), and taking the first
@@ -55,6 +55,8 @@ def err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
 
 
 class NotRequiredIf(Option):
+    """Custom option class to make option mutually exclusive with another i.e. 'not_required_if'."""
+
     def __init__(self, *args, **kwargs):
         self.not_required_if = kwargs.pop("not_required_if")
         assert self.not_required_if, "'not_required_if' parameter required"  # noqa: S101
@@ -64,7 +66,10 @@ class NotRequiredIf(Option):
         ).strip()
         super(NotRequiredIf, self).__init__(*args, **kwargs)
 
-    def handle_parse_result(self, ctx: Context, opts: Mapping[str, Any], args: List[str]):
+    def handle_parse_result(
+        self, ctx: Context, opts: Mapping[str, Any], args: List[str]
+    ) -> Tuple[Any, List[str]]:
+        """Check if option is mutually exclusive with another, if yes print error and exist."""
         we_are_present = self.name in opts
         other_present = self.not_required_if in opts
 
@@ -82,12 +87,13 @@ class NotRequiredIf(Option):
         return super(NotRequiredIf, self).handle_parse_result(ctx, opts, args)
 
 
-def sanitize_section(section):
+def sanitize_section(section: str) -> str:
     """Cleans up a section string, making it viable as a directory name."""
     return section.replace("/", "-").lower()
 
 
 def glob_fragments(version: str, sections: List[str]) -> List[str]:
+    """Glob all news fragments present on the repo."""
     filenames = []
     base = os.path.join("news", version)
 
@@ -108,7 +114,7 @@ def glob_fragments(version: str, sections: List[str]) -> List[str]:
 
 
 def get_metadata_from_file(path: Path) -> dict:
-    #  path = Path(Path.cwd(), f"news/next/pr-{self.gh_pr}.{self.news_type}.{self.nonce}.md")
+    """Get metadata information from a news entry."""
     new_fragment_file = path.stem
     date, gh_pr, news_type, nonce = new_fragment_file.split(".")
 
@@ -126,6 +132,7 @@ def get_metadata_from_file(path: Path) -> dict:
 
 
 def get_project_meta() -> Tuple[str, str]:
+    """Get the project version and name from pyproject.toml file."""
     with open("pyproject.toml", "rb") as pyproject:
         file_contents = tomli.load(pyproject)
 
@@ -135,13 +142,14 @@ def get_project_meta() -> Tuple[str, str]:
 
 
 def load_toml_config() -> Dict[str, Any]:
+    """Load the news TOML configuration file and exit if found to be invalid."""
     config_path = Path(Path.cwd(), "scripts/news/config.toml")
 
     try:
         with open(config_path, mode="r") as file:
             toml_dict = tomli.loads(file.read())
     except tomli.TOMLDecodeError as e:
-        message = "Invalid changelog news configuration at {}\n{}".format(
+        message = "Invalid news configuration at {0}\n{1}".format(
             config_path,
             "".join(traceback.format_exception_only(type(e), e)),
         )
@@ -158,7 +166,7 @@ def render_fragments(
     wrap: bool,
     version_data: Tuple[str, str],
     date: Union[str, datetime.datetime],
-):
+) -> str:
     """Render the fragments into a news file."""
     print(template)
     with open(template, mode="r") as template_file:

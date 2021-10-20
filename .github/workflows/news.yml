@@ -1,4 +1,4 @@
-name: Changelog Entry Check
+name: Check for a news entry
 
 on:
   pull_request:
@@ -9,20 +9,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checks out the repository in the current folder.
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Set up the right version of Python
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
 
-      - name: Install dependencies using poetry
-        if: steps.python_cache.outputs.cache-hit != 'true'
+      # Install the required dependencies for using the feature, we aren't using cache here
+      # as the number is relatively small and having cache would be complete redundancy.
+      - name: Install dependencies using pip
         run: |
           pip install tomli requests
 
-      - name: Changelog Entry Check for the current PR
+      # Run the script for checking if there is a news entry for the current PR
+      - name: Check for a news entry in the news/next
         run: |
           python -m scripts.news.check_news_workflow ${{ github.event.pull_request.number }}

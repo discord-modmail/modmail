@@ -7,6 +7,7 @@ from typing import Tuple
 import requests
 import tomli
 
+
 NEWS_NEXT_DIR = "news/next/"
 SKIP_NEWS_LABEL = "skip changelog"
 GH_API_URL = "https://api.github.com/"
@@ -14,13 +15,14 @@ HEADERS = {"accept": "application/vnd.github.v3+json"}
 
 
 def load_toml_config() -> dict:
+    """Load the news TOML configuration file and exit if found to be invalid."""
     config_path = pathlib.Path(pathlib.Path.cwd(), "scripts/news/config.toml")
 
     try:
         with open(config_path, mode="r") as file:
             toml_dict = tomli.loads(file.read())
     except tomli.TOMLDecodeError as e:
-        message = "Invalid changelog news configuration at {}\n{}".format(
+        message = "Invalid news configuration at {0}\n{1}".format(
             config_path,
             "".join(traceback.format_exception_only(type(e), e)),
         )
@@ -70,16 +72,14 @@ def main(pr: int) -> Tuple[str, bool]:
         pr_data = _r.json()
         labels = [label["name"] for label in pr_data["labels"]]
         if SKIP_NEWS_LABEL in labels:
-            description = f"'{SKIP_NEWS_LABEL}' label found"
+            status = (f"'{SKIP_NEWS_LABEL}' label found", True)
         else:
             if not in_next_dir:
-                description = f'No news entry in {NEWS_NEXT_DIR} or "{SKIP_NEWS_LABEL}" label found'
+                status = (f'No news entry in {NEWS_NEXT_DIR} or "{SKIP_NEWS_LABEL}" label found', False)
             elif not file_found:
-                description = "News entry not in an appropriate directory"
+                status = ("News entry not in an appropriate directory", False)
             else:
-                description = "News entry file name incorrectly formatted"
-
-        status = (description, False)
+                status = ("News entry file name incorrectly formatted", False)
 
     return status
 
