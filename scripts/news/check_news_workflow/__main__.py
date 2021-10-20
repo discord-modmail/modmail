@@ -32,13 +32,9 @@ def load_toml_config() -> dict:
         return toml_dict
 
 
-CONFIG = load_toml_config()
-SECTIONS = [_type for _type, _ in CONFIG.get("types").items()]
-
 FILENAME_RE = re.compile(
     r"\d{4}-\d{2}-\d{2}(?:-\d{2}-\d{2}-\d{2})?\."  # match `yyyy-mm-dd` or `yyyy-m-d`
     r"pr-\d+(?:,\d+)*\."  # Issue number(s)
-    fr"({'|'.join(SECTIONS)})\."  # Section type
     r"[A-Za-z0-9_=-]+\."  # Nonce (URL-safe base64)
     r"md",  # File extension
     re.VERBOSE,

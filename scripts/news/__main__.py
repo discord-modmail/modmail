@@ -50,7 +50,7 @@ def save_news_fragment(ctx: click.Context, gh_pr: int, nonce: str, news_entry: s
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     path = Path(
         Path.cwd(),
-        f"news/next/{news_type}/{date}.pr-{str(gh_pr)}.{news_type}.{nonce}.md",
+        f"news/next/{news_type}/{date}.pr-{str(gh_pr)}.{nonce}.md",
     )
     if not path.parents[1].exists():
         err(NO_NEWS_PATH_ERROR, fg="blue")
