@@ -44,6 +44,7 @@ import discord.mixins
 from discord.ext.commands import Context
 
 import modmail.bot
+import modmail.utils.time
 
 
 for logger in logging.Logger.manager.loggerDict.values():
