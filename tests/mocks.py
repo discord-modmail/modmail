@@ -63,12 +63,12 @@ class HashableMixin(discord.mixins.EqualityComparable):
     Given that most of our features need the created_at function to work, we are typically using
     full fake discord ids, and so we still bitshift the id like Dpy does.
 
-    However, given that the hash of 4>>22 and 5>>22 is the same, we check if the number is above 22.
+    However, given that the hash of 4>>22 and 5>>22 is the same, we check if the number is above 1<<22.
     If so, we hash it. This could result in some weird behavior with the hash of
     1<<22 + 1 equaling 1.
     """
 
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: nocover
         id: int
 
     def __hash__(self):
@@ -324,6 +324,32 @@ class MockUser(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
             self.mention = f"@{self.name}"
 
 
+# Create a User instance to get a realistic Mock of `discord.ClientUser`
+_user_data_mock = collections.defaultdict(unittest.mock.MagicMock, {"accent_color": 0})
+clientuser_instance = discord.ClientUser(
+    data=unittest.mock.MagicMock(get=unittest.mock.Mock(side_effect=_user_data_mock.get)),
+    state=unittest.mock.MagicMock(),
+)
+
+
+class MockClientUser(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
+    """
+    A Mock subclass to mock ClientUser objects.
+
+    Instances of this class will follow the specifications of `discord.ClientUser` instances. For more
+    information, see the `MockGuild` docstring.
+    """
+
+    spec_set = clientuser_instance
+
+    def __init__(self, **kwargs) -> None:
+        default_kwargs = {"name": "user", "id": next(self.discord_id), "bot": True}
+        super().__init__(**collections.ChainMap(kwargs, default_kwargs))
+
+        if "mention" not in kwargs:
+            self.mention = f"@{self.name}"
+
+
 def _get_mock_loop() -> unittest.mock.Mock:
     """Return a mocked asyncio.AbstractEventLoop."""
     loop = unittest.mock.create_autospec(spec=asyncio.AbstractEventLoop, spec_set=True)
@@ -356,6 +382,7 @@ class MockBot(CustomMockMixin, unittest.mock.MagicMock):
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
+        self.user = MockClientUser()
 
         self.loop = _get_mock_loop()
         self.http_session = unittest.mock.create_autospec(spec=aiohttp.ClientSession, spec_set=True)
@@ -544,9 +571,10 @@ class MockContext(CustomMockMixin, unittest.mock.MagicMock):
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.me: typing.Union[MockMember, MockUser] = kwargs.get("me", MockMember())
         self.bot: MockBot = kwargs.get("bot", MockBot())
-        self.guild: typing.Optional[MockGuild] = kwargs.get("guild", MockGuild())
+        self.guild: typing.Optional[MockGuild] = kwargs.get(
+            "guild", MockGuild(me=MockMember(id=self.bot.user.id, bot=True))
+        )
         self.author: typing.Union[MockMember, MockUser] = kwargs.get("author", MockMember())
         self.channel: typing.Union[MockTextChannel, MockThread, MockDMChannel] = kwargs.get(
             "channel", MockTextChannel(guild=self.guild)
@@ -555,6 +583,12 @@ class MockContext(CustomMockMixin, unittest.mock.MagicMock):
             "message", MockMessage(author=self.author, channel=self.channel)
         )
         self.invoked_from_error_handler = kwargs.get("invoked_from_error_handler", False)
+
+    @property
+    def me(self) -> typing.Union[MockMember, MockClientUser]:
+        """Similar to MockGuild.me except will return the class MockClientUser if guild is None."""
+        # bot.user will never be None at this point.
+        return self.guild.me if self.guild is not None else self.bot.user
 
 
 attachment_instance = discord.Attachment(data=unittest.mock.MagicMock(id=1), state=unittest.mock.MagicMock())

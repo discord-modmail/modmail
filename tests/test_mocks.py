@@ -175,6 +175,10 @@ class TestDiscordMocks:
         assert context.message.channel is context.channel
         assert context.channel.guild is context.guild
 
+        # ensure the me instance is of the right type and shtuff.
+        assert isinstance(context.me, test_mocks.MockMember)
+        assert context.me is context.guild.me
+
     @pytest.mark.parametrize(
         ["mock", "valid_attribute"],
         [
@@ -191,7 +195,7 @@ class TestDiscordMocks:
         """Accessing attributes that are valid for the objects they mock should succeed."""
         try:
             getattr(mock, valid_attribute)
-        except AttributeError:
+        except AttributeError:  # pragma: nocover
             msg = f"accessing valid attribute `{valid_attribute}` raised an AttributeError"
             pytest.fail(msg)
 
@@ -229,7 +233,7 @@ class TestDiscordMocks:
     def test_create_test_on_mock_bot_closes_passed_coroutine(self):
         """`bot.loop.create_task` should close the passed coroutine object to prevent warnings."""
 
-        async def dementati():
+        async def dementati():  # pragma: nocover
             """Dummy coroutine for testing purposes."""
             pass
 
@@ -259,6 +263,10 @@ class TestMockObjects:
         hemlock.color = 1
         assert hemlock.colour == 1
         assert hemlock.colour == hemlock.color
+
+        hemlock.accent_color = 123
+        assert hemlock.accent_colour == 123
+        assert hemlock.accent_colour == hemlock.accent_color
 
     def test_hashable_mixin_hash_returns_id(self):
         """Test the HashableMixing uses the id attribute for hashing."""
