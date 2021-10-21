@@ -70,13 +70,13 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
     async def handle_bot_missing_perms(
         self, ctx: commands.Context, error: commands.BotMissingPermissions
     ) -> bool:
-        """Handles bot missing permissing by dming the user if they have a permission which may be able to fix this."""  # noqa: E501
+        """Handles bot missing permissions by dming the user if they have a permission which may be able to fix this."""  # noqa: E501
         embed = self.error_embed("Permissions Failure", str(error))
         bot_perms = ctx.channel.permissions_for(ctx.me)
-        not_responded = True
+        responded = False
         if bot_perms >= discord.Permissions(send_messages=True, embed_links=True):
             await ctx.send(embeds=[embed])
-            not_responded = False
+            return True
         elif bot_perms >= discord.Permissions(send_messages=True):
             # make a message as similar to the embed, using as few permissions as possible
             # this is the only place we send a standard message instead of an embed
@@ -85,7 +85,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
                 "**Permissions Failure**\n\n"
                 "I am missing the permissions required to properly execute your command."
             )
-            # intentionally not setting responded to True, since we want to attempt to dm the user
+            # intentionally skipping setting responded to True, since we want to attempt to dm the user
             logger.warning(
                 f"Missing partial required permissions for {ctx.channel}. "
                 "I am able to send messages, but not embeds."
@@ -93,7 +93,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         else:
             logger.error(f"Unable to send an error message to channel {ctx.channel}")
 
-        if not_responded and ANY_DEV_MODE:
+        if not responded and ANY_DEV_MODE:  # pragma: nobranch
             # non-general permissions
             perms = discord.Permissions(
                 administrator=True,
@@ -111,7 +111,8 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
                 except discord.Forbidden:
                     logger.notice("Also encountered an error when trying to reply in dms.")
                     return False
-            return True
+                else:
+                    return True
 
     async def handle_check_failure(
         self, ctx: commands.Context, error: commands.CheckFailure
