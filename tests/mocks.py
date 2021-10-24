@@ -46,16 +46,6 @@ from discord.ext.commands import Context
 import modmail.bot
 
 
-for logger in logging.Logger.manager.loggerDict.values():
-    # Set all loggers to CRITICAL by default to prevent screen clutter during testing
-
-    if not isinstance(logger, logging.Logger):
-        # There might be some logging.PlaceHolder objects in there
-        continue
-
-    logger.setLevel(logging.CRITICAL)
-
-
 class HashableMixin(discord.mixins.EqualityComparable):
     """
     Mixin that provides similar hashing and equality functionality as discord.py's `Hashable` mixin.
