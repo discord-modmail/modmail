@@ -39,11 +39,28 @@ import unittest.mock
 from typing import TYPE_CHECKING, Iterable, Optional
 
 import aiohttp
+import arrow
 import discord
 import discord.mixins
 from discord.ext.commands import Context
+from discord.utils import time_snowflake
 
 import modmail.bot
+
+
+_snowflake_count = itertools.count(1)
+
+
+def generate_realistic_id() -> int:
+    """Generate realistic id, based from the current time."""
+    return discord.utils.time_snowflake(arrow.utcnow()) + next(_snowflake_count)
+
+
+class GenerateID:
+    """Class to be able to use next() to generate new ids."""
+
+    def __next__(self) -> int:
+        return generate_realistic_id()
 
 
 class HashableMixin(discord.mixins.EqualityComparable):
@@ -52,20 +69,13 @@ class HashableMixin(discord.mixins.EqualityComparable):
 
     Given that most of our features need the created_at function to work, we are typically using
     full fake discord ids, and so we still bitshift the id like Dpy does.
-
-    However, given that the hash of 4>>22 and 5>>22 is the same, we check if the number is above 1<<22.
-    If so, we hash it. This could result in some weird behavior with the hash of
-    1<<22 + 1 equaling 1.
     """
 
     if TYPE_CHECKING:  # pragma: nocover
         id: int
 
     def __hash__(self):
-        if self.id < 1 << 22:
-            return self.id
-        else:
-            return self.id >> 22
+        return self.id >> 22
 
 
 class ColourMixin:
@@ -106,7 +116,7 @@ class CustomMockMixin:
     """
 
     child_mock_type = unittest.mock.MagicMock
-    discord_id = itertools.count(0)
+    discord_id = GenerateID()
     spec_set = None
     additional_spec_asyncs = None
 
@@ -157,7 +167,7 @@ class CustomMockMixin:
 
 # Create a guild instance to get a realistic Mock of `discord.Guild`
 guild_data = {
-    "id": 1,
+    "id": generate_realistic_id(),
     "name": "guild",
     "region": "Europe",
     "verification_level": 2,
@@ -167,13 +177,13 @@ guild_data = {
     "banner": "banner.png",
     "mfa_level": 1,
     "splash": "splash.png",
-    "system_channel_id": 464033278631084042,
+    "system_channel_id": generate_realistic_id(),
     "description": "mocking is fun",
     "max_presences": 10_000,
     "max_members": 100_000,
     "preferred_locale": "UTC",
     "owner_id": 1,
-    "afk_channel_id": 464033278631084042,
+    "afk_channel_id": generate_realistic_id(),
 }
 guild_instance = discord.Guild(data=guild_data, state=unittest.mock.MagicMock())
 
@@ -217,7 +227,7 @@ class MockGuild(CustomMockMixin, unittest.mock.Mock, HashableMixin):
 
 
 # Create a Role instance to get a realistic Mock of `discord.Role`
-role_data = {"name": "role", "id": 1}
+role_data = {"name": "role", "id": generate_realistic_id()}
 role_instance = discord.Role(guild=guild_instance, state=unittest.mock.MagicMock(), data=role_data)
 
 
@@ -380,14 +390,14 @@ class MockBot(CustomMockMixin, unittest.mock.MagicMock):
 
 # Create a TextChannel instance to get a realistic MagicMock of `discord.TextChannel`
 channel_data = {
-    "id": 1,
+    "id": generate_realistic_id(),
     "type": "TextChannel",
     "name": "channel",
-    "parent_id": 1234567890,
+    "parent_id": generate_realistic_id(),
     "topic": "topic",
     "position": 1,
     "nsfw": False,
-    "last_message_id": 1,
+    "last_message_id": generate_realistic_id(),
 }
 state = unittest.mock.MagicMock()
 guild = unittest.mock.MagicMock()
@@ -436,7 +446,10 @@ class MockVoiceChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
 # Create data for the DMChannel instance
 state = unittest.mock.MagicMock()
 me = unittest.mock.MagicMock()
-dm_channel_data = {"id": 1, "recipients": [unittest.mock.MagicMock()]}
+dm_channel_data = {
+    "id": generate_realistic_id(),
+    "recipients": [unittest.mock.MagicMock()],
+}
 dm_channel_instance = discord.DMChannel(me=me, state=state, data=dm_channel_data)
 
 
@@ -457,7 +470,7 @@ class MockDMChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
 
 # Create CategoryChannel instance to get a realistic MagicMock of `discord.CategoryChannel`
 category_channel_data = {
-    "id": 1,
+    "id": generate_realistic_id(),
     "type": discord.ChannelType.category,
     "name": "category",
     "position": 1,
@@ -491,9 +504,9 @@ thread_metadata = {
     "archive_timestamp": "2021-10-17T20:35:48.058121+00:00",
 }
 thread_data = {
-    "id": "898070829617799179",
-    "parent_id": "898070393619902544",
-    "owner_id": "717983911824588862",
+    "id": generate_realistic_id(),
+    "parent_id": generate_realistic_id(),
+    "owner_id": generate_realistic_id(),
     "name": "user-0005",
     "type": discord.ChannelType.public_thread,
     "last_message_id": None,
@@ -524,8 +537,8 @@ class MockThread(CustomMockMixin, unittest.mock.Mock, HashableMixin):
 
 # Create a Message instance to get a realistic MagicMock of `discord.Message`
 message_data = {
-    "id": 1,
-    "webhook_id": 898069816622067752,
+    "id": generate_realistic_id(),
+    "webhook_id": generate_realistic_id(),
     "attachments": [],
     "embeds": [],
     "application": "Discord Modmail",
@@ -581,7 +594,9 @@ class MockContext(CustomMockMixin, unittest.mock.MagicMock):
         return self.guild.me if self.guild is not None else self.bot.user
 
 
-attachment_instance = discord.Attachment(data=unittest.mock.MagicMock(id=1), state=unittest.mock.MagicMock())
+attachment_instance = discord.Attachment(
+    data=unittest.mock.MagicMock(id=generate_realistic_id()), state=unittest.mock.MagicMock()
+)
 
 
 class MockAttachment(CustomMockMixin, unittest.mock.MagicMock):
@@ -612,7 +627,7 @@ class MockMessage(CustomMockMixin, unittest.mock.MagicMock):
         self.channel = kwargs.get("channel", MockTextChannel())
 
 
-emoji_data = {"require_colons": True, "managed": True, "id": 1, "name": "hyperlemon"}
+emoji_data = {"require_colons": True, "managed": True, "id": generate_realistic_id(), "name": "hyperlemon"}
 emoji_instance = discord.Emoji(guild=MockGuild(), state=unittest.mock.MagicMock(), data=emoji_data)
 
 

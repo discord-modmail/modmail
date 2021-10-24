@@ -33,6 +33,7 @@ SOFTWARE.
 import asyncio
 import unittest.mock
 
+import arrow
 import discord
 import discord.ext.commands
 import pytest
@@ -275,16 +276,6 @@ class TestMockObjects:
             pass
 
         scragly = MockScragly()
-        scragly.id = 10
-        assert hash(scragly) == scragly.id
-
-    def test_hashable_mixin_hash_returns_id_bitshift(self):
-        """Test the HashableMixing uses the id attribute for hashing when above 1<<22."""
-
-        class MockScragly(unittest.mock.Mock, test_mocks.HashableMixin):
-            pass
-
-        scragly = MockScragly()
         scragly.id = 10 << 22
         assert hash(scragly) == scragly.id >> 22
 
@@ -322,9 +313,9 @@ class TestMockObjects:
 
     @pytest.mark.parametrize(["mock_cls"], [[x] for x in hashable_mocks])
     def test_mock_class_with_hashable_mixin_uses_id_for_hashing(self, mock_cls):
-        """Test if the MagicMock subclasses that implement the HashableMixin use id for hash."""
-        instance = mock_cls(id=100)
-        assert hash(instance) == instance.id
+        """Test if the MagicMock subclasses that implement the HashableMixin use id bitshift for hash."""
+        instance = mock_cls(id=100 << 22)
+        assert hash(instance) == instance.id >> 22
 
     @pytest.mark.parametrize(["mock_class"], [[x] for x in hashable_mocks])
     def test_mock_class_with_hashable_mixin_uses_id_for_equality(self, mock_class):
