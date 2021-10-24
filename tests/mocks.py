@@ -271,8 +271,7 @@ class MockRole(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
 
 # Create a Member instance to get a realistic Mock of `discord.Member`
 member_data = {"user": "lemon", "roles": [1]}
-state_mock = unittest.mock.MagicMock()
-member_instance = discord.Member(data=member_data, guild=guild_instance, state=state_mock)
+member_instance = discord.Member(data=member_data, guild=guild_instance, state=unittest.mock.MagicMock())
 
 
 class MockMember(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
@@ -399,12 +398,14 @@ channel_data = {
     "nsfw": False,
     "last_message_id": generate_realistic_id(),
 }
-state = unittest.mock.MagicMock()
-guild = unittest.mock.MagicMock()
-text_channel_instance = discord.TextChannel(state=state, guild=guild, data=channel_data)
+text_channel_instance = discord.TextChannel(
+    state=unittest.mock.MagicMock(), guild=unittest.mock.MagicMock(), data=channel_data
+)
 
 channel_data["type"] = "VoiceChannel"
-voice_channel_instance = discord.VoiceChannel(state=state, guild=guild, data=channel_data)
+voice_channel_instance = discord.VoiceChannel(
+    state=unittest.mock.MagicMock(), guild=unittest.mock.MagicMock(), data=channel_data
+)
 
 
 class MockTextChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
@@ -444,13 +445,13 @@ class MockVoiceChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
 
 
 # Create data for the DMChannel instance
-state = unittest.mock.MagicMock()
-me = unittest.mock.MagicMock()
 dm_channel_data = {
     "id": generate_realistic_id(),
     "recipients": [unittest.mock.MagicMock()],
 }
-dm_channel_instance = discord.DMChannel(me=me, state=state, data=dm_channel_data)
+dm_channel_instance = discord.DMChannel(
+    me=unittest.mock.MagicMock(), state=unittest.mock.MagicMock(), data=dm_channel_data
+)
 
 
 class MockDMChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
@@ -476,9 +477,9 @@ category_channel_data = {
     "position": 1,
 }
 
-state = unittest.mock.MagicMock()
-guild = unittest.mock.MagicMock()
-category_channel_instance = discord.CategoryChannel(state=state, guild=guild, data=category_channel_data)
+category_channel_instance = discord.CategoryChannel(
+    state=unittest.mock.MagicMock(), guild=unittest.mock.MagicMock(), data=category_channel_data
+)
 
 
 class MockCategoryChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
@@ -515,9 +516,9 @@ thread_data = {
     "thread_metadata": thread_metadata,
 }
 
-state = unittest.mock.MagicMock()
-guild = unittest.mock.MagicMock()
-thread_instance = discord.Thread(state=state, guild=guild, data=thread_data)
+thread_instance = discord.Thread(
+    state=unittest.mock.MagicMock(), guild=unittest.mock.MagicMock(), data=thread_data
+)
 
 
 class MockThread(CustomMockMixin, unittest.mock.Mock, HashableMixin):
@@ -552,9 +553,9 @@ message_data = {
     "content": "content",
     "nonce": None,
 }
-state = unittest.mock.MagicMock()
-channel = unittest.mock.MagicMock()
-message_instance = discord.Message(state=state, channel=channel, data=message_data)
+message_instance = discord.Message(
+    state=unittest.mock.MagicMock(), channel=unittest.mock.MagicMock(), data=message_data
+)
 
 
 # Create a Context instance to get a realistic MagicMock of `discord.ext.commands.Context`
