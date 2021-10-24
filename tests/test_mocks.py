@@ -247,8 +247,7 @@ class TestDiscordMocks:
         assert error.match("cannot reuse already awaited coroutine")
 
 
-hashable_mocks = (test_mocks.MockRole, test_mocks.MockMember, test_mocks.MockGuild)
-print([[x] for x in hashable_mocks])
+HASHABLE_MOCKS = (test_mocks.MockRole, test_mocks.MockMember, test_mocks.MockGuild)
 
 
 class TestMockObjects:
@@ -311,13 +310,13 @@ class TestMockObjects:
         assert scragly != python
         assert (scragly != eevee) is False
 
-    @pytest.mark.parametrize(["mock_cls"], [[x] for x in hashable_mocks])
+    @pytest.mark.parametrize(["mock_cls"], [[x] for x in HASHABLE_MOCKS])
     def test_mock_class_with_hashable_mixin_uses_id_for_hashing(self, mock_cls):
         """Test if the MagicMock subclasses that implement the HashableMixin use id bitshift for hash."""
         instance = mock_cls(id=100 << 22)
         assert hash(instance) == instance.id >> 22
 
-    @pytest.mark.parametrize(["mock_class"], [[x] for x in hashable_mocks])
+    @pytest.mark.parametrize(["mock_class"], [[x] for x in HASHABLE_MOCKS])
     def test_mock_class_with_hashable_mixin_uses_id_for_equality(self, mock_class):
         """Test if MagicMocks that implement the HashableMixin use id for equality comparisons."""
         instance_one = mock_class()
@@ -331,7 +330,7 @@ class TestMockObjects:
         assert instance_one == instance_two
         assert (instance_one == instance_three) is False
 
-    @pytest.mark.parametrize(["mock_class"], [[x] for x in hashable_mocks])
+    @pytest.mark.parametrize(["mock_class"], [[x] for x in HASHABLE_MOCKS])
     def test_mock_class_with_hashable_mixin_uses_id_for_nonequality(self, mock_class):
         """Test if MagicMocks that implement HashableMixin use id for nonequality comparisons."""
         instance_one = mock_class()
