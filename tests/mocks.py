@@ -33,7 +33,6 @@ from __future__ import annotations
 import asyncio
 import collections
 import itertools
-import logging
 import typing
 import unittest.mock
 from typing import TYPE_CHECKING, Iterable, Optional
@@ -43,7 +42,6 @@ import arrow
 import discord
 import discord.mixins
 from discord.ext.commands import Context
-from discord.utils import time_snowflake
 
 import modmail.bot
 
@@ -150,8 +148,7 @@ class CustomMockMixin:
         if _new_name in self.__dict__["_spec_asyncs"]:
             return unittest.mock.AsyncMock(**kw)
 
-        _type = type(self)
-        if issubclass(_type, unittest.mock.MagicMock) and _new_name in unittest.mock._async_method_magics:
+        if isinstance(self, unittest.mock.MagicMock) and _new_name in unittest.mock._async_method_magics:
             # Any asynchronous magic becomes an AsyncMock
             klass = unittest.mock.AsyncMock
         else:
@@ -171,7 +168,7 @@ guild_data = {
     "name": "guild",
     "region": "Europe",
     "verification_level": 2,
-    "default_notications": 1,
+    "default_notifications": 1,
     "afk_timeout": 100,
     "icon": "icon.png",
     "banner": "banner.png",
@@ -212,7 +209,6 @@ class MockGuild(CustomMockMixin, unittest.mock.Mock, HashableMixin):
     >>> isinstance(guild, discord.Guild)
     True
 
-    For more info, see the `Mocking` section in `tests/README.md`.
     """
 
     spec_set = guild_instance
@@ -227,7 +223,10 @@ class MockGuild(CustomMockMixin, unittest.mock.Mock, HashableMixin):
 
 
 # Create a Role instance to get a realistic Mock of `discord.Role`
-role_data = {"name": "role", "id": generate_realistic_id()}
+role_data = {
+    "name": "role",
+    "id": generate_realistic_id(),
+}
 role_instance = discord.Role(guild=guild_instance, state=unittest.mock.MagicMock(), data=role_data)
 
 
@@ -270,7 +269,10 @@ class MockRole(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
 
 
 # Create a Member instance to get a realistic Mock of `discord.Member`
-member_data = {"user": "lemon", "roles": [1]}
+member_data = {
+    "user": "lemon",
+    "roles": [1],
+}
 member_instance = discord.Member(data=member_data, guild=guild_instance, state=unittest.mock.MagicMock())
 
 
