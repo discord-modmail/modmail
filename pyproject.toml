@@ -56,8 +56,10 @@ pytest-xdist = { version = "^2.3.0", extras = ["psutil"] }
 mkdocs = ">=1.1.2,<2.0.0"
 mkdocs-material = ">=7.1.9,<8.0.0"
 mkdocs-markdownextradata-plugin = ">=0.1.7,<0.2.0"
+# Custom changelogger
 click = "^8.0.3"
 Jinja2 = "^3.0.2"
+requests = "^2.26.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
