@@ -388,3 +388,50 @@ class TestMockObjects:
 
         mock = MyMock()
         assert isinstance(mock.__aenter__, unittest.mock.AsyncMock)
+
+
+class TestReturnTypes:
+    """
+    Our mocks are designed to automatically return the correct objects based on certain methods.
+
+    Eg, ctx.send should return a message object.
+    """
+
+    @pytest.mark.asyncio
+    async def test_message_edit_returns_self(self):
+        """Message editing edits the message in place. We should be returning the message."""
+        msg = test_mocks.MockMessage()
+
+        new_msg = await msg.edit()
+
+        assert isinstance(new_msg, discord.Message)
+
+        assert msg is new_msg
+
+    @pytest.mark.asyncio
+    async def test_channel_send_returns_message(self):
+        """Ensure that channel objects return mocked messages when sending messages."""
+        channel = test_mocks.MockTextChannel()
+
+        msg = await channel.send("hi")
+
+        print(type(msg))
+        assert isinstance(msg, discord.Message)
+
+    @pytest.mark.asyncio
+    async def test_message_thread_create_returns_thread(self):
+        """Thread create methods should return a MockThread."""
+        msg = test_mocks.MockMessage()
+
+        thread = await msg.create_thread()
+
+        assert isinstance(thread, discord.Thread)
+
+    @pytest.mark.asyncio
+    async def test_channel_thread_create_returns_thread(self):
+        """Thread create methods should return a MockThread."""
+        channel = test_mocks.MockTextChannel()
+
+        thread = await channel.create_thread()
+
+        assert isinstance(thread, discord.Thread)

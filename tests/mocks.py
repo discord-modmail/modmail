@@ -3,6 +3,9 @@ Helper methods for testing.
 
 Slight modifications have been made to support our bot.
 
+Additional modifications have been made to mocked class method side_effects
+in order to return the proper mock type, if it exists.
+
 Original Source:
 https://github.com/python-discord/bot/blob/d183d03fa2939bebaac3da49646449fdd4d00e6c/tests/helpers.py# noqa: E501
 
@@ -40,13 +43,38 @@ from typing import TYPE_CHECKING, Iterable, Optional
 import aiohttp
 import arrow
 import discord
+import discord.ext.commands
 import discord.mixins
-from discord.ext.commands import Context
 
 import modmail.bot
 
 
 _snowflake_count = itertools.count(1)
+
+__all__ = [
+    "generate_realistic_id",
+    "HashableMixin",
+    "CustomMockMixin",
+    "ColourMixin",
+    "MockAsyncWebhook",
+    "MockAttachment",
+    "MockBot",
+    "MockCategoryChannel",
+    "MockContext",
+    "MockClientUser",
+    "MockDMChannel",
+    "MockEmoji",
+    "MockGuild",
+    "MockMember",
+    "MockMessage",
+    "MockPartialEmoji",
+    "MockReaction",
+    "MockRole",
+    "MockTextChannel",
+    "MockThread",
+    "MockUser",
+    "MockVoiceChannel",
+]
 
 
 def generate_realistic_id() -> int:
@@ -98,6 +126,98 @@ class ColourMixin:
         self.accent_colour = color
 
 
+def generate_mock_attachment(*args, **kwargs):
+    return MockAttachment()
+
+
+def generate_mock_bot(*args, **kwargs):
+    return MockBot()
+
+
+def generate_mock_category_channel(*args, **kwargs):
+    return MockCategoryChannel()
+
+
+def generate_mock_context(*args, **kwargs):
+    return MockContext()
+
+
+def generate_mock_client_user(*args, **kwargs):
+    return MockClientUser()
+
+
+def generate_mock_dm_channel(*args, **kwargs):
+    return MockDMChannel()
+
+
+def generate_mock_emoji(*args, **kwargs):
+    return MockEmoji()
+
+
+def generate_mock_guild(*args, **kwargs):
+    return MockGuild()
+
+
+def generate_mock_member(*args, **kwargs):
+    return MockMember()
+
+
+def generate_mock_message(content=unittest.mock.DEFAULT, *args, **kwargs):
+    return MockMessage(content=content)
+
+
+def generate_mock_partial_emoji(*args, **kwargs):
+    return MockPartialEmoji()
+
+
+def generate_mock_reaction(*args, **kwargs):
+    return MockReaction()
+
+
+def generate_mock_role(*args, **kwargs):
+    return MockRole()
+
+
+def generate_mock_text_channel(*args, **kwargs):
+    return MockTextChannel()
+
+
+def generate_mock_thread(*args, **kwargs):
+    return MockThread()
+
+
+def generate_mock_user(*args, **kwargs):
+    return MockUser()
+
+
+def generate_mock_voice_channel(*args, **kwargs):
+    return MockVoiceChannel()
+
+
+# all of the classes here can be created from a mock object
+# the key is the object, and the method is a factory method for creating a new instance
+# some of the factories can factory take their input and pass it to the mock object.
+COPYABLE_MOCKS = {
+    discord.Attachment: generate_mock_attachment,
+    discord.ext.commands.Bot: generate_mock_bot,
+    discord.CategoryChannel: generate_mock_category_channel,
+    discord.ext.commands.Context: generate_mock_context,
+    discord.ClientUser: generate_mock_client_user,
+    discord.DMChannel: generate_mock_dm_channel,
+    discord.Emoji: generate_mock_emoji,
+    discord.Guild: generate_mock_guild,
+    discord.Member: generate_mock_member,
+    discord.Message: generate_mock_message,
+    discord.PartialEmoji: generate_mock_partial_emoji,
+    discord.Reaction: generate_mock_reaction,
+    discord.Role: generate_mock_role,
+    discord.TextChannel: generate_mock_text_channel,
+    discord.Thread: generate_mock_thread,
+    discord.User: generate_mock_user,
+    discord.VoiceChannel: generate_mock_voice_channel,
+}
+
+
 class CustomMockMixin:
     """
     Provides common functionality for our custom Mock types.
@@ -129,6 +249,66 @@ class CustomMockMixin:
 
         if name:
             self.name = name
+
+        # make all of the methods return the proper mock type
+        # configure mock
+        mock_config = {}
+        for attr in dir(self.spec_set):
+            if attr.startswith("__") and attr.endswith("__"):
+                # ignore all magic attributes
+                continue
+            try:
+                attr = getattr(self.spec_set, attr)
+            except AttributeError:
+                continue
+            # we only want functions, so we can properly mock their return
+            if not callable(attr):
+                continue
+
+            if isinstance(attr, (unittest.mock.Mock, unittest.mock.AsyncMock)):
+                # skip all mocks
+                continue
+
+            try:
+                hints = typing.get_type_hints(attr)
+            except NameError:
+                hints = attr.__annotations__
+
+            # fix not typed methods
+            # this list can be added to as methods are discovered
+            if attr.__name__ == "send":
+                hints["return"] = discord.Message
+            elif self.__class__ == discord.Message and attr.__name__ == "edit":
+                # set up message editing to return the same object
+                mock_config[f"{attr.__name__}.return_value"] = self
+                continue
+
+            if hints.get("return") is None:
+                continue
+
+            klass = hints["return"]
+
+            if isinstance(klass, str):
+                klass_name = klass
+            elif hasattr(klass, "__name__"):
+                klass_name = klass.__name__
+            else:
+                continue
+
+            method = None
+            for cls in COPYABLE_MOCKS:
+                if klass_name == cls.__name__:
+                    method = COPYABLE_MOCKS[cls]
+                    break
+
+            if not method:
+                continue
+
+            # print(self.__class__, attr.__name__, cls)
+
+            mock_config[f"{attr.__name__}.side_effect"] = method
+
+        self.configure_mock(**mock_config)
 
     def _get_child_mock(self, **kw):
         """
@@ -318,8 +498,10 @@ class MockUser(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
     spec_set = user_instance
 
     def __init__(self, **kwargs) -> None:
-        default_kwargs = {"name": "user", "id": next(self.discord_id), "bot": False}
-        super().__init__(**collections.ChainMap(kwargs, default_kwargs))
+        kwargs["name"] = kwargs.get("name", "user")
+        kwargs["id"] = kwargs.get("id", next(self.discord_id))
+        kwargs["bot"] = kwargs.get("bot", False)
+        super().__init__(**kwargs)
 
         if "mention" not in kwargs:
             self.mention = f"@{self.name}"
@@ -561,11 +743,13 @@ message_instance = discord.Message(
 
 
 # Create a Context instance to get a realistic MagicMock of `discord.ext.commands.Context`
-context_instance = Context(message=unittest.mock.MagicMock(), prefix="$", bot=MockBot(), view=None)
+context_instance = discord.ext.commands.Context(
+    message=unittest.mock.MagicMock(), prefix="$", bot=MockBot(), view=None
+)
 context_instance.invoked_from_error_handler = None
 
 
-class MockContext(CustomMockMixin, unittest.mock.MagicMock):
+class MockContext(CustomMockMixin, unittest.mock.NonCallableMagicMock):
     """
     A MagicMock subclass to mock Context objects.
 
@@ -625,6 +809,7 @@ class MockMessage(CustomMockMixin, unittest.mock.MagicMock):
 
     def __init__(self, **kwargs) -> None:
         default_kwargs = {"attachments": []}
+        kwargs["id"] = kwargs.get("id", generate_realistic_id())
         super().__init__(**collections.ChainMap(kwargs, default_kwargs))
         self.author = kwargs.get("author", MockMember())
         self.channel = kwargs.get("channel", MockTextChannel())
