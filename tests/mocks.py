@@ -126,100 +126,32 @@ class ColourMixin:
         self.accent_colour = color
 
 
-def generate_mock_webhook(*args, **kwargs):
-    return MockAsyncWebhook()
-
-
-def generate_mock_attachment(*args, **kwargs):
-    return MockAttachment()
-
-
-def generate_mock_bot(*args, **kwargs):
-    return MockBot()
-
-
-def generate_mock_category_channel(*args, **kwargs):
-    return MockCategoryChannel()
-
-
-def generate_mock_context(*args, **kwargs):
-    return MockContext()
-
-
-def generate_mock_client_user(*args, **kwargs):
-    return MockClientUser()
-
-
-def generate_mock_dm_channel(*args, **kwargs):
-    return MockDMChannel()
-
-
-def generate_mock_emoji(*args, **kwargs):
-    return MockEmoji()
-
-
-def generate_mock_guild(*args, **kwargs):
-    return MockGuild()
-
-
-def generate_mock_member(*args, **kwargs):
-    return MockMember()
-
-
 def generate_mock_message(content=unittest.mock.DEFAULT, *args, **kwargs):
     return MockMessage(content=content)
-
-
-def generate_mock_partial_emoji(*args, **kwargs):
-    return MockPartialEmoji()
-
-
-def generate_mock_reaction(*args, **kwargs):
-    return MockReaction()
-
-
-def generate_mock_role(*args, **kwargs):
-    return MockRole()
-
-
-def generate_mock_text_channel(*args, **kwargs):
-    return MockTextChannel()
-
-
-def generate_mock_thread(*args, **kwargs):
-    return MockThread()
-
-
-def generate_mock_user(*args, **kwargs):
-    return MockUser()
-
-
-def generate_mock_voice_channel(*args, **kwargs):
-    return MockVoiceChannel()
 
 
 # all of the classes here can be created from a mock object
 # the key is the object, and the method is a factory method for creating a new instance
 # some of the factories can factory take their input and pass it to the mock object.
 COPYABLE_MOCKS = {
-    discord.Attachment: generate_mock_attachment,
-    discord.ext.commands.Bot: generate_mock_bot,
-    discord.CategoryChannel: generate_mock_category_channel,
-    discord.ext.commands.Context: generate_mock_context,
-    discord.ClientUser: generate_mock_client_user,
-    discord.DMChannel: generate_mock_dm_channel,
-    discord.Emoji: generate_mock_emoji,
-    discord.Guild: generate_mock_guild,
-    discord.Member: generate_mock_member,
+    discord.Attachment: lambda *args, **kwargs: MockAttachment(),
+    discord.ext.commands.Bot: lambda *args, **kwargs: MockBot(),
+    discord.CategoryChannel: lambda *args, **kwargs: MockCategoryChannel(),
+    discord.ext.commands.Context: lambda *args, **kwargs: MockContext(),
+    discord.ClientUser: lambda *args, **kwargs: MockClientUser(),
+    discord.DMChannel: lambda *args, **kwargs: MockDMChannel(),
+    discord.Emoji: lambda *args, **kwargs: MockEmoji(),
+    discord.Guild: lambda *args, **kwargs: MockGuild(),
+    discord.Member: lambda *args, **kwargs: MockMember(),
     discord.Message: generate_mock_message,
-    discord.PartialEmoji: generate_mock_partial_emoji,
-    discord.Reaction: generate_mock_reaction,
-    discord.Role: generate_mock_role,
-    discord.TextChannel: generate_mock_text_channel,
-    discord.Thread: generate_mock_thread,
-    discord.User: generate_mock_user,
-    discord.VoiceChannel: generate_mock_voice_channel,
-    discord.Webhook: generate_mock_webhook,
+    discord.PartialEmoji: lambda *args, **kwargs: MockPartialEmoji(),
+    discord.Reaction: lambda *args, **kwargs: MockReaction(),
+    discord.Role: lambda *args, **kwargs: MockRole(),
+    discord.TextChannel: lambda *args, **kwargs: MockTextChannel(),
+    discord.Thread: lambda *args, **kwargs: MockThread(),
+    discord.User: lambda *args, **kwargs: MockUser(),
+    discord.VoiceChannel: lambda *args, **kwargs: MockVoiceChannel(),
+    discord.Webhook: lambda *args, **kwargs: MockAsyncWebhook(),
 }
 
 
