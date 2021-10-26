@@ -38,7 +38,7 @@ import discord
 import discord.ext.commands
 import pytest
 
-from tests import mocks as test_mocks
+from tests import mocks
 
 
 class TestDiscordMocks:
@@ -46,7 +46,7 @@ class TestDiscordMocks:
 
     def test_mock_role_default_initialization(self):
         """Test if the default initialization of MockRole results in the correct object."""
-        role = test_mocks.MockRole()
+        role = mocks.MockRole()
 
         # The `spec` argument makes sure `isinstance` checks with `discord.Role` pass
         assert isinstance(role, discord.Role)
@@ -57,7 +57,7 @@ class TestDiscordMocks:
 
     def test_mock_role_alternative_arguments(self):
         """Test if MockRole initializes with the arguments provided."""
-        role = test_mocks.MockRole(
+        role = mocks.MockRole(
             name="Admins",
             id=90210,
             position=10,
@@ -70,7 +70,7 @@ class TestDiscordMocks:
 
     def test_mock_role_accepts_dynamic_arguments(self):
         """Test if MockRole accepts and sets abitrary keyword arguments."""
-        role = test_mocks.MockRole(
+        role = mocks.MockRole(
             guild="Dino Man",
             hoist=True,
         )
@@ -80,9 +80,9 @@ class TestDiscordMocks:
 
     def test_mock_role_uses_position_for_less_than_greater_than(self):
         """Test if `<` and `>` comparisons for MockRole are based on its position attribute."""
-        role_one = test_mocks.MockRole(position=1)
-        role_two = test_mocks.MockRole(position=2)
-        role_three = test_mocks.MockRole(position=3)
+        role_one = mocks.MockRole(position=1)
+        role_two = mocks.MockRole(position=2)
+        role_three = mocks.MockRole(position=3)
 
         assert role_one < role_two
         assert role_one < role_three
@@ -93,28 +93,28 @@ class TestDiscordMocks:
 
     def test_mock_member_default_initialization(self):
         """Test if the default initialization of Mockmember results in the correct object."""
-        member = test_mocks.MockMember()
+        member = mocks.MockMember()
 
         # The `spec` argument makes sure `isinstance` checks with `discord.Member` pass
         assert isinstance(member, discord.Member)
 
         assert member.name == "member"
-        assert member.roles == [test_mocks.MockRole(name="@everyone", position=1, id=0)]
+        assert member.roles == [mocks.MockRole(name="@everyone", position=1, id=0)]
         assert member.mention == "@member"
 
     def test_mock_member_alternative_arguments(self):
         """Test if MockMember initializes with the arguments provided."""
-        core_developer = test_mocks.MockRole(name="Core Developer", position=2)
-        member = test_mocks.MockMember(name="Mark", id=12345, roles=[core_developer])
+        core_developer = mocks.MockRole(name="Core Developer", position=2)
+        member = mocks.MockMember(name="Mark", id=12345, roles=[core_developer])
 
         assert member.name == "Mark"
         assert member.id == 12345
-        assert member.roles == [test_mocks.MockRole(name="@everyone", position=1, id=0), core_developer]
+        assert member.roles == [mocks.MockRole(name="@everyone", position=1, id=0), core_developer]
         assert member.mention == "@Mark"
 
     def test_mock_member_accepts_dynamic_arguments(self):
         """Test if MockMember accepts and sets abitrary keyword arguments."""
-        member = test_mocks.MockMember(
+        member = mocks.MockMember(
             nick="Dino Man",
             colour=discord.Colour.default(),
         )
@@ -124,28 +124,28 @@ class TestDiscordMocks:
 
     def test_mock_guild_default_initialization(self):
         """Test if the default initialization of Mockguild results in the correct object."""
-        guild = test_mocks.MockGuild()
+        guild = mocks.MockGuild()
 
         # The `spec` argument makes sure `isistance` checks with `discord.Guild` pass
         assert isinstance(guild, discord.Guild)
 
-        assert guild.roles == [test_mocks.MockRole(name="@everyone", position=1, id=0)]
+        assert guild.roles == [mocks.MockRole(name="@everyone", position=1, id=0)]
         assert guild.members == []
 
     def test_mock_guild_alternative_arguments(self):
         """Test if MockGuild initializes with the arguments provided."""
-        core_developer = test_mocks.MockRole(name="Core Developer", position=2)
-        guild = test_mocks.MockGuild(
+        core_developer = mocks.MockRole(name="Core Developer", position=2)
+        guild = mocks.MockGuild(
             roles=[core_developer],
-            members=[test_mocks.MockMember(id=54321)],
+            members=[mocks.MockMember(id=54321)],
         )
 
-        assert guild.roles == [test_mocks.MockRole(name="@everyone", position=1, id=0), core_developer]
-        assert guild.members == [test_mocks.MockMember(id=54321)]
+        assert guild.roles == [mocks.MockRole(name="@everyone", position=1, id=0), core_developer]
+        assert guild.members == [mocks.MockMember(id=54321)]
 
     def test_mock_guild_accepts_dynamic_arguments(self):
         """Test if MockGuild accepts and sets abitrary keyword arguments."""
-        guild = test_mocks.MockGuild(
+        guild = mocks.MockGuild(
             emojis=(":hyperjoseph:", ":pensive_ela:"),
             premium_subscription_count=15,
         )
@@ -155,44 +155,44 @@ class TestDiscordMocks:
 
     def test_mock_bot_default_initialization(self):
         """Tests if MockBot initializes with the correct values."""
-        bot = test_mocks.MockBot()
+        bot = mocks.MockBot()
 
         # The `spec` argument makes sure `isinstance` checks with `discord.ext.commands.Bot` pass
         assert isinstance(bot, discord.ext.commands.Bot)
 
     def test_mock_context_default_initialization(self):
         """Tests if MockContext initializes with the correct values."""
-        context = test_mocks.MockContext()
+        context = mocks.MockContext()
 
         # The `spec` argument makes sure `isinstance` checks with `discord.ext.commands.Context` pass
         assert isinstance(context, discord.ext.commands.Context)
 
-        assert isinstance(context.bot, test_mocks.MockBot)
-        assert isinstance(context.guild, test_mocks.MockGuild)
-        assert isinstance(context.author, test_mocks.MockMember)
-        assert isinstance(context.message, test_mocks.MockMessage)
+        assert isinstance(context.bot, mocks.MockBot)
+        assert isinstance(context.guild, mocks.MockGuild)
+        assert isinstance(context.author, mocks.MockMember)
+        assert isinstance(context.message, mocks.MockMessage)
 
         # ensure that the mocks are the same attributes, like discord.py
         assert context.message.channel is context.channel
         assert context.channel.guild is context.guild
 
         # ensure the me instance is of the right type and shtuff.
-        assert isinstance(context.me, test_mocks.MockMember)
+        assert isinstance(context.me, mocks.MockMember)
         assert context.me is context.guild.me
 
     @pytest.mark.parametrize(
         ["mock", "valid_attribute"],
         [
-            [test_mocks.MockGuild(), "name"],
-            [test_mocks.MockRole(), "hoist"],
-            [test_mocks.MockMember(), "display_name"],
-            [test_mocks.MockBot(), "user"],
-            [test_mocks.MockContext(), "invoked_with"],
-            [test_mocks.MockTextChannel(), "last_message"],
-            [test_mocks.MockMessage(), "mention_everyone"],
+            [mocks.MockGuild(), "name"],
+            [mocks.MockRole(), "hoist"],
+            [mocks.MockMember(), "display_name"],
+            [mocks.MockBot(), "user"],
+            [mocks.MockContext(), "invoked_with"],
+            [mocks.MockTextChannel(), "last_message"],
+            [mocks.MockMessage(), "mention_everyone"],
         ],
     )
-    def test_mocks_allows_access_to_attributes_part_of_spec(self, mock, valid_attribute: str):
+    def mocks_allows_access_to_attributes_part_of_spec(self, mock, valid_attribute: str):
         """Accessing attributes that are valid for the objects they mock should succeed."""
         try:
             getattr(mock, valid_attribute)
@@ -203,16 +203,16 @@ class TestDiscordMocks:
     @pytest.mark.parametrize(
         ["mock"],
         [
-            [test_mocks.MockGuild()],
-            [test_mocks.MockRole()],
-            [test_mocks.MockMember()],
-            [test_mocks.MockBot()],
-            [test_mocks.MockContext()],
-            [test_mocks.MockTextChannel()],
-            [test_mocks.MockMessage()],
+            [mocks.MockGuild()],
+            [mocks.MockRole()],
+            [mocks.MockMember()],
+            [mocks.MockBot()],
+            [mocks.MockContext()],
+            [mocks.MockTextChannel()],
+            [mocks.MockMessage()],
         ],
     )
-    def test_mocks_rejects_access_to_attributes_not_part_of_spec(self, mock):
+    def mocks_rejects_access_to_attributes_not_part_of_spec(self, mock):
         """Accessing attributes that are invalid for the objects they mock should fail."""
         with pytest.raises(AttributeError):
             mock.the_cake_is_a_lie
@@ -220,13 +220,13 @@ class TestDiscordMocks:
     @pytest.mark.parametrize(
         ["mock_type", "provided_mention"],
         [
-            [test_mocks.MockRole, "role mention"],
-            [test_mocks.MockMember, "member mention"],
-            [test_mocks.MockTextChannel, "channel mention"],
-            [test_mocks.MockUser, "user mention"],
+            [mocks.MockRole, "role mention"],
+            [mocks.MockMember, "member mention"],
+            [mocks.MockTextChannel, "channel mention"],
+            [mocks.MockUser, "user mention"],
         ],
     )
-    def test_mocks_use_mention_when_provided_as_kwarg(self, mock_type, provided_mention: str):
+    def mocks_use_mention_when_provided_as_kwarg(self, mock_type, provided_mention: str):
         """The mock should use the passed `mention` instead of the default one if present."""
         mock = mock_type(mention=provided_mention)
         assert mock.mention == provided_mention
@@ -240,14 +240,14 @@ class TestDiscordMocks:
 
         coroutine_object = dementati()
 
-        bot = test_mocks.MockBot()
+        bot = mocks.MockBot()
         bot.loop.create_task(coroutine_object)
         with pytest.raises(RuntimeError) as error:
             asyncio.run(coroutine_object)
         assert error.match("cannot reuse already awaited coroutine")
 
 
-HASHABLE_MOCKS = (test_mocks.MockRole, test_mocks.MockMember, test_mocks.MockGuild)
+HASHABLE_MOCKS = (mocks.MockRole, mocks.MockMember, mocks.MockGuild)
 
 
 class TestMockObjects:
@@ -256,7 +256,7 @@ class TestMockObjects:
     def test_colour_mixin(self):
         """Test if the ColourMixin adds aliasing of color -> colour for child classes."""
 
-        class MockHemlock(unittest.mock.MagicMock, test_mocks.ColourMixin):
+        class MockHemlock(unittest.mock.MagicMock, mocks.ColourMixin):
             pass
 
         hemlock = MockHemlock()
@@ -271,7 +271,7 @@ class TestMockObjects:
     def test_hashable_mixin_hash_returns_id(self):
         """Test the HashableMixing uses the id attribute for hashing."""
 
-        class MockScragly(unittest.mock.Mock, test_mocks.HashableMixin):
+        class MockScragly(unittest.mock.Mock, mocks.HashableMixin):
             pass
 
         scragly = MockScragly()
@@ -281,7 +281,7 @@ class TestMockObjects:
     def test_hashable_mixin_uses_id_for_equality_comparison(self):
         """Test the HashableMixing uses the id attribute for equal comparison."""
 
-        class MockScragly(test_mocks.HashableMixin):
+        class MockScragly(mocks.HashableMixin):
             pass
 
         scragly = MockScragly()
@@ -297,7 +297,7 @@ class TestMockObjects:
     def test_hashable_mixin_uses_id_for_nonequality_comparison(self):
         """Test if the HashableMixing uses the id attribute for non-equal comparison."""
 
-        class MockScragly(test_mocks.HashableMixin):
+        class MockScragly(mocks.HashableMixin):
             pass
 
         scragly = MockScragly()
@@ -347,7 +347,7 @@ class TestMockObjects:
     def test_custom_mock_mixin_accepts_mock_seal(self):
         """The `CustomMockMixin` should support `unittest.mock.seal`."""
 
-        class MyMock(test_mocks.CustomMockMixin, unittest.mock.MagicMock):
+        class MyMock(mocks.CustomMockMixin, unittest.mock.MagicMock):
 
             child_mock_type = unittest.mock.MagicMock
             pass
@@ -362,15 +362,15 @@ class TestMockObjects:
     @pytest.mark.parametrize(
         ["mock_type", "valid_attribute"],
         [
-            (test_mocks.MockGuild, "region"),
-            (test_mocks.MockRole, "mentionable"),
-            (test_mocks.MockMember, "display_name"),
-            (test_mocks.MockBot, "owner_id"),
-            (test_mocks.MockContext, "command_failed"),
-            (test_mocks.MockMessage, "mention_everyone"),
-            (test_mocks.MockEmoji, "managed"),
-            (test_mocks.MockPartialEmoji, "url"),
-            (test_mocks.MockReaction, "me"),
+            (mocks.MockGuild, "region"),
+            (mocks.MockRole, "mentionable"),
+            (mocks.MockMember, "display_name"),
+            (mocks.MockBot, "owner_id"),
+            (mocks.MockContext, "command_failed"),
+            (mocks.MockMessage, "mention_everyone"),
+            (mocks.MockEmoji, "managed"),
+            (mocks.MockPartialEmoji, "url"),
+            (mocks.MockReaction, "me"),
         ],
     )
     def test_spec_propagation_of_mock_subclasses(self, mock_type, valid_attribute: str):
@@ -383,7 +383,7 @@ class TestMockObjects:
     def test_custom_mock_mixin_mocks_async_magic_methods_with_async_mock(self):
         """The CustomMockMixin should mock async magic methods with an AsyncMock."""
 
-        class MyMock(test_mocks.CustomMockMixin, unittest.mock.MagicMock):
+        class MyMock(mocks.CustomMockMixin, unittest.mock.MagicMock):
             pass
 
         mock = MyMock()
@@ -400,7 +400,7 @@ class TestReturnTypes:
     @pytest.mark.asyncio
     async def test_message_edit_returns_self(self):
         """Message editing edits the message in place. We should be returning the message."""
-        msg = test_mocks.MockMessage()
+        msg = mocks.MockMessage()
 
         new_msg = await msg.edit()
 
@@ -411,7 +411,7 @@ class TestReturnTypes:
     @pytest.mark.asyncio
     async def test_channel_send_returns_message(self):
         """Ensure that channel objects return mocked messages when sending messages."""
-        channel = test_mocks.MockTextChannel()
+        channel = mocks.MockTextChannel()
 
         msg = await channel.send("hi")
 
@@ -421,7 +421,7 @@ class TestReturnTypes:
     @pytest.mark.asyncio
     async def test_message_thread_create_returns_thread(self):
         """Thread create methods should return a MockThread."""
-        msg = test_mocks.MockMessage()
+        msg = mocks.MockMessage()
 
         thread = await msg.create_thread()
 
@@ -430,7 +430,7 @@ class TestReturnTypes:
     @pytest.mark.asyncio
     async def test_channel_thread_create_returns_thread(self):
         """Thread create methods should return a MockThread."""
-        channel = test_mocks.MockTextChannel()
+        channel = mocks.MockTextChannel()
 
         thread = await channel.create_thread()
 
@@ -440,7 +440,7 @@ class TestReturnTypes:
 class TestMocksNotCallable:
     """All discord.py mocks are not callable objects, so the mocks should not be either ."""
 
-    @pytest.mark.parametrize("factory", test_mocks.COPYABLE_MOCKS.values())
+    @pytest.mark.parametrize("factory", mocks.COPYABLE_MOCKS.values())
     def test_not_callable(self, factory):
         """Assert all mocks aren't callable."""
         instance = factory()
