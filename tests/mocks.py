@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import asyncio
 import collections
+import datetime
 import itertools
 import typing
 import unittest.mock
@@ -77,9 +78,15 @@ __all__ = [
 ]
 
 
-def generate_realistic_id() -> int:
-    """Generate realistic id, based from the current time."""
-    return discord.utils.time_snowflake(arrow.utcnow()) + next(_snowflake_count)
+def generate_realistic_id(time: typing.Union[arrow.Arrow, datetime.datetime] = None, /) -> int:
+    """
+    Generate realistic id, based from the current time.
+
+    If a time is provided, this will use that time for the time generation.
+    """
+    if time is None:
+        time = arrow.utcnow()
+    return discord.utils.time_snowflake(time) + next(_snowflake_count)
 
 
 class GenerateID:
