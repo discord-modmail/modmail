@@ -435,3 +435,14 @@ class TestReturnTypes:
         thread = await channel.create_thread()
 
         assert isinstance(thread, discord.Thread)
+
+
+class TestMocksNotCallable:
+    """All discord.py mocks are not callable objects, so the mocks should not be either ."""
+
+    @pytest.mark.parametrize("factory", test_mocks.COPYABLE_MOCKS.values())
+    def test_not_callable(self, factory):
+        """Assert all mocks aren't callable."""
+        instance = factory()
+        with pytest.raises(TypeError, match=f"'{type(instance).__name__}' object is not callable"):
+            instance()

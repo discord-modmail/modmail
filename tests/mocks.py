@@ -126,6 +126,10 @@ class ColourMixin:
         self.accent_colour = color
 
 
+def generate_mock_webhook(*args, **kwargs):
+    return MockAsyncWebhook()
+
+
 def generate_mock_attachment(*args, **kwargs):
     return MockAttachment()
 
@@ -215,6 +219,7 @@ COPYABLE_MOCKS = {
     discord.Thread: generate_mock_thread,
     discord.User: generate_mock_user,
     discord.VoiceChannel: generate_mock_voice_channel,
+    discord.Webhook: generate_mock_webhook,
 }
 
 
@@ -365,7 +370,7 @@ guild_data = {
 guild_instance = discord.Guild(data=guild_data, state=unittest.mock.MagicMock())
 
 
-class MockGuild(CustomMockMixin, unittest.mock.Mock, HashableMixin):
+class MockGuild(CustomMockMixin, unittest.mock.NonCallableMock, HashableMixin):
     """
     A `Mock` subclass to mock `discord.Guild` objects.
 
@@ -410,7 +415,7 @@ role_data = {
 role_instance = discord.Role(guild=guild_instance, state=unittest.mock.MagicMock(), data=role_data)
 
 
-class MockRole(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
+class MockRole(CustomMockMixin, unittest.mock.NonCallableMock, ColourMixin, HashableMixin):
     """
     A Mock subclass to mock `discord.Role` objects.
 
@@ -456,7 +461,7 @@ member_data = {
 member_instance = discord.Member(data=member_data, guild=guild_instance, state=unittest.mock.MagicMock())
 
 
-class MockMember(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
+class MockMember(CustomMockMixin, unittest.mock.NonCallableMock, ColourMixin, HashableMixin):
     """
     A Mock subclass to mock Member objects.
 
@@ -487,7 +492,7 @@ user_instance = discord.User(
 )
 
 
-class MockUser(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
+class MockUser(CustomMockMixin, unittest.mock.NonCallableMock, ColourMixin, HashableMixin):
     """
     A Mock subclass to mock User objects.
 
@@ -515,7 +520,7 @@ clientuser_instance = discord.ClientUser(
 )
 
 
-class MockClientUser(CustomMockMixin, unittest.mock.Mock, ColourMixin, HashableMixin):
+class MockClientUser(CustomMockMixin, unittest.mock.NonCallableMock, ColourMixin, HashableMixin):
     """
     A Mock subclass to mock ClientUser objects.
 
@@ -549,7 +554,7 @@ def _get_mock_loop() -> unittest.mock.Mock:
     return loop
 
 
-class MockBot(CustomMockMixin, unittest.mock.MagicMock):
+class MockBot(CustomMockMixin, unittest.mock.NonCallableMock):
     """
     A MagicMock subclass to mock Bot objects.
 
@@ -592,7 +597,7 @@ voice_channel_instance = discord.VoiceChannel(
 )
 
 
-class MockTextChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
+class MockTextChannel(CustomMockMixin, unittest.mock.NonCallableMock, HashableMixin):
     """
     A MagicMock subclass to mock TextChannel objects.
 
@@ -610,7 +615,7 @@ class MockTextChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
             self.mention = f"#{self.name}"
 
 
-class MockVoiceChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
+class MockVoiceChannel(CustomMockMixin, unittest.mock.NonCallableMock, HashableMixin):
     """
     A MagicMock subclass to mock VoiceChannel objects.
 
@@ -638,7 +643,7 @@ dm_channel_instance = discord.DMChannel(
 )
 
 
-class MockDMChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
+class MockDMChannel(CustomMockMixin, unittest.mock.NonCallableMock, HashableMixin):
     """
     A MagicMock subclass to mock DMChannel objects.
 
@@ -666,7 +671,7 @@ category_channel_instance = discord.CategoryChannel(
 )
 
 
-class MockCategoryChannel(CustomMockMixin, unittest.mock.Mock, HashableMixin):
+class MockCategoryChannel(CustomMockMixin, unittest.mock.NonCallableMock, HashableMixin):
     """
     A MagicMock subclass to mock CategoryChannel objects.
 
@@ -705,7 +710,7 @@ thread_instance = discord.Thread(
 )
 
 
-class MockThread(CustomMockMixin, unittest.mock.Mock, HashableMixin):
+class MockThread(CustomMockMixin, unittest.mock.NonCallableMock, HashableMixin):
     """
     A MagicMock subclass to mock Thread objects.
 
@@ -786,7 +791,7 @@ attachment_instance = discord.Attachment(
 )
 
 
-class MockAttachment(CustomMockMixin, unittest.mock.MagicMock):
+class MockAttachment(CustomMockMixin, unittest.mock.NonCallableMagicMock):
     """
     A MagicMock subclass to mock Attachment objects.
 
@@ -797,7 +802,7 @@ class MockAttachment(CustomMockMixin, unittest.mock.MagicMock):
     spec_set = attachment_instance
 
 
-class MockMessage(CustomMockMixin, unittest.mock.MagicMock):
+class MockMessage(CustomMockMixin, unittest.mock.NonCallableMagicMock):
     """
     A MagicMock subclass to mock Message objects.
 
@@ -819,7 +824,7 @@ emoji_data = {"require_colons": True, "managed": True, "id": generate_realistic_
 emoji_instance = discord.Emoji(guild=MockGuild(), state=unittest.mock.MagicMock(), data=emoji_data)
 
 
-class MockEmoji(CustomMockMixin, unittest.mock.MagicMock):
+class MockEmoji(CustomMockMixin, unittest.mock.NonCallableMagicMock):
     """
     A MagicMock subclass to mock Emoji objects.
 
@@ -837,7 +842,7 @@ class MockEmoji(CustomMockMixin, unittest.mock.MagicMock):
 partial_emoji_instance = discord.PartialEmoji(animated=False, name="guido")
 
 
-class MockPartialEmoji(CustomMockMixin, unittest.mock.MagicMock):
+class MockPartialEmoji(CustomMockMixin, unittest.mock.NonCallableMagicMock):
     """
     A MagicMock subclass to mock PartialEmoji objects.
 
@@ -851,7 +856,7 @@ class MockPartialEmoji(CustomMockMixin, unittest.mock.MagicMock):
 reaction_instance = discord.Reaction(message=MockMessage(), data={"me": True}, emoji=MockEmoji())
 
 
-class MockReaction(CustomMockMixin, unittest.mock.MagicMock):
+class MockReaction(CustomMockMixin, unittest.mock.NonCallableMagicMock):
     """
     A MagicMock subclass to mock Reaction objects.
 
@@ -877,7 +882,7 @@ class MockReaction(CustomMockMixin, unittest.mock.MagicMock):
 webhook_instance = discord.Webhook(data=unittest.mock.MagicMock(), session=unittest.mock.MagicMock())
 
 
-class MockAsyncWebhook(CustomMockMixin, unittest.mock.MagicMock):
+class MockAsyncWebhook(CustomMockMixin, unittest.mock.NonCallableMagicMock):
     """
     A MagicMock subclass to mock Webhook objects using an AsyncWebhookAdapter.
 
