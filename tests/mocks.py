@@ -565,7 +565,7 @@ class MockVoiceChannel(CustomMockMixin, unittest.mock.NonCallableMock, HashableM
     spec_set = voice_channel_instance
 
     def __init__(self, **kwargs) -> None:
-        default_kwargs = {"id": next(self.discord_id), "name": "channel", "guild": MockGuild()}
+        default_kwargs = {"id": next(self.discord_id), "name": "voice_channel", "guild": MockGuild()}
         super().__init__(**collections.ChainMap(kwargs, default_kwargs))
 
         if "mention" not in kwargs:
