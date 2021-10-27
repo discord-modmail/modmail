@@ -278,6 +278,7 @@ class CustomMockMixin:
         else:
             klass = self.child_mock_type
 
+        # if the mock is sealed, that means that new mocks cannot be created when accessing attributes
         if self._mock_sealed:
             attribute = "." + kw["name"] if "name" in kw else "()"
             mock_name = self._extract_mock_name() + attribute

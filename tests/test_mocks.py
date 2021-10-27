@@ -138,7 +138,7 @@ class TestDiscordMocks:
         assert guild.members == [mocks.MockMember(id=54321)]
 
     def test_mock_guild_accepts_dynamic_arguments(self):
-        """Test if MockGuild accepts and sets abitrary keyword arguments."""
+        """Test if MockGuild accepts and sets arbitrary keyword arguments."""
         guild = mocks.MockGuild(
             emojis=(":hyperjoseph:", ":pensive_ela:"),
             premium_subscription_count=15,
@@ -163,7 +163,7 @@ class TestDiscordMocks:
         assert context.message.channel is context.channel
         assert context.channel.guild is context.guild
 
-        # ensure the me instance is of the right type and shtuff.
+        # ensure the me instance is of the right type and is shared among mock attributes.
         assert isinstance(context.me, mocks.MockMember)
         assert context.me is context.guild.me
 
@@ -297,7 +297,7 @@ class TestMockObjects:
         assert scragly == eevee
         assert (scragly == python) is False
 
-    def test_hashable_mixin_uses_id_for_nonequality_comparison(self):
+    def test_hashable_mixin_uses_id_for_inequality_comparison(self):
         """Test if the HashableMixing uses the id attribute for non-equal comparison."""
 
         class MockScragly(mocks.HashableMixin):
