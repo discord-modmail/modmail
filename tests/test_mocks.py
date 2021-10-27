@@ -400,42 +400,56 @@ class TestReturnTypes:
     Eg, ctx.send should return a message object.
     """
 
+    @pytest.mark.parametrize(
+        "mock_cls",
+        [
+            mocks.MockClientUser,
+            mocks.MockGuild,
+            mocks.MockMember,
+            mocks.MockMessage,
+            mocks.MockTextChannel,
+            mocks.MockVoiceChannel,
+            mocks.MockWebhook,
+        ],
+    )
     @pytest.mark.asyncio
-    async def test_message_edit_returns_self(self):
-        """Message editing edits the message in place. We should be returning the message."""
-        msg = mocks.MockMessage()
+    async def test_edit_returns_same_class(self, mock_cls):
+        """Edit methods return a new instance of the same type."""
+        mock = mock_cls()
 
-        new_msg = await msg.edit()
+        new_mock = await mock.edit()
 
-        assert isinstance(new_msg, discord.Message)
+        assert isinstance(new_mock, type(mock_cls.spec_set))
 
-        assert msg is new_msg
-
+    @pytest.mark.parametrize(
+        "mock_cls",
+        [
+            mocks.MockMember,
+            mocks.MockTextChannel,
+            mocks.MockThread,
+            mocks.MockUser,
+        ],
+    )
     @pytest.mark.asyncio
-    async def test_channel_send_returns_message(self):
+    async def test_messageable_send_returns_message(self, mock_cls):
         """Ensure that channel objects return mocked messages when sending messages."""
-        channel = mocks.MockTextChannel()
+        messageable = mock_cls()
 
-        msg = await channel.send("hi")
+        msg = await messageable.send("hi")
 
         print(type(msg))
         assert isinstance(msg, discord.Message)
 
+    @pytest.mark.parametrize(
+        "mock_cls",
+        [mocks.MockMessage, mocks.MockTextChannel],
+    )
     @pytest.mark.asyncio
-    async def test_message_thread_create_returns_thread(self):
+    async def test_thread_create_returns_thread(self, mock_cls):
         """Thread create methods should return a MockThread."""
-        msg = mocks.MockMessage()
+        mock = mock_cls()
 
-        thread = await msg.create_thread()
-
-        assert isinstance(thread, discord.Thread)
-
-    @pytest.mark.asyncio
-    async def test_channel_thread_create_returns_thread(self):
-        """Thread create methods should return a MockThread."""
-        channel = mocks.MockTextChannel()
-
-        thread = await channel.create_thread()
+        thread = await mock.create_thread()
 
         assert isinstance(thread, discord.Thread)
 

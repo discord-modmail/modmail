@@ -57,7 +57,6 @@ __all__ = [
     "HashableMixin",
     "CustomMockMixin",
     "ColourMixin",
-    "MockAsyncWebhook",
     "MockAttachment",
     "MockBot",
     "MockCategoryChannel",
@@ -75,6 +74,7 @@ __all__ = [
     "MockThread",
     "MockUser",
     "MockVoiceChannel",
+    "MockWebhook",
 ]
 
 
@@ -158,7 +158,7 @@ COPYABLE_MOCKS = {
     discord.Thread: lambda *args, **kwargs: MockThread(),
     discord.User: lambda *args, **kwargs: MockUser(),
     discord.VoiceChannel: lambda *args, **kwargs: MockVoiceChannel(),
-    discord.Webhook: lambda *args, **kwargs: MockAsyncWebhook(),
+    discord.Webhook: lambda *args, **kwargs: MockWebhook(),
 }
 
 
@@ -222,10 +222,8 @@ class CustomMockMixin:
             # this list can be added to as methods are discovered
             if attr.__name__ == "send":
                 hints["return"] = discord.Message
-            elif self.__class__ == discord.Message and attr.__name__ == "edit":
-                # set up message editing to return the same object
-                mock_config[f"{attr.__name__}.return_value"] = self
-                continue
+            elif attr.__name__ == "edit":
+                hints["return"] = type(self.spec_set)
 
             if hints.get("return") is None:
                 continue
@@ -822,7 +820,7 @@ class MockReaction(CustomMockMixin, unittest.mock.NonCallableMagicMock):
 webhook_instance = discord.Webhook(data=unittest.mock.MagicMock(), session=unittest.mock.MagicMock())
 
 
-class MockAsyncWebhook(CustomMockMixin, unittest.mock.NonCallableMagicMock):
+class MockWebhook(CustomMockMixin, unittest.mock.NonCallableMagicMock):
     """
     A MagicMock subclass to mock Webhook objects using an AsyncWebhookAdapter.
 
