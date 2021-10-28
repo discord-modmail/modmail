@@ -12,6 +12,7 @@ from discord.client import _cleanup_loop
 from discord.ext import commands
 
 from modmail.config import CONFIG
+from modmail.dispatcher import Dispatcher
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
@@ -35,11 +36,13 @@ class ModmailBot(commands.Bot):
     """
 
     logger: ModmailLogger = logging.getLogger(__name__)
+    dispatcher: Dispatcher
 
     def __init__(self, **kwargs):
         self.config = CONFIG
         self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
         self.http_session: t.Optional[ClientSession] = None
+        self.dispatcher = Dispatcher()
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
