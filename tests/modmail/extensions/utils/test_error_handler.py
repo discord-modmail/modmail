@@ -118,7 +118,7 @@ async def test_handle_bot_missing_perms_only_send(
 
     await cog.handle_bot_missing_perms(ctx, error)
 
-    assert ctx.send.call_count + ctx.channel.send.call_count + ctx.message.channel.send.call_count == 1
+    assert 1 == ctx.send.call_count + ctx.channel.send.call_count
 
 
 @pytest.mark.parametrize(
@@ -198,12 +198,9 @@ async def test_handle_bot_missing_perms(
 
     await cog.handle_bot_missing_perms(ctx, error)
 
-    assert (
-        expected_send_to_channel
-        == ctx.send.call_count + ctx.channel.send.call_count + ctx.message.channel.send.call_count
-    )
+    assert expected_send_to_channel == ctx.send.call_count + ctx.channel.send.call_count
 
-    assert expected_send_to_author == ctx.author.send.call_count + ctx.message.author.send.call_count
+    assert expected_send_to_author == ctx.author.send.call_count
 
 
 @pytest.mark.parametrize(
