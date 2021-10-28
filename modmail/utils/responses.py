@@ -33,37 +33,29 @@ logger: ModmailLogger = logging.getLogger(__name__)
 DEFAULT_SUCCESS_COLOUR = discord.Colour.green()
 DEFAULT_SUCCESS_COLOR = DEFAULT_SUCCESS_COLOUR
 SUCCESS_HEADERS: typing.List[str] = [
-    "You got it.",
-    "Done.",
-    "Affirmative.",
-    "As you wish.",
-    "Okay.",
-    "Fine by me.",
-    "There we go.",
+    "Affirmative",
+    "As you wish",
+    "Done",
+    "Fine by me",
+    "There we go",
     "Sure!",
-    "Your wish is my command.",
+    "Okay",
+    "You got it",
+    "Your wish is my command",
 ]
 
 DEFAULT_FAILURE_COLOUR = discord.Colour.red()
 DEFAULT_FAILURE_COLOR = DEFAULT_FAILURE_COLOUR
 FAILURE_HEADERS: typing.List[str] = [
     "Abort!",
-    "FAIL.",
-    "I cannot do that.",
-    "I'm leaving you.",
-    "Its not me, its you.",
+    "I cannot do that",
     "Hold up!",
-    "Mistakes were made.",
-    "Nope.",
-    "Not happening.",
-    "Oops.",
-    "Something went wrong.",
-    "Sorry, no.",
-    "This will never work.",
-    "Uh. No.",
+    "I was unable to interpret that",
+    "Not understood",
+    "Oops",
+    "Something went wrong",
     "\U0001f914",
-    "That is not happening.",
-    "Whups.",
+    "Unable to complete your command",
 ]
 
 
@@ -89,7 +81,7 @@ async def send_general_response(
     if isinstance(channel, commands.Context):  # pragma: nocover
         channel = channel.channel
 
-    logger.debug(f"Requested to send {_kind} message to {channel!s}. Response: {response!s}")
+    logger.debug(f"Requested to send {_kind} response message to {channel!s}. Response: {response!s}")
 
     if embed is None:
         if message is None:
