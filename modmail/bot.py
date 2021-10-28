@@ -52,14 +52,16 @@ class ModmailBot(commands.Bot):
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
+        # override passed kwargs if they are None
+        kwargs["case_insensitive"] = kwargs.get("case_insensitive", True)
+        # do not let the description be overridden.
+        kwargs["description"] = "Modmail bot by discord-modmail."
+        kwargs["status"] = kwargs.get("status", status)
+        kwargs["activity"] = kwargs.get("activity", activity)
+        kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", allowed_mentions)
+        kwargs["command_prefix"] = kwargs.get("command_prefix", prefix)
+        kwargs["intents"] = kwargs.get("intents", REQUIRED_INTENTS)
         super().__init__(
-            case_insensitive=True,
-            description="Modmail bot by discord-modmail.",
-            status=status,
-            activity=activity,
-            allowed_mentions=allowed_mentions,
-            command_prefix=prefix,
-            intents=REQUIRED_INTENTS,
             **kwargs,
         )
 
