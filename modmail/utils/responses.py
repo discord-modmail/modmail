@@ -2,6 +2,9 @@
 Helper methods for responses from the bot to the user.
 
 These help ensure consistency between errors, as they will all be consistent between different uses.
+
+Note: these are to used for general success or general errors. Typically, the error handler will make a
+response if a command raises a discord.ext.commands.CommandError exception.
 """
 import logging
 import random
