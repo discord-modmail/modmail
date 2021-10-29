@@ -45,6 +45,6 @@ jobs:
           git push --force origin ${GITHUB_REF##*/}
 
       - name: Add a label
-        run: gh pr edit "$PR_URL" --add-label "a{{':'}} dependencies,skip changelog"
+        run: 'gh pr edit "$PR_URL" --add-label "a: dependencies,skip changelog"'
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
