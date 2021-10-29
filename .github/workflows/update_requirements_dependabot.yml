@@ -6,7 +6,7 @@ on:
 jobs:
   regenerate-requirements:
     runs-on: ubuntu-latest
-    if: github.event.issue.user.login == 'dependabot[bot]'
+    if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       # Checks out the repository in the current folder.
       - name: Checkout repository
