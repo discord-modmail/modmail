@@ -2,6 +2,7 @@ name: Update `requirements.txt`
 
 on:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   pull-requests: write
@@ -17,9 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          # Check out the pull request HEAD
-          ref: ${{ github.event.pull_request.head.sha }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.workflow_run.head_branch }}
 
       # Set up the right version of Python
       - uses: actions/checkout@v2
@@ -46,9 +45,14 @@ jobs:
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add .
           git commit --amend --no-edit
-          git push --force origin ${GITHUB_REF##*/}
 
-      - name: Add a label
+      - name: Push regenerate requirements.txt change
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Add labels
         run: 'gh pr edit "$PR_URL" --add-label "a: dependencies,skip changelog"'
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
