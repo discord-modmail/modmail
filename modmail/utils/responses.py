@@ -70,7 +70,7 @@ async def send_general_response(
     embed: discord.Embed = _UNSET,
     colour: discord.Colour = None,
     title: str = None,
-    _kind: typing.Literal["general", "affirmative", "negatory"] = "general",
+    tag_as: typing.Literal["general", "affirmative", "negatory"] = "general",
     **kwargs,
 ) -> discord.Message:
     """
@@ -84,7 +84,7 @@ async def send_general_response(
     if isinstance(channel, commands.Context):  # pragma: nocover
         channel = channel.channel
 
-    logger.debug(f"Requested to send {_kind} response message to {channel!s}. Response: {response!s}")
+    logger.debug(f"Requested to send {tag_as} response message to {channel!s}. Response: {response!s}")
 
     if embed is None:
         if message is None:
@@ -132,7 +132,7 @@ async def send_positive_response(
         channel=channel,
         response=response,
         colour=colour,
-        _kind="affirmative",
+        tag_as="affirmative",
         **kwargs,
     )
 
@@ -161,6 +161,6 @@ async def send_negatory_response(
         channel=channel,
         response=response,
         colour=colour,
-        _kind="negatory",
+        tag_as="negatory",
         **kwargs,
     )
