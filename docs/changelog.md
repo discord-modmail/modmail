@@ -16,12 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Threads system (#53)
     - Messages can now be relayed between a user and a server.
     - NOTE: There is not a database yet, so none of these messages are stored.
-
+- Added Dispatcher system, although it is not hooked into important features like thread creation yet. (#71)
 
 ### Changed
 
 - Embedified the meta commands so they have a nicer UI (#78)
-
 
 ## [0.2.0] - 2021-09-29
 
@@ -32,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Running the bot after configuring the env vars is now as simple as `docker-compose up`
 - Automatic docker image creation: `ghcr.io/discord-modmail/modmail` (#19)
 - Dockerfile support for all supported hosting providers. (#58)
+- Errors no longer happen silently and notify the user when they make a mistake. (#77)
+
+### Changed
+
 - Refactored bot creation and bot running (#56)
     - Running the bot is still the same method, but it loads extensions and plugins now.
     - `bot.start()` can also be used if already in a running event loop. Keep in mind using it will require

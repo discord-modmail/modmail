@@ -1,0 +1,50 @@
+name: Update `requirements.txt`
+
+on:
+  pull_request:
+
+permissions:
+  pull-requests: write
+  issues: write
+  repository-projects: write
+
+jobs:
+  regenerate-requirements:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      # Checks out the repository in the current folder.
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Set up the right version of Python
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      # Install the required dependencies for using the feature, we aren't using cache here
+      # as the number is relatively small and having cache would be complete redundancy.
+      - name: Install dependencies using pip
+        run: |
+          pip install tomli
+
+      # Run the script for regenerating requirements.txt so that the dependancies
+      # updated by dependabot are reflected in `requirements.txt`
+      - name: Regenerate `requirements.txt` if opened PR is made by dependabot
+        run: |
+          python -m scripts.export_requirements
+
+      - name: Commit Changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add .
+          git commit --amend --no-edit
+          git push --force origin ${GITHUB_REF##*/}
+
+      - name: Add a label
+        run: 'gh pr edit "$PR_URL" --add-label "a: dependencies,skip changelog"'
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
