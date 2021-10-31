@@ -63,6 +63,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     def __init__(self, bot: "ModmailBot"):
         self.bot = bot
+        super().__init__(bot)
         # validation for this configuration variable is be defered to fully implementing
         # a new configuration system
         self.relay_channel: Union[
@@ -795,7 +796,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         if payload.guild_id is not None:
             return
 
-        if payload.data.get("embeds") is not None:
+        if payload.data["author"]["id"] == self.bot.user.id:
             return
 
         logger.trace(
