@@ -4,8 +4,8 @@ import inspect
 import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
 
+import arrow
 import discord
-from arrow import Arrow
 from discord import Embed
 from discord.ext import commands
 from discord.ext.commands import Context, Greedy
@@ -15,6 +15,7 @@ from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.extensions import BOT_MODE, BotModes
 from modmail.utils.threads import Ticket, is_modmail_thread
 from modmail.utils.threads.errors import ThreadAlreadyExistsError, ThreadNotFoundError
+from modmail.utils.time import TimeStampEnum, get_discord_formatted_timestamp
 from modmail.utils.users import check_can_dm_user
 
 
@@ -284,7 +285,10 @@ class TicketsCog(ModmailCog, name="Threads"):
             timestamp=datetime.datetime.now(),
             color=NO_REPONSE_COLOUR,
         )
-        embed.add_field(name="Opened since", value=f"<t:{int(datetime.datetime.now().timestamp())}:R>")
+        embed.add_field(
+            name="Opened since",
+            value=get_discord_formatted_timestamp(arrow.utcnow(), TimeStampEnum.RELATIVE_TIME),
+        )
 
         relayed_msg = await self.relay_channel.send(
             content=mention,
@@ -676,13 +680,13 @@ class TicketsCog(ModmailCog, name="Threads"):
             thread_close_embed = discord.Embed(
                 title="Thread Closed",
                 description=contents or f"{closer.mention} has closed this Modmail thread.",
-                timestamp=Arrow.utcnow().datetime,
+                timestamp=arrow.utcnow().datetime,
             )
         else:
             thread_close_embed = discord.Embed(
                 title="Thread Closed",
                 description=contents or "This thread has been closed.",
-                timestamp=Arrow.utcnow().datetime,
+                timestamp=arrow.utcnow().datetime,
             )
 
         async with self.thread_create_delete_lock:
@@ -865,7 +869,9 @@ class TicketsCog(ModmailCog, name="Threads"):
         new_embed = guild_msg.embeds[0]
 
         new_embed.colour = discord.Colour.red()
-        new_embed.insert_field_at(0, name="Deleted", value=f"Deleted at <t:{Arrow.utcnow().int_timestamp}:f>")
+        new_embed.insert_field_at(
+            0, name="Deleted", value=f"Deleted at {get_discord_formatted_timestamp(arrow.utcnow())}"
+        )
         await guild_msg.edit(embed=new_embed)
 
         dm_channel = self.bot.get_partial_messageable(payload.channel_id, type=discord.DMChannel)
@@ -913,7 +919,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         self,
         channel: discord.abc.Messageable,
         user: Union[discord.User, discord.Member],
-        _: Arrow,
+        _: arrow.Arrow,
     ) -> None:
         """Relay typing events to the thread channel."""
         if user.id == self.bot.user.id:
@@ -985,7 +991,7 @@ class TicketsCog(ModmailCog, name="Threads"):
                 return
         else:
             # check the last message id
-            now = Arrow.utcnow().datetime
+            now = arrow.utcnow().datetime
             last_message_time = discord.Object(after.last_message_id).created_at
             print()
             if before.auto_archive_duration <= (now - last_message_time).total_seconds():
