@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
 import discord
 from arrow import Arrow
 from discord import Embed
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord.ext.commands import Context, Greedy
 from discord.utils import escape_markdown
 
@@ -36,7 +36,7 @@ ON_SUCCESS_EMOJI = "\u2705"  # ✅
 FAILURE_EMOJI = "\u274c"  # :x:
 
 # This will be part of configuration later, so its stored in globals for now
-FORWARD_USER_TYPING = False  # Library bug prevents this form working right now
+FORWARD_USER_TYPING = False  # Library bug prevents this from working right now
 FORWARD_MODERATOR_TYPING = False
 
 # NOTE: Since discord removed `threads.archiver_id`, (it will always be `None` now), and the
@@ -68,23 +68,26 @@ class TicketsCog(ModmailCog, name="Threads"):
             discord.TextChannel, discord.PartialMessageable
         ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
 
-        # message deletion events are messed up, so we have to use these dictionaries
+        self.dms_to_users: Dict[int, int] = dict()  # key: dm_channel.id, value: user.id
+
+        # message deletion events are messed up, so we have to use these sets
         # to track if we deleted a message, and if we have already relayed it or not.
-        self.dms_to_users: Dict[int, int] = dict()
-        self.dm_deleted_messages: Set[int] = set()
-        self.thread_deleted_messages: Set[int] = set()
+        # these lists hold the ids of deleted messages that have
+        # been acted on before a on_msg_delete event is received
+
+        self.dm_deleted_messages: Set[int] = set()  # message.id of the bot's deleted messages in dms
+        self.thread_deleted_messages: Set[int] = set()  # message.id of the bot's deleted messsages in thread
 
         self.thread_create_delete_lock = asyncio.Lock()
         self.thread_create_lock = asyncio.Lock()
 
         self.use_audit_logs: bool = USE_AUDIT_LOGS
-        self.fetch_necessary_values.start()
+        self.bot.loop.create_task(self.fetch_necessary_values())
 
     async def init_relay_channel(self) -> None:
         """Fetch the relay channel."""
         self.relay_channel = await self.bot.fetch_channel(self.bot.config.thread.relay_channel_id)
 
-    @tasks.loop(count=1)
     async def fetch_necessary_values(self) -> None:
         """Fetch the audit log permission."""
         self.relay_channel: discord.TextChannel = await self.bot.fetch_channel(self.relay_channel.id)
@@ -96,8 +99,6 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     def cog_unload(self) -> None:
         """Cancel any tasks that may be running on unload."""
-        self.fetch_necessary_values.cancel()
-
         super().cog_unload()
 
     async def add_ticket(self, ticket: Ticket, /) -> Ticket:
@@ -153,7 +154,7 @@ class TicketsCog(ModmailCog, name="Threads"):
                 ticket = await self.create_ticket(
                     ctx.message,
                     recipient=recipient,
-                    raise_for_preexisting_ticket=True,
+                    raise_for_preexisting=True,
                     send_initial_message=False,
                     description=reason,
                     creator=ctx.message.author,
@@ -178,7 +179,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         /,
         *,
         recipient: discord.User = None,
-        raise_for_preexisting_ticket: bool = True,
+        raise_for_preexisting: bool = True,
         send_initial_message: bool = True,
         description: str = None,
         creator: Union[discord.User, discord.Member] = None,
@@ -195,7 +196,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         initial_message: discord.Message
 
-        raise_for_preexisting_ticket: bool = True
+        raise_for_preexisting: bool = True
             Whether to check if there is an existing ticket for the user.
             If there is an existing thread, this method will raise a ThreadAlreadyExistsError exception.
 
@@ -212,7 +213,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         # we want to ensure that anything entering this section can get validated.
         async with self.thread_create_delete_lock:
             if recipient.id in self.bot._tickets.keys():
-                if raise_for_preexisting_ticket:
+                if raise_for_preexisting:
                     raise ThreadAlreadyExistsError(recipient.id)
                 else:
                     return self.get_ticket(recipient.id)
@@ -254,7 +255,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         Create a thread in discord off of a provided message.
 
         Sends an initial message, and returns the thread and the first message sent in the thread.
-        Any kwargs not defined in the method signature are forwarded to the
+        Any kwargs not defined in the method signature are forwarded to the discord.Messageable.send method
         """
         await self.init_relay_channel()
 
@@ -272,6 +273,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         if description is None:
             description = message.content
         description = description.strip()
+
         if creator:
             description += f"\nOpened by {creator!s}"
 
@@ -752,7 +754,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             # Thread doesn't exist, so create one.
             async with self.thread_create_lock:
                 try:
-                    ticket = await self.create_ticket(message, raise_for_preexisting_ticket=True)
+                    ticket = await self.create_ticket(message, raise_for_preexisting=True)
                 except ThreadAlreadyExistsError:
                     # the thread already exists, so we still need to relay the message
                     # thankfully a keyerror should NOT happen now
