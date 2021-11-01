@@ -1,9 +1,12 @@
 from dataclasses import dataclass
 from enum import IntEnum, auto
+from typing import TYPE_CHECKING
 
 from discord.ext import commands
 
-import modmail.bot
+
+if TYPE_CHECKING:  # pragma: nocover
+    import modmail.bot
 
 
 class BitwiseAutoEnum(IntEnum):
