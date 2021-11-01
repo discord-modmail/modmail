@@ -2,7 +2,6 @@ import asyncio
 import logging
 import signal
 import typing as t
-from typing import Any
 
 import arrow
 import discord
@@ -10,7 +9,7 @@ from aiohttp import ClientSession
 from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
-from tortoise import Tortoise
+from tortoise import BaseDBAsyncClient, Tortoise
 
 from modmail.config import CONFIG
 from modmail.dispatcher import Dispatcher
@@ -78,8 +77,9 @@ class ModmailBot(commands.Bot):
         )
 
     @property
-    def db(self):
-        return Tortoise.get_connection("default")
+    def db(self, name: t.Optional[str] = "default") -> BaseDBAsyncClient:
+        """Get the default tortoise-orm connection."""
+        return Tortoise.get_connection(name)
 
     async def init_db(self) -> None:
         """Initiate the bot DB connection and check if the DB is alive."""
@@ -153,7 +153,7 @@ class ModmailBot(commands.Bot):
         except NotImplementedError:
             pass
 
-        def stop_loop_on_completion(f: Any) -> None:
+        def stop_loop_on_completion(f: t.Any) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(self.start(*args, **kwargs), loop=loop)
