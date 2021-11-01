@@ -8,7 +8,7 @@ from discord.threads import Thread
 def is_modmail_thread() -> Callable:
     """Check to see whether the channel in which the command is invoked is a discord thread or not."""
 
-    def check(ctx: Context) -> bool:
+    def predicate(ctx: Context) -> bool:
         """
         Check contextual channel is a modmail thread channel.
 
@@ -21,4 +21,4 @@ def is_modmail_thread() -> Callable:
             and ctx.channel.parent.id == ctx.bot.config.thread.relay_channel_id
         )
 
-    return commands.check(check)
+    return commands.check(predicate)
