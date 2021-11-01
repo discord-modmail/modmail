@@ -302,6 +302,37 @@ your chapter weird.
 
 <!-- TODO: ... -->
 
+
+## Applying database migrations
+Migrations are like a version control system for your database. Each migration defines a change to the database
+and how to undo it. By modifying your database through migrations, you create a consistent, testable, and shareable
+way to evolve your databases over time.
+
+You can easily create migrations through aerich's CLI. But before you do that, you need to generate the database
+schemas, this can simply be done by running the bot once (`task start`). Once that's done, you can use the CLI
+to generate the migration raw SQL file:
+
+<div class="termy">
+
+```console
+$ aerich migrate
+
+---> 100%
+
+Success migrate 1_202029051520102929_drop_column.sql
+```
+
+</div>
+
+Now, check your `migrations/models` folder. You should see your brand-new migration! Notice that it also
+contains a timestamp. This allows `aerich` to run your migrations in the correct order. Format of migrate filename
+is `{version_num}_{datetime}_{name|update}.sql`. If you are renaming a column, aerich would ask you for confirmation,
+you can then choose `True` to rename the column without a column drop and `False` to drop the column then create.
+Note that the latter may **lose** data.
+
+
+
+
 ## Changelog Requirement
 
 Modmail has CI that will check for an entry corresponding to your PR in `CHANGES.md`.
