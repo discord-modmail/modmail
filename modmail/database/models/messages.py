@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .attachments import Attachments
     from .embeds import Embeds
     from .emojis import Emojis
+    from .stickers import Stickers
 
 
 class Messages(Model):
@@ -22,3 +23,4 @@ class Messages(Model):
     attachments: fields.ReverseRelation["Attachments"]
     embeds: fields.ReverseRelation["Embeds"]
     emojis: fields.ReverseRelation["Emojis"]
+    stickers: fields.ReverseRelation["Stickers"]
