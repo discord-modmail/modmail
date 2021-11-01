@@ -19,7 +19,7 @@ from modmail.utils.time import TimeStampEnum, get_discord_formatted_timestamp
 from modmail.utils.users import check_can_dm_user
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: nocover
     from modmail.bot import ModmailBot
     from modmail.log import ModmailLogger
 
@@ -107,7 +107,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         """Save a newly created ticket."""
         self.bot._tickets[ticket.recipient.id] = ticket
         self.bot._tickets[ticket.thread.id] = ticket
-        return Ticket
+        return ticket
 
     def get_ticket(self, id: int, /) -> Optional[Ticket]:
         """
@@ -194,9 +194,9 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         Parameters
         ----------
-        recipient: discord.User
-
         initial_message: discord.Message
+
+        recipient: discord.User
 
         raise_for_preexisting: bool = True
             Whether to check if there is an existing ticket for the user.
@@ -206,9 +206,6 @@ class TicketsCog(ModmailCog, name="Threads"):
             Whether to relay the provided initial_message to the user.
 
         """
-        if initial_message is None:
-            raise ValueError("initial_message must be provided.")
-
         recipient = recipient or initial_message.author
 
         # lock this next session, since we're checking if a thread already exists here
@@ -920,7 +917,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         self,
         channel: discord.abc.Messageable,
         user: Union[discord.User, discord.Member],
-        _: arrow.Arrow,
+        _: datetime.datetime,
     ) -> None:
         """Relay typing events to the thread channel."""
         if user.id == self.bot.user.id:
