@@ -1,9 +1,3 @@
-"""
-Test Ticket extension.
-
-To be written.
-"""
-import random
 import typing
 import unittest.mock
 from typing import TYPE_CHECKING
@@ -27,7 +21,8 @@ def _get_fake_ticket():
     guild = mocks.MockGuild(id=GUILD_ID)
     channel = mocks.MockTextChannel(guild=guild)
     user = mocks.MockUser()
-    thread = mocks.MockThread(guild=guild, parent=channel)
+    thread = mocks.MockThread(guild=guild)
+    thread.parent = channel
     message = mocks.MockMessage(guild=guild, channel=channel)
 
     ticket = thread_utils.Ticket(user, thread, log_message=message)
@@ -133,6 +128,129 @@ class TestUtilityMethods:
         assert ticket.recipient.id in bot._tickets.keys()
         assert returned_ticket in bot._tickets.values()
 
+    # TODO: write more tests for this specific method
+    @pytest.mark.asyncio
+    async def test_start_discord_thread(self, bot, cog: threads.TicketsCog, ticket: threads.Ticket):
+        """Test _start_discord_thread does what it says and returns the correct thread and message."""
+        cog.relay_channel = mocks.MockTextChannel()
+        user = mocks.MockUser(name="NitroScammer")
+        thread = ticket.thread
+        msg = mocks.MockMessage(guild=None, author=user)
+        relayed_msg = mocks.MockMessage(guild=thread.guild, channel=cog.relay_channel)
+        cog.relay_channel.send = unittest.mock.AsyncMock(return_value=relayed_msg)
+        relayed_msg.create_thread = unittest.mock.AsyncMock(return_value=thread)
+
+        with unittest.mock.patch.object(cog, "init_relay_channel"):
+            result = await cog._start_discord_thread(msg)
+
+        assert 2 == len(result)
+        assert thread is result[0]
+        assert relayed_msg is result[1]
+
+        assert 1 == cog.relay_channel.send.call_count
+        assert 1 == relayed_msg.create_thread.call_count
+
+        assert str(user) == relayed_msg.create_thread.call_args[1]["name"]
+
+
+@pytest.fixture
+def ctx():
+    """Mock ctx fixture."""
+    return mocks.MockContext()
+
+
+class TestContactCommand:
+    """Test the contact command which will create a ticket with a specified user."""
+
+    @pytest.mark.asyncio
+    async def test_contact(self, ctx, bot, cog, ticket):
+        """Test a contact command succeeds and creates a thread if everything is accurate."""
+        user = mocks.MockUser(name="spammer")
+        with unittest.mock.patch.object(cog, "create_ticket", return_value=ticket) as mock_create_ticket:
+            with unittest.mock.patch.object(
+                threads, "check_can_dm_user", return_value=True
+            ) as mock_check_can_dm_user:
+                await cog.contact(cog, ctx, user)
+
+        assert 0 == ticket.thread.send.call_count
+        assert 1 == mock_create_ticket.call_count
+        assert 1 == mock_check_can_dm_user.call_count
+
+        mock_create_ticket.assert_called_once_with(
+            ctx.message,
+            recipient=user,
+            raise_for_preexisting=True,
+            send_initial_message=False,
+            description="",
+            creator=ctx.message.author,
+        )
+
+    @pytest.mark.asyncio
+    async def test_does_not_allow_bots(self, ctx, bot, cog):
+        """Properly notify the user that tickets cannot be started with other bots."""
+        user = mocks.MockUser(name="defintely a human", bot=True)
+        await cog.contact(cog, ctx, user)
+        assert 1 == ctx.send.call_count
+        assert "bot" in ctx.send.call_args[0][0]
+
+        ctx.reset_mock()
+
+        await cog.contact(cog, ctx, bot.user)
+        assert 1 == ctx.send.call_count
+        assert "perfect" in ctx.send.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_ticket_already_exists(self, ctx, bot, cog, ticket):
+        """Send an alert to the user if the thread already exists."""
+        user = mocks.MockUser(name="spammer")
+        with unittest.mock.patch.object(
+            cog, "create_ticket", side_effect=threads.ThreadAlreadyExistsError()
+        ) as mock_create_ticket:
+            with unittest.mock.patch.object(cog, "get_ticket", return_value=ticket):
+                await cog.contact(cog, ctx, user)
+        thread = ticket.thread
+        assert 0 == ticket.thread.send.call_count
+        assert 1 == ctx.send.call_count
+        assert 1 == mock_create_ticket.call_count
+
+        sent_content = ctx.send.call_args[0][0]
+        important_info = [
+            "already exists",
+            user.mention,
+            user.id,
+            f"{threads.BASE_JUMP_URL}/{thread.guild.id}/{thread.id}",
+        ]
+        for item in important_info:
+            assert str(item) in sent_content
+
+    @pytest.mark.asyncio
+    async def test_check_can_dm_user_false(self, ctx, bot, cog, ticket):
+        """Check if the thread is notified if a user is unable to be dmed upon creation."""
+        user = mocks.MockUser(name="spammer", discriminator="5555")
+        with unittest.mock.patch.object(cog, "create_ticket", return_value=ticket) as mock_create_ticket:
+            with unittest.mock.patch.object(
+                threads, "check_can_dm_user", return_value=False
+            ) as mock_check_can_dm_user:
+                await cog.contact(cog, ctx, user)
+
+        assert 1 == mock_create_ticket.call_count
+        assert 1 == mock_check_can_dm_user.call_count
+        assert 1 == ticket.thread.send.call_count
+
+        mock_create_ticket.assert_called_once_with(
+            ctx.message,
+            recipient=user,
+            raise_for_preexisting=True,
+            send_initial_message=False,
+            description="",
+            creator=ctx.message.author,
+        )
+        # check for important words to be in the reply when user cannot be dmed
+        sent_text = ticket.thread.send.call_args[0][0]
+        important_words = ["not able to", "DM", user.name, user.discriminator]
+        for word in important_words:
+            assert str(word) in sent_text
+
 
 # class TestReplyCommand:
 #     ...
@@ -140,7 +258,9 @@ class TestUtilityMethods:
 #     ...
 # class TestDeleteCommand:
 #     ...
-# class TestContactCommand:
+# class TestRelayToGuild:
+#     ...
+# class TestRelayToUser:
 #     ...
 # class TestOnMessage:
 #     ...
