@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
+from modmail.utils import responses
 from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
 from modmail.utils.extensions import BOT_MODE
 
@@ -16,9 +17,9 @@ logger: ModmailLogger = logging.getLogger(__name__)
 
 EXT_METADATA = ExtMetadata()
 
-ERROR_COLOUR = discord.Colour.red()
+ERROR_COLOUR = responses.DEFAULT_FAILURE_COLOUR
 
-ERROR_TITLE_REGEX = re.compile(r"(?<=[a-zA-Z])([A-Z])(?=[a-z])")
+ERROR_TITLE_REGEX = re.compile(r"((?<=[a-z])[A-Z]|(?<=[a-zA-Z])[A-Z](?=[a-z]))")
 
 ANY_DEV_MODE = BOT_MODE & (BotModes.DEVELOP.value + BotModes.PLUGIN_DEV.value)
 

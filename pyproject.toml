@@ -45,10 +45,10 @@ isort = "^5.9.2"
 pep8-naming = "~=0.11"
 # testing
 codecov = "^2.1.11"
-coverage = { extras = ["toml"], version = "^5.5" }
+coverage = { extras = ["toml"], version = "^6.0.2" }
 pytest = "^6.2.4"
 pytest-asyncio = "^0.15.1"
-pytest-cov = "^2.12.1"
+pytest-cov = "^3.0.0"
 pytest-dependency = "^0.5.1"
 pytest-sugar = "^0.9.4"
 pytest-xdist = { version = "^2.3.0", extras = ["psutil"] }
@@ -67,13 +67,13 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.run]
 branch = true
-source_pkgs = ["modmail"]
+source_pkgs = ['modmail', 'tests.modmail']
 omit = ["modmail/plugins/**.*"]
 
 [tool.pytest.ini_options]
 addopts = "--cov --cov-report="
 minversion = "6.0"
-testpaths = ["tests"]
+testpaths = ["tests/modmail"]
 
 [tool.black]
 line-length = 110
@@ -93,4 +93,5 @@ lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI err
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
 report = { cmd = "coverage report", help = "Show coverage report from previously run tests." }
 test = { cmd = "pytest -n auto --dist loadfile", help = "Runs tests and save results to a coverage report" }
+test_mocks = { cmd = 'pytest tests/test_mocks.py', help = 'Runs the tests on the mock files. They are excluded from the main test suite.' }
 news-create = { cmd = "python -m scripts.news add", help = "Create a new news fragment for your PR to discord-modmail!"}

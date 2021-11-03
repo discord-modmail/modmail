@@ -12,6 +12,7 @@ from discord.client import _cleanup_loop
 from discord.ext import commands
 
 from modmail.config import CONFIG
+from modmail.dispatcher import Dispatcher
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
@@ -35,11 +36,13 @@ class ModmailBot(commands.Bot):
     """
 
     logger: ModmailLogger = logging.getLogger(__name__)
+    dispatcher: Dispatcher
 
     def __init__(self, **kwargs):
         self.config = CONFIG
         self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
         self.http_session: t.Optional[ClientSession] = None
+        self.dispatcher = Dispatcher()
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
@@ -49,14 +52,16 @@ class ModmailBot(commands.Bot):
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
+        # override passed kwargs if they are None
+        kwargs["case_insensitive"] = kwargs.get("case_insensitive", True)
+        # do not let the description be overridden.
+        kwargs["description"] = "Modmail bot by discord-modmail."
+        kwargs["status"] = kwargs.get("status", status)
+        kwargs["activity"] = kwargs.get("activity", activity)
+        kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", allowed_mentions)
+        kwargs["command_prefix"] = kwargs.get("command_prefix", prefix)
+        kwargs["intents"] = kwargs.get("intents", REQUIRED_INTENTS)
         super().__init__(
-            case_insensitive=True,
-            description="Modmail bot by discord-modmail.",
-            status=status,
-            activity=activity,
-            allowed_mentions=allowed_mentions,
-            command_prefix=prefix,
-            intents=REQUIRED_INTENTS,
             **kwargs,
         )
 
