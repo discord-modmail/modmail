@@ -201,7 +201,7 @@ def cli_build_news(ctx: click.Context) -> None:
 
     template = CONFIG["core"].get("template")
     if not template:
-        template = Path(Path.cwd(), "scripts/news/default_template.md.jinja")
+        template = Path(Path.cwd(), "scripts/news/template.md.jinja")
     else:
         template = Path(Path.cwd(), f"scripts/news/{template}")
 

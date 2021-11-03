@@ -1,6 +1,3 @@
-[core]
-template = "default_template.rst"
-
 [types]
 feature = { name = "Features" }
 trivial = { name = "Trivial/Internal Changes" }
