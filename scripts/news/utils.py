@@ -70,10 +70,10 @@ class NotRequiredIf(Option):
         self, ctx: Context, opts: Mapping[str, Any], args: List[str]
     ) -> Tuple[Any, List[str]]:
         """Check if option is mutually exclusive with another, if yes print error and exist."""
-        we_are_present = self.name in opts
         other_present = self.not_required_if in opts
 
         if other_present:
+            we_are_present = self.name in opts
             if we_are_present:
                 err(
                     f"{ERROR_MSG_PREFIX} Illegal usage. `%s` is mutually exclusive with `%s`"
@@ -121,14 +121,13 @@ def get_metadata_from_file(path: Path) -> dict:
     with open(path, "r", encoding="utf-8") as file:
         news_entry = file.read()
 
-    metadata = {
+    return {
         "date": date,
         "gh_pr": gh_pr,
         "news_type": news_type,
         "nonce": nonce,
         "news_entry": news_entry,
     }
-    return metadata
 
 
 def get_project_meta() -> Tuple[str, str]:

@@ -40,7 +40,6 @@ NO_NEWS_PATH_ERROR = (
     "doesn't exist please create it and run this command again :) Happy change-logging!"
 )
 
-
 CONFIG = load_toml_config()
 SECTIONS = [_type for _type, _ in CONFIG.get("types").items()]
 
@@ -48,10 +47,7 @@ SECTIONS = [_type for _type, _ in CONFIG.get("types").items()]
 def save_news_fragment(ctx: click.Context, gh_pr: int, nonce: str, news_entry: str, news_type: str) -> None:
     """Save received changelog data to a news file."""
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    path = Path(
-        Path.cwd(),
-        f"news/next/{news_type}/{date}.pr-{str(gh_pr)}.{nonce}.md",
-    )
+    path = Path(Path.cwd(), f"news/next/{news_type}/{date}.pr-{gh_pr}.{nonce}.md")
     if not path.parents[1].exists():
         err(NO_NEWS_PATH_ERROR, fg="blue")
         ctx.exit(1)
@@ -158,11 +154,11 @@ def cli_add_news(ctx: click.Context, message: str, editor: str, type: str, pr_nu
             )
 
             if not content:
-                message_notes = "# ERROR: No content found previously"
+                message_notes = ["# ERROR: No content found previously"]
                 continue
 
             message = "\n".join(
-                [line.rstrip() for line in content.split("\n") if not line.lstrip().startswith("#")]
+                line.rstrip() for line in content.split("\n") if not line.lstrip().startswith("#")
             )
 
             if message is None:
@@ -175,8 +171,14 @@ def cli_add_news(ctx: click.Context, message: str, editor: str, type: str, pr_nu
 
 
 @cli_main.command("build")
+@click.option(
+    "--edit/--no-edit",
+    default=None,
+    help="Open the changelog file in your text editor.",
+)
+@click.option("--keep", is_flag=True, help="Keep the fragment files that are collected.")
 @click.pass_context
-def cli_build_news(ctx: click.Context) -> None:
+def cli_build_news(ctx: click.Context, edit: Optional[bool], keep: bool) -> None:
     """Build a combined news file 📜 from news fragments."""
     filenames = glob_fragments("next", SECTIONS)
     _file_metadata = {}
@@ -222,16 +224,19 @@ def cli_build_news(ctx: click.Context) -> None:
     )
     news_path = Path(Path.cwd(), f"news/{version}.md")
 
-    with open(news_path, mode="w") as filename:
-        filename.write(version_news)
+    with open(news_path, mode="w") as file:
+        file.write(version_news)
 
     out(f"All done! ✨ 🍰 ✨ Created {name}-v{version} news at {news_path}")
 
-    files = Path(Path.cwd(), "scripts/news/next")
-    for news_fragment in files.glob("*.md"):
-        os.remove(news_fragment)
+    if edit:
+        click.edit(filename=str(news_path))
 
-    out("🍰 Cleared existing `scripts/news/next` news fragments!")
+    if not keep:
+        files = Path(Path.cwd(), "scripts/news/next")
+        for news_fragment in files.glob("*.md"):
+            os.remove(news_fragment)
+        out("🍰 Cleared existing `scripts/news/next` news fragments!")
 
 
 if __name__ == "__main__":
