@@ -18,4 +18,4 @@ COPY . .
 # install the package using pep 517
 RUN pip install . --no-deps --use-feature=in-tree-build
 
-CMD ["python", "-m", "modmail"]
+CMD ["sh", "-c", "aerich upgrade && python -m modmail"]

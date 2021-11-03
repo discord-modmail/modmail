@@ -27,7 +27,6 @@ REQUIRED_INTENTS = Intents(
     emojis_and_stickers=True,
 )
 
-logging.error(CONFIG.bot)
 TORTOISE_ORM = {
     "connections": {"default": CONFIG.bot.database_uri},
     "apps": {
