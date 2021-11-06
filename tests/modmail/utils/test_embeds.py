@@ -1,3 +1,5 @@
+import unittest.mock
+
 import discord
 import pytest
 
@@ -10,9 +12,10 @@ def test_patch_embed() -> None:
     from modmail.utils.embeds import __init__ as init
     from modmail.utils.embeds import original_init
 
-    assert discord.Embed.__init__ == original_init
-    patch_embed()
-    assert discord.Embed.__init__ == init
+    with unittest.mock.patch.object(discord.Embed, "__init__", original_init):
+        assert discord.Embed.__init__ == original_init
+        patch_embed()
+        assert discord.Embed.__init__ == init
 
 
 @pytest.mark.dependency(depends_on="patch_embed")
