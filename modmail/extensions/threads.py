@@ -131,11 +131,7 @@ class TicketsCog(ModmailCog, name="Threads"):
     # so it's possible that the user isn't in the server where this command is run.
     @commands.command()
     async def contact(
-        self,
-        ctx: Context,
-        recipient: Union[discord.User, discord.Member],
-        *,
-        reason: str = "",
+        self, ctx: Context, recipient: Union[discord.User, discord.Member], *, reason: str = ""
     ) -> None:
         """
         Open a new ticket with a provided recipient.
@@ -218,10 +214,7 @@ class TicketsCog(ModmailCog, name="Threads"):
                     return self.get_ticket(recipient.id)
 
             thread_channel, thread_msg = await self._start_discord_thread(
-                initial_message,
-                recipient,
-                description=description,
-                creator=creator,
+                initial_message, recipient, description=description, creator=creator
             )
             ticket = Ticket(
                 recipient,
@@ -288,11 +281,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             value=get_discord_formatted_timestamp(arrow.utcnow(), TimeStampEnum.RELATIVE_TIME),
         )
 
-        relayed_msg = await self.relay_channel.send(
-            content=mention,
-            embed=embed,
-            **send_kwargs,
-        )
+        relayed_msg = await self.relay_channel.send(content=mention, embed=embed, **send_kwargs)
         try:
             thread_channel = await relayed_msg.create_thread(
                 name=f"{recipient!s}".replace("#", "-"),
@@ -304,8 +293,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             # repeat the request but using the user id and discrim
             # 50035 means that the user has some banned characters or phrases in their name
             thread_channel = await relayed_msg.create_thread(
-                name=recipient.id,
-                auto_archive_duration=relayed_msg.channel.default_auto_archive_duration,
+                name=recipient.id, auto_archive_duration=relayed_msg.channel.default_auto_archive_duration
             )
 
         return thread_channel, relayed_msg
@@ -315,7 +303,7 @@ class TicketsCog(ModmailCog, name="Threads"):
     ) -> discord.Message:
         """Relay a message from guild to user."""
         if ticket.recipient.dm_channel is None:
-            # note, this is
+            # Note, this is the recommended way by discord.py to fetch a dm channel.
             await ticket.recipient.create_dm()
 
         # thread -> dm
@@ -502,10 +490,12 @@ class TicketsCog(ModmailCog, name="Threads"):
             raise commands.MissingRequiredArgument(param)
         ticket = self.get_ticket(ctx.channel.id)
         if not ticket.has_sent_initial_message:
+            await ctx.trigger_typing()
             logger.info(
                 "Sending initial message before replying on a thread "
                 "that was opened with the contact command."
             )
+
             await ticket.recipient.send(
                 embeds=[
                     Embed(
@@ -516,7 +506,6 @@ class TicketsCog(ModmailCog, name="Threads"):
             )
             ticket.has_sent_initial_message = True
 
-            await ctx.trigger_typing()
             await asyncio.sleep(1)
 
         await self.relay_message_to_user(ticket, ctx.message, message)
@@ -873,9 +862,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         await guild_msg.edit(embed=new_embed)
 
         dm_channel = self.bot.get_partial_messageable(payload.channel_id, type=discord.DMChannel)
-        await dm_channel.send(
-            embed=discord.Embed("Successfully deleted message."),
-        )
+        await dm_channel.send(embed=discord.Embed("Successfully deleted message."))
 
     @ModmailCog.listener(name="on_raw_message_delete")
     async def on_thread_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
@@ -1006,11 +993,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             )
             return
 
-        await self.close_thread(
-            ticket,
-            archiver,
-            automatically_archived=automatically_archived,
-        )
+        await self.close_thread(ticket, archiver, automatically_archived=automatically_archived)
 
     @is_modmail_thread()
     @commands.command(name="debug_thread", enabled=DEV_MODE_ENABLED)
