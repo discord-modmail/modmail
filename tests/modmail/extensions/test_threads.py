@@ -104,6 +104,7 @@ class TestUtilityMethods:
         with pytest.raises(threads.ThreadNotFoundError):
             cog.get_ticket(mocks.generate_realistic_id())
 
+    # TODO: More tests for this method
     @pytest.mark.asyncio
     async def test_create_ticket(self, bot: "ModmailBot", cog: threads.TicketsCog, ticket: threads.Ticket):
         """Test the create_ticket method adds the ticket to the internal dictionary."""
@@ -252,15 +253,83 @@ class TestContactCommand:
             assert str(word) in sent_text
 
 
-# class TestReplyCommand:
-#     ...
+class TestRelayMessageToUser:
+    """
+    Relay a message from guild to user and save it to the ticket.
+
+    This should:
+    - send message in thread
+    - send message to user
+    - error if the user cannot be dmed (TODO)
+    - handle all of the following:
+        - message content
+        - message stickers
+        - message attachments
+    """
+
+    ...
+
+    @staticmethod
+    @pytest.fixture
+    def message():
+        """Mock Message."""
+        return mocks.MockMessage()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(["contents", "should_delete"], [["...", True]])
+    async def test_reply_to_user_general(
+        self,
+        cog: threads.TicketsCog,
+        ticket: threads.Ticket,
+        message: typing.Union[discord.Message, mocks.MockMessage],
+        contents: str,
+        should_delete: bool,
+    ):
+        """Test the reply to user method does indeed send a message to the user."""
+        message.author.colour = 5
+        message.created_at = arrow.get(discord.utils.snowflake_time(message.created_at).timestamp()).datetime
+
+        import modmail.utils.embeds
+
+        modmail.utils.embeds.patch_embed()
+        await cog.relay_message_to_user(ticket, message, contents, delete=should_delete)
+
+        assert 1 == ticket.recipient.send.call_count
+        ticket.recipient.send.assert_called_once()
+        ticket.recipient.send.assert_awaited_once()
+
+
+class TestRelayMessageToGuild:
+    """
+    Relay a message from guild to user and save it to the ticket.
+
+    This should:
+    - send message in thread
+    - react to the user's message with a confirmation emoji that the above was successful
+    - handle all of the following:
+        - message content
+        - message stickers
+        - message attachments
+    """
+
+    ...
+
+
+class TestReplyCommand:
+    """
+    Test reply command.
+
+    Reply command needs to
+    - respond to the user with errors
+    - call the relay message to user method
+    """
+
+    ...
+
+
 # class TestEditCommand:
 #     ...
 # class TestDeleteCommand:
-#     ...
-# class TestRelayToGuild:
-#     ...
-# class TestRelayToUser:
 #     ...
 # class TestOnMessage:
 #     ...
