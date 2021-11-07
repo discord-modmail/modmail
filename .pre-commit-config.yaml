@@ -45,6 +45,18 @@ repos:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
 
+  - repo: local
+    hooks:
+    - id: generate_requirements.txt
+      name: Generate requirements.txt
+      entry: python -m scripts.export_requirements
+      files: '(pyproject.toml|poetry.lock|requirements.txt|scripts\/export\_requirements\.py)$'
+      language: python
+      pass_filenames: false
+      require_serial: true
+      additional_dependencies:
+        - tomli~=1.2.1
+
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0
     hooks:

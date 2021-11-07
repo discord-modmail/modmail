@@ -52,10 +52,10 @@ isort = "^5.9.2"
 pep8-naming = "~=0.11"
 # testing
 codecov = "^2.1.11"
-coverage = { extras = ["toml"], version = "^5.5" }
+coverage = { extras = ["toml"], version = "^6.0.2" }
 pytest = "^6.2.4"
 pytest-asyncio = "^0.15.1"
-pytest-cov = "^2.12.1"
+pytest-cov = "^3.0.0"
 pytest-dependency = "^0.5.1"
 pytest-sugar = "^0.9.4"
 pytest-xdist = { version = "^2.3.0", extras = ["psutil"] }
@@ -70,13 +70,13 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.run]
 branch = true
-source_pkgs = ["modmail"]
+source_pkgs = ['modmail', 'tests.modmail']
 omit = ["modmail/plugins/**.*"]
 
 [tool.pytest.ini_options]
 addopts = "--cov --cov-report="
 minversion = "6.0"
-testpaths = ["tests"]
+testpaths = ["tests/modmail"]
 filterwarnings = [
     "default",
     'ignore::DeprecationWarning:marshmallow.fields:173',
@@ -84,40 +84,22 @@ filterwarnings = [
     'ignore::DeprecationWarning:marshmallow.fields:456',
 ]
 
-
 [tool.black]
 line-length = 110
 target-version = ['py38']
 include = '\.pyi?$'
 
-[tool.taskipy.tasks.export]
-cmd = """
-echo 'Exporting installed packages to requirements.txt.\n\
-This task automatically relocks the lock file using "poetry lock --no-update"' && \
-poetry lock --no-update && \
-echo '# Do not manually edit.\n# Generate with "poetry run task export"\n' > requirements.txt && \
-echo "Exporting..." && \
-poetry export --without-hashes >> requirements.txt && \
-echo "Done exporting."
-"""
-help = "Export installed packages in requirements.txt format"
-
 [tool.taskipy.tasks]
-# Documentation
-docs = { cmd = "mkdocs serve", help = "Run the docs on a local automatically reloading server" }
-
-# Bot
 start = { cmd = "python -m modmail", help = "Run bot" }
-
-# Linting
-precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
 black = { cmd = "black --check .", help = "dry run of black" }
-flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
-lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
-
-# Testing
 codecov-validate = { cmd = "curl --data-binary @.codecov.yml https://codecov.io/validate", help = "Validate `.codecov.yml` with their api." }
 cov-server = { cmd = "coverage html", help = "Start an http.server for viewing coverage data." }
 post_cov-server = "python -m http.server 8012 --bind 127.0.0.1 --directory htmlcov"
+docs = { cmd = "mkdocs serve", help = "Run the docs on a local automatically reloading server" }
+export = { cmd = "python -m scripts.export_requirements", help = "Export the requirements from poetry.lock to requirements.txt" }
+flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
+lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
+precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
 report = { cmd = "coverage report", help = "Show coverage report from previously run tests." }
 test = { cmd = "pytest -n auto --dist loadfile", help = "Runs tests and save results to a coverage report" }
+test_mocks = { cmd = 'pytest tests/test_mocks.py', help = 'Runs the tests on the mock files. They are excluded from the main test suite.' }

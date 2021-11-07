@@ -1,23 +1,25 @@
+import unittest.mock
+
 import discord
 import pytest
-from discord import Colour
 
 from modmail.utils.embeds import patch_embed
 
 
 @pytest.mark.dependency(name="patch_embed")
-def test_patch_embed():
+def test_patch_embed() -> None:
     """Ensure that the function changes init only after the patch is called."""
     from modmail.utils.embeds import __init__ as init
     from modmail.utils.embeds import original_init
 
-    assert discord.Embed.__init__ == original_init
-    patch_embed()
-    assert discord.Embed.__init__ == init
+    with unittest.mock.patch.object(discord.Embed, "__init__", original_init):
+        assert discord.Embed.__init__ == original_init
+        patch_embed()
+        assert discord.Embed.__init__ == init
 
 
 @pytest.mark.dependency(depends_on="patch_embed")
-def test_create_embed():
+def test_create_embed() -> None:
     """Test creating an embed with patched parameters works properly."""
     title = "Test title"
     description = "Test description"
@@ -49,14 +51,14 @@ def test_create_embed():
 
 
 @pytest.mark.dependency(depends_on="patch_embed")
-def test_create_embed_with_extra_params():
+def test_create_embed_with_extra_params() -> None:
     """Test creating an embed with extra parameters errors properly."""
     with pytest.raises(TypeError, match="ooga_booga"):
         discord.Embed("hello", ooga_booga=3)
 
 
 @pytest.mark.dependency(depends_on="patch_embed")
-def test_create_embed_with_description_and_content():
+def test_create_embed_with_description_and_content() -> None:
     """
     Create an embed while providing both description and content parameters.
 
