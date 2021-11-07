@@ -3,6 +3,7 @@ Exports the configuration to the configuration default files.
 
 This is intented to be used as a local pre-commit hook, which runs if the modmail/config.py file is changed.
 """
+import difflib
 import json
 import os
 import pathlib
@@ -42,23 +43,29 @@ class DidFileEdit:
         for f in files:
             self.files.append(f)
         self.return_value: typing.Optional[int] = None
-        self.edited_files: typing.List[os.PathLike] = []
+        self.edited_files: typing.Dict[os.PathLike] = dict()
 
     def __enter__(self):
         self.file_contents = {}
         for file in self.files:
             try:
                 with open(file, "r") as f:
-                    self.file_contents[file] = f.read()
+                    self.file_contents[file] = f.readlines()
             except FileNotFoundError:
                 self.file_contents[file] = None
+        return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):  # noqa: ANN001
         for file in self.files:
             with open(file, "r") as f:
-                contents = self.file_contents[file]
-                if contents != f.read():
-                    self.edited_files.append(file)
+                original_contents = self.file_contents[file]
+                new_contents = f.readlines()
+                if original_contents != new_contents:
+                    # construct a diff
+                    diff = difflib.unified_diff(
+                        original_contents, new_contents, fromfile="before", tofile="after"
+                    )
+                    self.edited_files[file] = diff
 
 
 def export_default_conf() -> int:
@@ -91,9 +98,7 @@ def export_default_conf() -> int:
     toml_file = MODMAIL_CONFIG_DIR / (modmail.config.AUTO_GEN_FILE_NAME + ".toml")
     yaml_file = MODMAIL_CONFIG_DIR / (modmail.config.AUTO_GEN_FILE_NAME + ".yaml")
 
-    check_file = DidFileEdit(toml_file, yaml_file)
-
-    with check_file:
+    with DidFileEdit(toml_file, yaml_file) as check_file:
         with open(toml_file, "w") as f:
             atoml.dump(doc, f)
 
@@ -102,11 +107,16 @@ def export_default_conf() -> int:
             f.write(f"# {autogen_gen_notice}\n")
             yaml.dump(dump, f, indent=4, Dumper=yaml.SafeDumper)
 
-    for file in check_file.edited_files:
+    for file, diff in check_file.edited_files.items():
         print(
             f"Exported new configuration to {pathlib.Path(file).relative_to(MODMAIL_DIR.parent)}.",
             file=sys.stderr,
         )
+        try:
+            print("".join(diff))
+        except TypeError:
+            print("No diff to show.")
+        print()
     return bool(len(check_file.edited_files))
 
 
@@ -147,9 +157,7 @@ def export_env_and_app_json_conf() -> int:
 
         return export
 
-    check_file = DidFileEdit(ENV_EXPORT_FILE, APP_JSON_FILE)
-
-    with check_file:
+    with DidFileEdit(ENV_EXPORT_FILE, APP_JSON_FILE) as check_file:
         # dotenv modifies currently existing files, but we want to erase the current file
         ENV_EXPORT_FILE.unlink(missing_ok=True)
         ENV_EXPORT_FILE.touch()
@@ -200,11 +208,16 @@ def export_env_and_app_json_conf() -> int:
             json.dump(app_json, f, indent=4)
             f.write("\n")
 
-    for file in check_file.edited_files:
+    for file, diff in check_file.edited_files.items():
         print(
             f"Exported new env configuration to {pathlib.Path(file).relative_to(MODMAIL_DIR.parent)}.",
             file=sys.stderr,
         )
+        try:
+            print("".join(diff))
+        except TypeError:
+            print("No diff to show.")
+        print()
     return bool(len(check_file.edited_files))
 
 
