@@ -35,7 +35,13 @@ def run_script(module_name: str, *args, **kwargs) -> None:
 @click.group()
 @click.help_option("-h", "--help")
 def cli() -> None:
-    """Click group for the command wrapper."""
+    """
+    Custom scripts which help modmail development.
+
+    All custom scripts should be listed below as a command, with a description.
+    In addition, some built in modules may be listed below as well.
+    If a custom script is not shown below please open an issue.
+    """
     pass
 
 
