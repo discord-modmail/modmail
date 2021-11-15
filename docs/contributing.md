@@ -188,6 +188,19 @@ $ poetry install
 
 5. Open the file with any text editor and write the bot token to the files in this format: `MODMAIL_BOT_TOKEN="my_token"`.
 
+
+Of the several supported configuration sources, they are loaded in a specific priority. In decreasing priority:
+- `os.environ`
+- .env
+- modmail_config.yaml (if PyYaml is installed and the file exists)
+- modmail_config.toml (if the above file does not exist)
+- defaults
+
+Internally, the actual parsing order may not match the above,
+but the end configuration object will have the above priorty.
+
+
+
 ### Run The Project
 
 To run the project, use the (below) in the project root.
