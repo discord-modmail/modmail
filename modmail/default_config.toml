@@ -3,6 +3,7 @@
 
 [bot]
 prefix = "?"
+prefix_when_mentioned = true
 
 [colours]
 base_embed_color = "#7289da"

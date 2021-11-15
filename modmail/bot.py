@@ -48,7 +48,7 @@ class ModmailBot(commands.Bot):
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
         # listen to messages mentioning the bot or matching the prefix
         # ! NOTE: This needs to use the configuration system to get the prefix from the db once it exists.
-        prefix = commands.when_mentioned_or(self.config.user.bot.prefix)
+        prefix = self.determine_prefix
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
@@ -64,6 +64,15 @@ class ModmailBot(commands.Bot):
         super().__init__(
             **kwargs,
         )
+
+    @staticmethod
+    async def determine_prefix(bot: "ModmailBot", message: discord.Message) -> t.List[str]:
+        """Dynamically get the updated prefix on every command."""
+        prefixes = []
+        if bot.config.user.bot.prefix_when_mentioned:
+            prefixes.extend(commands.when_mentioned(bot, message))
+        prefixes.append(bot.config.user.bot.prefix)
+        return prefixes
 
     async def start(self, token: str, reconnect: bool = True) -> None:
         """

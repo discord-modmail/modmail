@@ -252,6 +252,12 @@ class BotCfg:
             )
         },
     )
+    prefix_when_mentioned: bool = attr.ib(
+        default=True,
+        metadata={
+            METADATA_TABLE: ConfigMetadata(description="Use the bot mention as a prefix."),
+        },
+    )
 
 
 @attr.s(auto_attribs=True, slots=True, frozen=True)

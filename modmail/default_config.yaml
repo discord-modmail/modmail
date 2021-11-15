@@ -2,6 +2,7 @@
 # Run scripts/export_new_config_to_default_config.py as a module to generate.
 bot:
     prefix: '?'
+    prefix_when_mentioned: true
 colours:
     base_embed_color: '#7289da'
 dev:
