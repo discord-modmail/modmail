@@ -6,6 +6,7 @@ import typing
 
 import attr
 import attr._make
+import discord
 import marshmallow
 from discord.ext import commands
 from discord.ext.commands import Context
@@ -14,6 +15,7 @@ from discord.ext.commands import converter as commands_converter
 from modmail import config
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
+from modmail.utils import responses
 from modmail.utils.cogs import ExtMetadata, ModmailCog
 from modmail.utils.pagination import ButtonPaginator
 
@@ -48,7 +50,7 @@ class ConfOptions:
 
     @classmethod
     def from_field(cls, field: attr.Attribute, *, frozen: bool = False, nested: str = None):
-        """Create a ConfOptions from a attr.Attribute."""
+        """Create a ConfOptions from an attr.Attribute."""
         kw = {}
         kw["default"] = field.default if field.default is not marshmallow.missing else None
         kw["name"] = field.name
@@ -126,7 +128,7 @@ class KeyConverter(commands.Converter):
             return new_arg
         else:
             raise commands.BadArgument(
-                f"{ctx.current_parameter.name} {arg} is not a valid configuration key."
+                f"{ctx.current_parameter.name.capitalize()} `{arg}` is not a valid configuration key."
             )
 
 
@@ -150,26 +152,30 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
     async def list_config(self, ctx: Context) -> None:
         """List the valid configuration options."""
         options = {}
+
+        embed = discord.Embed(title="Configuration Options")
         for table, opt in self.config_fields.items():
+            # TODO: add flag to skip this check
             if opt.hidden or opt.frozen:
+                # bot refuses to modify a hidden value
+                # and bot cannot modify a frozen value
                 continue
 
-            # we want to merge items from the same config table so they are on the same table
+            # we want to merge items from the same config table so they display on the same pagination page
+            # for example, all emoji configuration options will not be split up
             key = table.rsplit(".", 1)[0]
-            options[key] = options.get(key, "") + (
-                "\n".join(
-                    [
-                        f"**{string.capwords(opt.canonical_name or opt.name)}**",
-                        f"Default: `{opt.default}`"
-                        if opt.default is not None
-                        else "Required. There is no default value for this option.",
-                        f"{opt.description}",
-                        f" {opt.extended_description}\n" if opt.extended_description else "",
-                    ]
-                )
-            )
+            if options.get(key) is None:
+                options[key] = f"**__{string.capwords(key)} config__**\n"
 
-        await ButtonPaginator.paginate(options.values(), ctx.message)
+            name = opt.canonical_name or opt.name
+            default = f"Default: `{opt.default}`" if opt.default is not None else "Required."
+            description = opt.description
+            if opt.extended_description:
+                description += "\n" + opt.extended_description
+
+            options[key] += "\n".join([f"**{name}**", default, description]).strip() + "\n"
+
+        await ButtonPaginator.paginate(options.values(), ctx.message, embed=embed)
 
     @config_group.command(name="set", aliases=("edit",))
     async def modify_config(self, ctx: Context, option: KeyConverter, value: str) -> None:
@@ -179,8 +185,8 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
         meta = self.config_fields[option]
 
         if meta.frozen:
-            # TODO: replace with responses module.
-            await ctx.send("Can't modify this value.")
+
+            await responses.send_negatory_response(ctx, f"Unable to modify {option}.")
             return
 
         if meta.modmail_metadata.discord_converter is not None:
@@ -195,15 +201,15 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
         elif meta._field.converter:
             value = meta._field.converter(value)
 
-        try:
+        if "." in option:
             root, name = option.rsplit(".", -1)
-        except ValueError:
+        else:
             root = ""
             name = option
 
         setattr(operator.attrgetter(root)(self.bot.config.user), name, value)
 
-        await ctx.message.reply("ok.")
+        await responses.send_positive_response(ctx, f"Successfully set `{option}` to `{value}`.")
 
     @config_group.command(name="get", aliases=("show",))
     async def get_config(self, ctx: Context, option: KeyConverter) -> None:
