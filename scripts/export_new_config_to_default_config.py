@@ -32,7 +32,7 @@ import modmail.config
 
 
 MODMAIL_CONFIG_DIR = pathlib.Path(modmail.config.__file__).parent
-ENV_EXPORT_FILE = MODMAIL_CONFIG_DIR.parent / ".env.template"
+ENV_EXPORT_FILE = MODMAIL_CONFIG_DIR.parent / "template.env"
 APP_JSON_FILE = MODMAIL_CONFIG_DIR.parent / "app.json"
 
 METADATA_TABLE = modmail.config.METADATA_TABLE
@@ -97,9 +97,13 @@ class DidFileEdit:
                     diff = difflib.unified_diff(
                         original_contents, new_contents, fromfile="before", tofile="after"
                     )
-                    diff = "".join(diff)
-                    if diff is not None and pygments is not None:
-                        diff = pygments.highlight(diff, DiffLexer(), Terminal256Formatter())
+                    try:
+                        diff = "".join(diff)
+                    except TypeError:
+                        diff = None
+                    else:
+                        if pygments is not None:
+                            diff = pygments.highlight(diff, DiffLexer(), Terminal256Formatter())
                     self.edited_files[file] = diff
 
 

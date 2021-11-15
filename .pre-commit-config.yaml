@@ -8,7 +8,7 @@ repos:
         name: Export default configuration
         language: python
         entry: poetry run python -m scripts.export_new_config_to_default_config
-        files: '(app\.json|\.env\.template|modmail\/(config\.py|default_config(\.toml|\.yaml)))$'
+        files: '(app\.json|template\.env|modmail\/(config\.py|default_config(\.toml|\.yaml)))$'
         require_serial: true
         additional_dependencies:
           # so apparently these are needed, but the versions don't have to be pinned since it uses the local env

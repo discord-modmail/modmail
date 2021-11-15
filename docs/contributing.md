@@ -181,7 +181,7 @@ $ poetry install
 2. Set the modmail bot prefix in `bot.prefix`.
 3. In case you are a contributor set `dev.mode.plugin_dev` and `dev.mode.develop` to `true`. The `develop` variable enables the developer bot extensions and `plugin_dev` enables plugin-developer friendly bot extensions.
 4. Create a text file named `.env` in your project root (that's the base folder of your repository):
-    - You can also copy the `.env.template` file to `.env`
+    - You can also copy the `template.env` file to `.env`
 
 !!!note
         The entire file name is literally `.env`
