@@ -557,15 +557,15 @@ def load_yaml(path: os.PathLike) -> dict:
 DictT = typing.TypeVar("DictT", bound=typing.Dict[str, typing.Any])
 
 
-def _remove_extra_values(klass: type, dit: DictT) -> DictT:
+def _remove_extra_values(klass: type, dictionary: DictT) -> DictT:
     """
     Remove extra values from the provided dict which don't fit into the provided klass recursively.
 
     klass must be an attr.s class.
     """
     fields = attr.fields_dict(klass)
-    cleared_dict = dit.copy()
-    for k in dit:
+    cleared_dict = dictionary.copy()
+    for k in dictionary:
         if k not in fields:
             del cleared_dict[k]
         elif isinstance(cleared_dict[k], dict):
