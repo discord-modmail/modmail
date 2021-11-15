@@ -15,6 +15,7 @@ repos:
           # go figure.
           - atoml
           - attrs
+          - click
           - coloredlogs
           - desert
           - discord.py
