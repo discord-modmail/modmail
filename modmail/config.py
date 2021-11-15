@@ -67,10 +67,7 @@ class BetterPartialEmojiConverter(discord.ext.commands.converter.EmojiConverter)
     """
 
     async def convert(self, _: discord.ext.commands.context.Context, argument: str) -> discord.PartialEmoji:
-        # match = self._get_id_match(argument) or re.match(
-        #     r"<a?:[a-zA-Z0-9\_]{1,32}:([0-9]{15,20})>$", argument
-        # )
-
+        """Convert a provided argument into an emoji object."""
         match = discord.PartialEmoji._CUSTOM_EMOJI_RE.match(argument)
         if match is not None:
             groups = match.groupdict()
@@ -196,8 +193,7 @@ class ConfigMetadata:
         types.FunctionType
     ] = None  # if we want an attribute off of the converted value
 
-    # hidden, eg log_level
-    # hidden values mean they do not show up in the bot configuration menu
+    # hidden values do not show up in the bot configuration menu
     hidden: bool = False
 
     @description.validator
@@ -447,13 +443,15 @@ def _build_class(
     if env_prefix is None:
         env_prefix = ENV_PREFIX
 
-    if env is None:
-        if dotenv_file is not None:
-            env = dotenv.dotenv_values(dotenv_file)
-            env.update(os.environ)
-        else:
-            env = os.environ.copy()
-
+    # while dotenv has methods to load the .env into the environment, we don't want that
+    # that would mean that all of the .env variables would be loaded in to the env
+    # we can't assume everything in .env is for modmail
+    # so we load it into our own dictonary and parse from that
+    env = {}
+    if dotenv_file is not None:
+        env.update(dotenv.dotenv_values(dotenv_file))
+    env.update(os.environ.copy())
+    dotenv.load_dotenv()
     # get the attributes of the provided class
     if defaults is None:
         defaults = defaultdict(lambda: None)
@@ -464,22 +462,29 @@ def _build_class(
 
     for var in attr.fields(klass):
         if attr.has(var.type):
-            # var is an attrs class too
+            # var is an attrs class too, so recurse over it
             kw[var.name] = _build_class(
                 var.type,
                 env=env,
                 env_prefix=env_prefix + var.name.upper() + "_",
                 defaults=defaults.get(var.name, None),
             )
-        else:
-            kw[var.name] = env.get(env_prefix + var.name.upper(), None)
-            if kw[var.name] is None:
-                if (defa := defaults.get(var.name, None)) is not None and defa is not marshmallow.missing:
-                    kw[var.name] = defaults[var.name]
-                elif var.default is not attr.NOTHING:  # check for var default
-                    kw[var.name] = var.default
-                else:
-                    del kw[var.name]
+            continue
+
+        kw[var.name] = env.get(env_prefix + var.name.upper(), None)
+
+        if kw[var.name] is not None:
+            continue
+
+        if var.name in defaults and defaults[var.name] not in [None, marshmallow.missing]:
+            kw[var.name] = defaults[var.name]
+            continue
+
+        if var.default is not attr.NOTHING:  # check for var default
+            kw[var.name] = var.default
+            continue
+
+        del kw[var.name]
 
     return klass(**kw)
 
