@@ -27,6 +27,12 @@ logger: ModmailLogger = logging.getLogger(__name__)
 KeyT = str
 
 
+class UnableToModifyConfig(commands.CommandError):
+    """Raised when a command is unable to modify the configuration."""
+
+    pass
+
+
 @attr.mutable
 class ConfOptions:
     """Configuration attribute class."""
@@ -178,33 +184,45 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
 
         await ButtonPaginator.paginate(options.values(), ctx.message, embed=embed)
 
-    @config_group.command(name="set_default", aliases=("set-default",))
-    async def set_default(self, ctx: Context, option: KeyConverter) -> None:
-        """Reset the provided configuration value to the default."""
+    _T = typing.TypeVar("_T")
+
+    async def set_config_value(self, option: str, new_value: _T) -> typing.Tuple[str, _T]:
+        """
+        Set the provided option to new_value.
+
+        Raises an UnableToModifyConfig error if there is an issue
+        """
         if "." in option:
             root, name = option.rsplit(".", 1)
         else:
             root = ""
             name = option
-        value = operator.attrgetter(option)(self.bot.config.default)
-        if value in [marshmallow.missing, attr.NOTHING]:
-            await responses.send_negatory_response(
-                ctx, f"`{option}` is a required configuration variable and cannot be reset."
-            )
-            return
+
+        if new_value in [marshmallow.missing, attr.NOTHING]:
+            raise UnableToModifyConfig(
+                f"`{option}` is a required configuration variable and cannot be reset."
+            ) from None
         try:
-            setattr(operator.attrgetter(root)(self.bot.config.user), name, value)
+            setattr(operator.attrgetter(root)(self.bot.config.user), name, new_value)
         except (attr.exceptions.FrozenAttributeError, attr.exceptions.FrozenInstanceError):
-            await responses.send_negatory_response(
-                ctx, f"Unable to set `{option}` as it is frozen and cannot be edited during runtime."
-            )
+            raise UnableToModifyConfig(
+                f"Unable to set `{option}` as it is frozen and cannot be edited during runtime."
+            ) from None
         else:
-            await responses.send_positive_response(
-                ctx, f"Successfully set `{option}` to the default of `{value}`."
-            )
+            return (option, new_value)
+
+    @config_group.command(name="set_default", aliases=("set-default",))
+    async def set_default(self, ctx: Context, option: KeyConverter) -> None:
+        """Reset the provided configuration value to the default."""
+        value = operator.attrgetter(option)(self.bot.config.default)
+        await self.set_config_value(option, value)
+
+        await responses.send_positive_response(
+            ctx, f"Successfully set `{option}` to the default of `{value}`."
+        )
 
     @config_group.command(name="set", aliases=("edit",))
-    async def modify_config(self, ctx: Context, option: KeyConverter, value: str) -> None:
+    async def modify_config_command(self, ctx: Context, option: KeyConverter, value: str) -> None:
         """Modify an existing configuration value."""
         metadata = self.config_fields[option]
 
@@ -223,13 +241,7 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
         if isinstance(discord_converter_attribute, types.FunctionType):
             converted_result = discord_converter_attribute(converted_result)
 
-        if "." in option:
-            root, name = option.rsplit(".", 1)
-        else:
-            root = ""
-            name = option
-
-        setattr(operator.attrgetter(root)(self.bot.config.user), name, converted_result)
+        await self.set_config_value(option, value)
 
         if converted_result == value:
             response = f"Successfully set `{option}` to `{value}`."
