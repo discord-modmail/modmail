@@ -31,15 +31,14 @@ __all__ = [
     "ENV_PREFIX",
     "USER_CONFIG_FILE_NAME",
     "USER_CONFIG_FILES",
-    "CfgLoadError",
+    "ConfigLoadError",
     "Config",
     "config",
     "ConfigurationSchema",
-    "BotCfg",
-    "BotModeCfg",
-    "Cfg",
-    "Colours",
-    "DevCfg",
+    "BotConfig",
+    "BotModeConfig",
+    "ColourConfig",
+    "DeveloperConfig",
     "convert_to_color",
     "get_config",
     "get_default_config",
@@ -80,7 +79,7 @@ class BetterPartialEmojiConverter(discord.ext.commands.converter.EmojiConverter)
 
 
 # load env before we do *anything*
-# TODO: Convert this to a function and check the parent directory too, if the CWD is within the bot.
+# !!! TODO: Convert this to a function and check the parent directory too, if the CWD is within the bot.
 # TODO: add the above feature to the other configuration locations too.
 dotenv.load_dotenv(_CWD / ".env")
 
@@ -90,10 +89,10 @@ def _generate_default_dict() -> defaultdict:
     return defaultdict(_generate_default_dict)
 
 
-class CfgLoadError(Exception):
+class ConfigLoadError(Exception):
     """Exception if the configuration failed to load from a local file."""
 
-    ...
+    pass
 
 
 class _ColourField(marshmallow.fields.Field):
@@ -157,7 +156,7 @@ def convert_to_color(col: typing.Union[str, int, discord.Colour]) -> discord.Col
 @attr.frozen(kw_only=True)
 class ConfigMetadata:
     """
-    Cfg metadata. This is intended to be used on the marshmallow and attr metadata dict as 'modmail_metadata'.
+    Config metadata. The intent is to be used on the marshmallow and attr metadata dict as 'modmail_metadata'.
 
     Nearly all of these values are optional, save for the description.
     All of them are keyword only.
@@ -210,7 +209,7 @@ class ConfigMetadata:
 
 
 @attr.s(auto_attribs=True, slots=True)
-class BotCfg:
+class BotConfig:
     """
     Values that are configuration for the bot itself.
 
@@ -257,7 +256,7 @@ class BotCfg:
 
 
 @attr.s(auto_attribs=True, slots=True, frozen=True)
-class BotModeCfg:
+class BotModeConfig:
     """
     The three bot modes for the bot. Enabling some of these may enable other bot features.
 
@@ -299,7 +298,7 @@ class BotModeCfg:
 
 
 @attr.s(auto_attribs=True, slots=True)
-class Colours:
+class ColourConfig:
     """
     Default colors.
 
@@ -319,10 +318,10 @@ class Colours:
 
 
 @attr.s(auto_attribs=True, slots=True)
-class DevCfg:
+class DeveloperConfig:
     """Developer configuration. These values should not be changed unless you know what you're doing."""
 
-    mode: BotModeCfg = BotModeCfg()
+    mode: BotModeConfig = BotModeConfig()
     log_level: int = attr.ib(
         default=logging.INFO,
         metadata={
@@ -341,7 +340,7 @@ class DevCfg:
 
 
 @attr.mutable(slots=True)
-class EmojiCfg:
+class EmojiConfig:
     """
     Emojis used across the entire bot.
 
@@ -372,7 +371,7 @@ class EmojiCfg:
 
 
 @attr.s(auto_attribs=True, slots=True)
-class Cfg:
+class BaseConfig:
     """
     Base configuration attrs class.
 
@@ -380,10 +379,10 @@ class Cfg:
     we can get a clean default variable if we don't pass anything.
     """
 
-    bot: BotCfg = BotCfg()
-    colours: Colours = Colours()
-    dev: DevCfg = attr.ib(
-        default=DevCfg(),
+    bot: BotConfig = BotConfig()
+    colours: ColourConfig = ColourConfig()
+    dev: DeveloperConfig = attr.ib(
+        default=DeveloperConfig(),
         metadata={
             METADATA_TABLE: ConfigMetadata(
                 description=(
@@ -393,15 +392,15 @@ class Cfg:
             )
         },
     )
-    emojis: EmojiCfg = EmojiCfg()
+    emojis: EmojiConfig = EmojiConfig()
 
 
 # build configuration
-ConfigurationSchema = desert.schema_class(Cfg, meta={"ordered": True})  # noqa: N818
+ConfigurationSchema = desert.schema_class(BaseConfig, meta={"ordered": True})  # noqa: N818
 
 
 _CACHED_CONFIG: "Config" = None
-_CACHED_DEFAULT: Cfg = None
+_CACHED_DEFAULT: BaseConfig = None
 
 
 @attr.s(auto_attribs=True, slots=True, kw_only=True)
@@ -410,15 +409,15 @@ class Config:
     Base configuration variable. Used across the entire bot for configuration variables.
 
     Holds two variables, default and user.
-    Default is a Cfg instance with nothing passed. It is a default instance of Cfg.
+    Default is a BaseConfig instance with nothing passed. It is a default instance of BaseConfig.
 
-    User is a Cfg schema instance, generated from a combination of the defaults,
+    User is a BaseConfig schema instance, generated from a combination of the defaults,
     user provided toml, and environment variables.
     """
 
-    user: Cfg
+    user: BaseConfig
     schema: marshmallow.Schema
-    default: Cfg = Cfg()
+    default: BaseConfig = BaseConfig()
 
 
 ClassT = typing.TypeVar("ClassT", bound=type)
@@ -486,7 +485,7 @@ def _build_class(
     return klass(**kw)
 
 
-def load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> dict:
+def load_env(env_file: os.PathLike = None, existing_config_dict: dict = None) -> dict:
     """
     Load a configuration dictionary from the specified env file and environment variables.
 
@@ -497,10 +496,16 @@ def load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> di
     else:
         env_file = pathlib.Path(env_file)
 
-    if not existing_cfg_dict:
-        existing_cfg_dict = defaultdict(_generate_default_dict)
+    if not existing_config_dict:
+        existing_config_dict = defaultdict(_generate_default_dict)
 
-    new_config_dict = attr.asdict(_build_class(Cfg, dotenv_file=env_file, defaults=existing_cfg_dict))
+    new_config_dict = attr.asdict(
+        _build_class(
+            BaseConfig,
+            dotenv_file=env_file,
+            defaults=existing_config_dict,
+        )
+    )
 
     return new_config_dict
 
@@ -518,13 +523,13 @@ def load_toml(path: os.PathLike = None) -> defaultdict:
         path = pathlib.Path(path)
 
     if not path.is_file():
-        raise CfgLoadError("The provided toml file path is not a valid file.")
+        raise ConfigLoadError("The provided toml file path is not a valid file.")
 
     try:
         with open(path) as f:
             return defaultdict(lambda: marshmallow.missing, atoml.parse(f.read()).value)
     except Exception as e:
-        raise CfgLoadError from e
+        raise ConfigLoadError from e
 
 
 def load_yaml(path: os.PathLike) -> dict:
@@ -547,13 +552,13 @@ def load_yaml(path: os.PathLike) -> dict:
         ("The provided yaml config file is not a readable file.", path.is_file()),
     ]
     if errors := "\n".join(msg for msg, check in states if not check):
-        raise CfgLoadError(errors)
+        raise ConfigLoadError(errors)
 
     try:
         with open(path, "r") as f:
             return defaultdict(lambda: marshmallow.missing, yaml.load(f.read(), Loader=yaml.SafeLoader))
     except Exception as e:
-        raise CfgLoadError from e
+        raise ConfigLoadError from e
 
 
 DictT = typing.TypeVar("DictT", bound=typing.Dict[str, typing.Any])
@@ -590,7 +595,7 @@ def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
     """
 
     def raise_missing_dep(file_type: str, dependency: str = None) -> typing.NoReturn:
-        raise CfgLoadError(
+        raise ConfigLoadError(
             f"The required dependency for reading {file_type} configuration files is not installed. "
             f"Please install {dependency or file_type} to allow reading these files."
         )
@@ -617,16 +622,16 @@ def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
             loaded_config_dict = load_yaml(file)
             break
         else:
-            raise CfgLoadError("Provided configuration file is not of a supported type.")
+            raise ConfigLoadError("Provided configuration file is not of a supported type.")
 
     if should_load_env:
-        loaded_config_dict = load_env(existing_cfg_dict=loaded_config_dict)
+        loaded_config_dict = load_env(existing_config_dict=loaded_config_dict)
 
     # HACK remove extra keeps from the configuration dict since marshmallow doesn't know what to do with them
     # CONTRARY to the marshmallow.EXCLUDE below.
     # They will cause errors.
     # Extra configuration values are okay, we aren't trying to be strict here.
-    loaded_config_dict = _remove_extra_values(Cfg, loaded_config_dict)
+    loaded_config_dict = _remove_extra_values(BaseConfig, loaded_config_dict)
 
     loaded_config_dict = ConfigurationSchema().load(data=loaded_config_dict, unknown=marshmallow.EXCLUDE)
     return Config(user=loaded_config_dict, schema=ConfigurationSchema, default=get_default_config())
@@ -644,11 +649,11 @@ def get_config() -> Config:
     return _CACHED_CONFIG
 
 
-def get_default_config() -> Cfg:
+def get_default_config() -> BaseConfig:
     """Get the default configuration instance of the global Config instance."""
     global _CACHED_DEFAULT
     if _CACHED_DEFAULT is None:
-        _CACHED_DEFAULT = Cfg()
+        _CACHED_DEFAULT = BaseConfig()
     return _CACHED_DEFAULT
 
 
