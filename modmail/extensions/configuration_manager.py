@@ -125,7 +125,7 @@ class KeyConverter(commands.Converter):
 
         new_arg = ""
         for c in arg.lower():
-            if c in " /`":
+            if c in "./-":
                 new_arg += "."
             else:
                 new_arg += c

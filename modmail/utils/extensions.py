@@ -34,8 +34,9 @@ def determine_bot_mode() -> int:
     The configuration system uses true/false values, so we need to turn them into an integer for bitwise.
     """
     bot_mode = 0
+    _config = config()
     for mode in BotModes:
-        if getattr(config().user.dev.mode, unqualify(str(mode)).lower(), True):
+        if getattr(_config.user.dev.mode, unqualify(str(mode)).lower(), True):
             bot_mode += mode.value
     return bot_mode
 

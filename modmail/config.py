@@ -428,7 +428,7 @@ ClassT = typing.TypeVar("ClassT", bound=type)
 def _build_class(
     klass: ClassT,
     env: typing.Dict[str, str] = None,
-    env_prefix: str = None,
+    env_prefix: str = ENV_PREFIX,
     *,
     dotenv_file: os.PathLike = None,
     defaults: typing.Dict = None,
@@ -440,9 +440,6 @@ def _build_class(
     Also can parse from a provided dictionary of environment variables.
     If `defaults` is provided, uses a value from there if the environment variable is not set or is None.
     """
-    if env_prefix is None:
-        env_prefix = ENV_PREFIX
-
     # while dotenv has methods to load the .env into the environment, we don't want that
     # that would mean that all of the .env variables would be loaded in to the env
     # we can't assume everything in .env is for modmail
@@ -451,7 +448,7 @@ def _build_class(
     if dotenv_file is not None:
         env.update(dotenv.dotenv_values(dotenv_file))
     env.update(os.environ.copy())
-    dotenv.load_dotenv()
+
     # get the attributes of the provided class
     if defaults is None:
         defaults = defaultdict(lambda: None)
@@ -503,9 +500,9 @@ def load_env(env_file: os.PathLike = None, existing_cfg_dict: dict = None) -> di
     if not existing_cfg_dict:
         existing_cfg_dict = defaultdict(_generate_default_dict)
 
-    existing_cfg_dict = attr.asdict(_build_class(Cfg, dotenv_file=env_file, defaults=existing_cfg_dict))
+    new_config_dict = attr.asdict(_build_class(Cfg, dotenv_file=env_file, defaults=existing_cfg_dict))
 
-    return existing_cfg_dict
+    return new_config_dict
 
 
 def load_toml(path: os.PathLike = None) -> defaultdict:
