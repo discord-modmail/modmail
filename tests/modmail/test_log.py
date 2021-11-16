@@ -47,6 +47,9 @@ def test_notice_level(log: ModmailLogger) -> None:
 @pytest.mark.dependency(depends=["create_logger"])
 def test_trace_level(log: ModmailLogger) -> None:
     """Test trace logging level prints a trace response."""
+    if not log.isEnabledFor(logging.TRACE):
+        pytest.skip("Skipping because logging isn't enabled for the necessary level")
+
     trace_test_phrase = "Getting in the weeds"
     stdout = io.StringIO()
 
