@@ -229,11 +229,13 @@ def export_env_and_app_json_conf() -> int:
                 or meta[METADATA_TABLE].export_to_env_template
                 or meta.get("required", False)
             ):
-
+                description = (
+                    f"{meta[METADATA_TABLE].description}\n{meta[METADATA_TABLE].extended_description or ''}"
+                ).strip()
                 options = defaultdict(
                     str,
                     {
-                        "description": meta[METADATA_TABLE].description,
+                        "description": description,
                         "required": meta[METADATA_TABLE].app_json_required or meta.get("required", False),
                     },
                 )
