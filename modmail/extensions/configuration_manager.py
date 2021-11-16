@@ -44,11 +44,13 @@ class ConfOptions:
     extended_description: str
     hidden: bool
 
-    _type: type
+    type: type
 
     metadata: dict
 
     modmail_metadata: config.ConfigMetadata
+    discord_converter: commands.Converter
+    discord_converter_attribute: types.FunctionType = None
 
     _field: attr.Attribute = None
     nested: str = None
@@ -67,12 +69,15 @@ class ConfOptions:
 
         kw["frozen"] = field.on_setattr is attr.setters.frozen or frozen
 
-        meta: config.ConfigMetadata = field.metadata[config.METADATA_TABLE]
-        kw[config.METADATA_TABLE] = meta
-        kw["description"] = meta.description
-        kw["canonical_name"] = meta.canonical_name
-        kw["extended_description"] = meta.extended_description
-        kw["hidden"] = meta.hidden
+        metadata_table: config.ConfigMetadata = field.metadata[config.METADATA_TABLE]
+        kw[config.METADATA_TABLE] = metadata_table
+        kw["description"] = metadata_table.description
+        kw["canonical_name"] = metadata_table.canonical_name
+        kw["extended_description"] = metadata_table.extended_description
+        kw["hidden"] = metadata_table.hidden
+
+        kw["discord_converter"] = metadata_table.discord_converter
+        kw["discord_converter_attribute"] = metadata_table.discord_converter_attribute
 
         if nested is not None:
             kw["nested"] = nested
@@ -234,8 +239,9 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
 
         # since we are in the bot, we are able to run commands.run_converters()
         # we have a context object, and several other objects, so this should be able to work
-        param = inspect.Parameter("value", 1, default=metadata.default, annotation=metadata._type)
-        converted_result = await commands.run_converters(ctx, metadata._type, value, param)
+        annotation = metadata.discord_converter or metadata.type
+        param = inspect.Parameter("value", 1, default=metadata.default, annotation=annotation)
+        converted_result = await commands.run_converters(ctx, annotation, value, param)
 
         discord_converter_attribute = metadata.modmail_metadata.discord_converter_attribute
         if isinstance(discord_converter_attribute, types.FunctionType):

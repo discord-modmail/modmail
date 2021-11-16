@@ -348,7 +348,7 @@ class EmojiCfg:
     This was a pain to implement.
     """
 
-    success: typing.Any = attr.ib(
+    success: str = attr.ib(
         default=":thumbsup:",
         metadata={
             METADATA_TABLE: ConfigMetadata(
@@ -359,7 +359,7 @@ class EmojiCfg:
         },
     )
 
-    failure: typing.Any = attr.ib(
+    failure: str = attr.ib(
         default=":x:",
         metadata={
             METADATA_TABLE: ConfigMetadata(
