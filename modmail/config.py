@@ -360,7 +360,7 @@ class ColourConfig:
 class DeveloperConfig:
     """Developer configuration. These values should not be changed unless you know what you're doing."""
 
-    mode: BotModeConfig = BotModeConfig()
+    mode: BotModeConfig = attr.ib(factory=BotModeConfig)
     log_level: int = attr.ib(
         default=logging.INFO,
         metadata={
@@ -418,10 +418,10 @@ class BaseConfig:
     we can get a clean default variable if we don't pass anything.
     """
 
-    bot: BotConfig = BotConfig()
-    colours: ColourConfig = ColourConfig()
+    bot: BotConfig = attr.ib(factory=BotConfig)
+    colours: ColourConfig = attr.ib(factory=ColourConfig)
     dev: DeveloperConfig = attr.ib(
-        default=DeveloperConfig(),
+        factory=DeveloperConfig,
         metadata={
             METADATA_TABLE: ConfigMetadata(
                 description=(
@@ -438,7 +438,17 @@ class BaseConfig:
 ConfigurationSchema = desert.schema_class(BaseConfig, meta={"ordered": True})  # noqa: N818
 
 
-@attr.s(auto_attribs=True, slots=True, kw_only=True)
+# @functools.lru_cache(None)
+def get_default_config() -> BaseConfig:
+    """Get the default configuration instance of the BaseConfig instance."""
+    # TODO: This should be a frozen instance all the way down on every level
+    # TODO: but I'm not sure the best way to do that, or even how to do that
+    # TODO: as a result, the lrucache decorator is temporarily commented out
+    # TODO: until we discover the best way to freeze this and all subclasses
+    return BaseConfig()
+
+
+@attr.s(auto_attribs=True, slots=True, kw_only=True, frozen=True)
 class Config:
     """
     Base configuration variable. Used across the entire bot for configuration variables.
@@ -452,7 +462,7 @@ class Config:
 
     user: BaseConfig
     schema: marshmallow.Schema
-    default: BaseConfig = BaseConfig()
+    default: BaseConfig = get_default_config()
 
 
 ClassT = typing.TypeVar("ClassT", bound=type)
@@ -577,9 +587,12 @@ def load_toml(path: os.PathLike = None) -> defaultdict:
 
     try:
         with open(path) as f:
-            return defaultdict(lambda: marshmallow.missing, atoml.parse(f.read()).value)
+            result = defaultdict(lambda: marshmallow.missing, atoml.parse(f.read()).value)
     except Exception as e:
         raise ConfigLoadError from e
+
+    logger.info(f"Successfully parsed  toml config located at {path!s}")
+    return result
 
 
 def load_yaml(path: os.PathLike) -> dict:
@@ -607,9 +620,12 @@ def load_yaml(path: os.PathLike) -> dict:
 
     try:
         with open(path, "r") as f:
-            return defaultdict(lambda: marshmallow.missing, yaml.load(f.read(), Loader=yaml.SafeLoader))
+            result = defaultdict(lambda: marshmallow.missing, yaml.load(f.read(), Loader=yaml.SafeLoader))
     except Exception as e:
         raise ConfigLoadError from e
+
+    logger.info(f"Successfully parsed  yaml config located at {path!s}")
+    return result
 
 
 DictT = typing.TypeVar("DictT", bound=typing.Dict[str, typing.Any])
@@ -685,12 +701,13 @@ def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
     # They will cause errors.
     # Extra configuration values are okay, we aren't trying to be strict here.
     loaded_config_dict = _remove_extra_values(BaseConfig, loaded_config_dict)
-    logger.debug("configuration loaded_config_dict prepped. Attempting to seralize...")
+    logger.debug("Configuration loaded_config_dict prepped. Attempting to seralize...")
     try:
         loaded_config_dict = ConfigurationSchema().load(data=loaded_config_dict, unknown=marshmallow.EXCLUDE)
     except marshmallow.ValidationError:
         logger.exception("Unable to load the configuration.")
         exit(1)
+    logger.debug("Seralization successful.")
     return Config(user=loaded_config_dict, schema=ConfigurationSchema, default=get_default_config())
 
 
@@ -702,12 +719,6 @@ def get_config() -> Config:
     This means that all usage of the configuration is using the same configuration class.
     """
     return _load_config()
-
-
-@functools.lru_cache(None)
-def get_default_config() -> BaseConfig:
-    """Get the default configuration instance of the global Config instance."""
-    return BaseConfig()
 
 
 config = get_config

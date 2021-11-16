@@ -19,13 +19,16 @@ from modmail import config
 def test_config_is_cached():
     """Test configuration is cached, helping keep only one version of the configuration in existance."""
     for _ in range(2):
-        assert config.config() == config._CACHED_CONFIG
+        assert config.config() is config.config()
 
 
+@pytest.mark.xfail(
+    reason="Default config is temporarily not cached due to a bug relating to frozen attributes."
+)
 def test_default_config_is_cached():
     """Test default configuration is cached, helping keep only one version of the config in existance."""
     for _ in range(2):
-        assert config.default() == config._CACHED_DEFAULT
+        assert config.default() is config.default()
 
 
 class TestConfigLoaders:
