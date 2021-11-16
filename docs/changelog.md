@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Embedified the meta commands so they have a nicer UI (#78)
+- Improved the logging system to allow trace logging and a specific logging directory to be configured. (#118)
 
 ## [0.2.0] - 2021-09-29
 
