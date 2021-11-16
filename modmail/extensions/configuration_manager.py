@@ -1,3 +1,4 @@
+import inspect
 import logging
 import operator
 import string
@@ -10,7 +11,6 @@ import discord
 import marshmallow
 from discord.ext import commands
 from discord.ext.commands import Context
-from discord.ext.commands import converter as commands_converter
 
 from modmail import config
 from modmail.bot import ModmailBot
@@ -128,7 +128,8 @@ class KeyConverter(commands.Converter):
             return new_arg
         else:
             raise commands.BadArgument(
-                f"{ctx.current_parameter.name.capitalize()} `{arg}` is not a valid configuration key."
+                f"{ctx.current_parameter.name.capitalize()} `{arg}` is not a valid configuration key.\n"
+                f"{ctx.current_parameter.name.capitalize()} must be in {', '.join(fields.keys())}"
             )
 
 
@@ -180,46 +181,42 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
     @config_group.command(name="set", aliases=("edit",))
     async def modify_config(self, ctx: Context, option: KeyConverter, value: str) -> None:
         """Modify an existing configuration value."""
-        if option not in self.config_fields:
-            raise commands.BadArgument(f"Option must be in {', '.join(self.config_fields.keys())}")
-        meta = self.config_fields[option]
+        metadata = self.config_fields[option]
 
-        if meta.frozen:
-
-            await responses.send_negatory_response(ctx, f"Unable to modify {option}.")
+        if metadata.frozen:
+            await responses.send_negatory_response(
+                ctx, f"Unable to modify `{option}` as it is frozen and cannot be edited during runtime."
+            )
             return
 
-        if meta.modmail_metadata.discord_converter is not None:
-            value = await meta.modmail_metadata.discord_converter().convert(ctx, value)
-            if meta.modmail_metadata.discord_converter_attribute is not None:
-                if isinstance(meta.modmail_metadata.discord_converter_attribute, types.FunctionType):
-                    value = meta.modmail_metadata.discord_converter_attribute(value)
-        if meta._type in commands_converter.CONVERTER_MAPPING:
-            value = await commands_converter.CONVERTER_MAPPING[meta._type]().convert(ctx, value)
-            if isinstance(meta.modmail_metadata.discord_converter_attribute, types.FunctionType):
-                value = meta.modmail_metadata.discord_converter_attribute(value)
-        elif meta._field.converter:
-            value = meta._field.converter(value)
+        # since we are in the bot, we are able to run commands.run_converters()
+        # we have a context object, and several other objects, so this should be able to work
+        param = inspect.Parameter("value", 1, default=metadata.default, annotation=metadata._type)
+        converted_result = await commands.run_converters(ctx, metadata._type, value, param)
+
+        discord_converter_attribute = metadata.modmail_metadata.discord_converter_attribute
+        if isinstance(discord_converter_attribute, types.FunctionType):
+            converted_result = discord_converter_attribute(converted_result)
 
         if "." in option:
-            root, name = option.rsplit(".", -1)
+            root, name = option.rsplit(".", 1)
         else:
             root = ""
             name = option
 
-        setattr(operator.attrgetter(root)(self.bot.config.user), name, value)
+        setattr(operator.attrgetter(root)(self.bot.config.user), name, converted_result)
 
-        await responses.send_positive_response(ctx, f"Successfully set `{option}` to `{value}`.")
+        if converted_result == value:
+            response = f"Successfully set `{option}` to `{value}`."
+        else:
+            response = f"Successfully set `{option}` to `{converted_result}` (converted from `{value}`)"
+        await responses.send_positive_response(ctx, response)
 
     @config_group.command(name="get", aliases=("show",))
     async def get_config(self, ctx: Context, option: KeyConverter) -> None:
-        """Modify an existing configuration value."""
-        if option not in self.config_fields:
-            raise commands.BadArgument(f"Option must be in {', '.join(self.config_fields.keys())}")
-
-        get_value = operator.attrgetter(option)
-        value = get_value(self.bot.config.user)
-        await ctx.send(f"{option}: `{value}`")
+        """Display an existing configuration value."""
+        value = operator.attrgetter(option)(self.bot.config.user)
+        await responses.send_general_response(ctx, f"value: `{value}`", embed=discord.Embed(title=option))
 
 
 def setup(bot: ModmailBot) -> None:
