@@ -11,11 +11,15 @@ import desert
 import discord
 import discord.ext.commands
 import discord.ext.commands.converter
-import dotenv
 import marshmallow
 import marshmallow.fields
 import marshmallow.validate
 
+
+try:
+    import dotenv
+except ModuleNotFoundError:  # pragma: nocover
+    dotenv = None
 
 try:
     import atoml
@@ -57,6 +61,8 @@ USER_CONFIG_FILES = [
     _CWD / (USER_CONFIG_FILE_NAME + ".toml"),
 ]
 
+logger = logging.getLogger(__name__)
+
 
 class BetterPartialEmojiConverter(discord.ext.commands.converter.EmojiConverter):
     """
@@ -76,12 +82,6 @@ class BetterPartialEmojiConverter(discord.ext.commands.converter.EmojiConverter)
             return discord.PartialEmoji(name=name, animated=animated, id=emoji_id)
 
         return discord.PartialEmoji(name=argument)
-
-
-# load env before we do *anything*
-# !!! TODO: Convert this to a function and check the parent directory too, if the CWD is within the bot.
-# TODO: add the above feature to the other configuration locations too.
-dotenv.load_dotenv(_CWD / ".env")
 
 
 def _generate_default_dict() -> defaultdict:
@@ -443,8 +443,12 @@ def _build_class(
     # that would mean that all of the .env variables would be loaded in to the env
     # we can't assume everything in .env is for modmail
     # so we load it into our own dictonary and parse from that
-    env = {}
+    if env is None:
+        env = {}
+
     if dotenv_file is not None:
+        if dotenv is None:
+            raise ConfigLoadError("dotenv extra must be installed to read .env files.")
         env.update(dotenv.dotenv_values(dotenv_file))
     env.update(os.environ.copy())
 
@@ -492,7 +496,9 @@ def load_env(env_file: os.PathLike = None, existing_config_dict: dict = None) ->
     All dependencies for this will always be installed.
     """
     if env_file is None:
-        env_file = _CWD / ".env"
+        # only presume an .env file if dotenv is not None
+        if dotenv is not None:
+            env_file = _CWD / ".env"
     else:
         env_file = pathlib.Path(env_file)
 
@@ -627,13 +633,16 @@ def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
     if should_load_env:
         loaded_config_dict = load_env(existing_config_dict=loaded_config_dict)
 
-    # HACK remove extra keeps from the configuration dict since marshmallow doesn't know what to do with them
+    # HACK remove extra keys from the configuration dict since marshmallow doesn't know what to do with them
     # CONTRARY to the marshmallow.EXCLUDE below.
     # They will cause errors.
     # Extra configuration values are okay, we aren't trying to be strict here.
     loaded_config_dict = _remove_extra_values(BaseConfig, loaded_config_dict)
-
-    loaded_config_dict = ConfigurationSchema().load(data=loaded_config_dict, unknown=marshmallow.EXCLUDE)
+    try:
+        loaded_config_dict = ConfigurationSchema().load(data=loaded_config_dict, unknown=marshmallow.EXCLUDE)
+    except marshmallow.ValidationError:
+        logger.exception("Unable to load the configuration.")
+        exit(1)
     return Config(user=loaded_config_dict, schema=ConfigurationSchema, default=get_default_config())
 
 
