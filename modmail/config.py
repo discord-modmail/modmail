@@ -1,3 +1,4 @@
+import functools
 import inspect
 import logging
 import os
@@ -15,23 +16,34 @@ import marshmallow
 import marshmallow.fields
 import marshmallow.validate
 
+from modmail.log import ModmailLogger
 
+
+_log_optional_deps = logging.getLogger("modmail.optional_dependencies")
+_silence = " You can silence these alerts by ignoring the `modmail.optional_dependencies` logger"
 try:
     import dotenv
 except ModuleNotFoundError:  # pragma: nocover
+    _log_optional_deps.notice("dotenv was unable to be imported." + _silence)
     dotenv = None
 
 try:
     import atoml
 except ModuleNotFoundError:  # pragma: nocover
+    _log_optional_deps.notice("atoml was unable to be imported." + _silence)
     atoml = None
 try:
     import yaml
 except ModuleNotFoundError:  # pragma: nocover
+    _log_optional_deps.notice("yaml was unable to be imported." + _silence)
     yaml = None
+
+del _log_optional_deps
+del _silence
 
 __all__ = [
     "AUTO_GEN_FILE_NAME",
+    "CONFIG_DIRECTORY",
     "ENV_PREFIX",
     "USER_CONFIG_FILE_NAME",
     "USER_CONFIG_FILES",
@@ -51,17 +63,44 @@ __all__ = [
     "load_yaml",
 ]
 
-_CWD = pathlib.Path.cwd()
+
+logger: ModmailLogger = logging.getLogger(__name__)
+
+
+@functools.lru_cache
+def _get_config_directory() -> pathlib.Path:
+    """
+    Return a directory where the configuration should reside.
+
+    This is typically the current working directory, with a cavet.
+
+    If the current directory's path includes the first parent directory of the bot
+    then the parent directory of the bot is looked for configuration files.
+    """
+    import modmail
+
+    path = pathlib.Path(modmail.__file__).parent.parent
+    cwd = pathlib.Path.cwd()
+    try:
+        cwd.relative_to(path)
+    except ValueError:
+        result = cwd
+    else:
+        result = path
+    logger.trace(f"Determined bot root directory from cwd as {result}")
+    logger.trace("That directory is either the cwd, or the common parent of the bot and cwd directories.")
+    return result
+
+
+CONFIG_DIRECTORY = _get_config_directory()
 METADATA_TABLE = "modmail_metadata"
 ENV_PREFIX = "MODMAIL_"
 USER_CONFIG_FILE_NAME = "modmail_config"
 AUTO_GEN_FILE_NAME = "default_config"
 USER_CONFIG_FILES = [
-    _CWD / (USER_CONFIG_FILE_NAME + ".yaml"),
-    _CWD / (USER_CONFIG_FILE_NAME + ".toml"),
+    CONFIG_DIRECTORY / (USER_CONFIG_FILE_NAME + ".yaml"),
+    CONFIG_DIRECTORY / (USER_CONFIG_FILE_NAME + ".toml"),
 ]
-
-logger = logging.getLogger(__name__)
 
 
 class BetterPartialEmojiConverter(discord.ext.commands.converter.EmojiConverter):
@@ -431,6 +470,7 @@ def _build_class(
     *,
     dotenv_file: os.PathLike = None,
     defaults: typing.Dict = None,
+    skip_dotenv_if_none: bool = False,
 ) -> ClassT:
     """
     Create an instance of the provided klass from env vars prefixed with ENV_PREFIX and class_prefix.
@@ -447,9 +487,12 @@ def _build_class(
         env = {}
 
     if dotenv_file is not None:
-        if dotenv is None:
+        if dotenv is not None:
+            env.update(dotenv.dotenv_values(dotenv_file))
+        elif not skip_dotenv_if_none:
             raise ConfigLoadError("dotenv extra must be installed to read .env files.")
-        env.update(dotenv.dotenv_values(dotenv_file))
+        else:
+            logger.info(f"{dotenv = }, but {skip_dotenv_if_none = }" f" so ignoring reading {dotenv_file = }")
     env.update(os.environ.copy())
 
     # get the attributes of the provided class
@@ -489,16 +532,18 @@ def _build_class(
     return klass(**kw)
 
 
-def load_env(env_file: os.PathLike = None, existing_config_dict: dict = None) -> dict:
+def load_env(
+    env_file: os.PathLike = None, existing_config_dict: dict = None, *, skip_dotenv_if_none: bool = False
+) -> dict:
     """
     Load a configuration dictionary from the specified env file and environment variables.
 
     All dependencies for this will always be installed.
     """
+    logger.trace(f"function `load_env` called to load env_file {env_file}")
+
     if env_file is None:
-        # only presume an .env file if dotenv is not None
-        if dotenv is not None:
-            env_file = _CWD / ".env"
+        env_file = CONFIG_DIRECTORY / ".env"
     else:
         env_file = pathlib.Path(env_file)
 
@@ -510,6 +555,7 @@ def load_env(env_file: os.PathLike = None, existing_config_dict: dict = None) ->
             BaseConfig,
             dotenv_file=env_file,
             defaults=existing_config_dict,
+            skip_dotenv_if_none=skip_dotenv_if_none,
         )
     )
 
@@ -522,8 +568,10 @@ def load_toml(path: os.PathLike = None) -> defaultdict:
 
     All dependencies for this will always be installed.
     """
+    logger.trace(f"function `load_toml` called to load toml file {path}")
+
     if path is None:
-        path = (_CWD / (USER_CONFIG_FILE_NAME + ".toml"),)
+        path = (CONFIG_DIRECTORY / (USER_CONFIG_FILE_NAME + ".toml"),)
     else:
         # fully resolve path
         path = pathlib.Path(path)
@@ -547,8 +595,9 @@ def load_yaml(path: os.PathLike) -> dict:
     In order to keep errors at a minimum, this function checks if both pyyaml is installed
     and if a yaml configuration file exists before raising an exception.
     """
+    logger.trace(f"function `load_yaml` called to load yaml file {path}")
     if path is None:
-        path = (_CWD / (USER_CONFIG_FILE_NAME + ".yaml"),)
+        path = (CONFIG_DIRECTORY / (USER_CONFIG_FILE_NAME + ".yaml"),)
     else:
         path = pathlib.Path(path)
 
@@ -601,10 +650,12 @@ def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
     """
 
     def raise_missing_dep(file_type: str, dependency: str = None) -> typing.NoReturn:
-        raise ConfigLoadError(
+        msg = (
             f"The required dependency for reading {file_type} configuration files is not installed. "
             f"Please install {dependency or file_type} to allow reading these files."
         )
+        logger.error(msg)
+        raise ConfigLoadError(msg)
 
     if len(files) == 0:
         files = USER_CONFIG_FILES
@@ -631,13 +682,14 @@ def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
             raise ConfigLoadError("Provided configuration file is not of a supported type.")
 
     if should_load_env:
-        loaded_config_dict = load_env(existing_config_dict=loaded_config_dict)
+        loaded_config_dict = load_env(existing_config_dict=loaded_config_dict, skip_dotenv_if_none=True)
 
     # HACK remove extra keys from the configuration dict since marshmallow doesn't know what to do with them
     # CONTRARY to the marshmallow.EXCLUDE below.
     # They will cause errors.
     # Extra configuration values are okay, we aren't trying to be strict here.
     loaded_config_dict = _remove_extra_values(BaseConfig, loaded_config_dict)
+    logger.debug("configuration loaded_config_dict prepped. Attempting to seralize...")
     try:
         loaded_config_dict = ConfigurationSchema().load(data=loaded_config_dict, unknown=marshmallow.EXCLUDE)
     except marshmallow.ValidationError:
