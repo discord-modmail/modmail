@@ -178,6 +178,31 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
 
         await ButtonPaginator.paginate(options.values(), ctx.message, embed=embed)
 
+    @config_group.command(name="set_default", aliases=("set-default",))
+    async def set_default(self, ctx: Context, option: KeyConverter) -> None:
+        """Reset the provided configuration value to the default."""
+        if "." in option:
+            root, name = option.rsplit(".", 1)
+        else:
+            root = ""
+            name = option
+        value = operator.attrgetter(option)(self.bot.config.default)
+        if value in [marshmallow.missing, attr.NOTHING]:
+            await responses.send_negatory_response(
+                ctx, f"`{option}` is a required configuration variable and cannot be reset."
+            )
+            return
+        try:
+            setattr(operator.attrgetter(root)(self.bot.config.user), name, value)
+        except (attr.exceptions.FrozenAttributeError, attr.exceptions.FrozenInstanceError):
+            await responses.send_negatory_response(
+                ctx, f"Unable to set `{option}` as it is frozen and cannot be edited during runtime."
+            )
+        else:
+            await responses.send_positive_response(
+                ctx, f"Successfully set `{option}` to the default of `{value}`."
+            )
+
     @config_group.command(name="set", aliases=("edit",))
     async def modify_config(self, ctx: Context, option: KeyConverter, value: str) -> None:
         """Modify an existing configuration value."""
