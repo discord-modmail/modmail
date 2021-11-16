@@ -438,10 +438,6 @@ class BaseConfig:
 ConfigurationSchema = desert.schema_class(BaseConfig, meta={"ordered": True})  # noqa: N818
 
 
-_CACHED_CONFIG: "Config" = None
-_CACHED_DEFAULT: BaseConfig = None
-
-
 @attr.s(auto_attribs=True, slots=True, kw_only=True)
 class Config:
     """
@@ -698,24 +694,20 @@ def _load_config(*files: os.PathLike, should_load_env: bool = True) -> Config:
     return Config(user=loaded_config_dict, schema=ConfigurationSchema, default=get_default_config())
 
 
+@functools.lru_cache(None)
 def get_config() -> Config:
     """
     Helps to try to ensure that only one instance of the Config class exists.
 
     This means that all usage of the configuration is using the same configuration class.
     """
-    global _CACHED_CONFIG
-    if _CACHED_CONFIG is None:
-        _CACHED_CONFIG = _load_config()
-    return _CACHED_CONFIG
+    return _load_config()
 
 
+@functools.lru_cache(None)
 def get_default_config() -> BaseConfig:
     """Get the default configuration instance of the global Config instance."""
-    global _CACHED_DEFAULT
-    if _CACHED_DEFAULT is None:
-        _CACHED_DEFAULT = BaseConfig()
-    return _CACHED_DEFAULT
+    return BaseConfig()
 
 
 config = get_config
