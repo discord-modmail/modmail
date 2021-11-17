@@ -37,3 +37,23 @@ def standardize_environment():
     with unittest.mock.patch.dict(os.environ, clear=True):
         dotenv.load_dotenv(env)
         yield
+
+
+@pytest.fixture(autouse=True, scope="package")
+def standardize_config():
+    """Set the configuration paths to this directory."""
+    import modmail.config
+
+    _config_directory = modmail.config.CONFIG_DIRECTORY
+    _user_config_files = modmail.config.USER_CONFIG_FILES
+    try:
+        modmail.config.CONFIG_DIRECTORY = pathlib.Path(__file__).parent
+        modmail.config.USER_CONFIG_FILES = [
+            modmail.config.CONFIG_DIRECTORY / (modmail.config.USER_CONFIG_FILE_NAME + ".yaml"),
+            modmail.config.CONFIG_DIRECTORY / (modmail.config.USER_CONFIG_FILE_NAME + ".toml"),
+        ]
+        yield
+    finally:
+
+        modmail.config.CONFIG_DIRECTORY = _config_directory
+        modmail.config.USER_CONFIG_FILES = _user_config_files
