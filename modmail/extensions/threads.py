@@ -311,8 +311,9 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # thread -> dm
         logger.debug(
-            "Relaying message id {0} by {3} from thread {1} to dm channel {2}.".format(
-                message.id, ticket.thread.id, ticket.recipient.dm_channel.id, message.author
+            "Relaying message id {message.id} by {message.author} "
+            "from thread {thread.id} to dm channel {dm_channel.id}.".format(
+                message=message, thread=ticket.thread, dm_channel=ticket.recipient.dm_channel
             )
         )
 
@@ -393,8 +394,9 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # dm -> thread
         logger.debug(
-            "Relaying message id {0} from dm channel {1} with {3} to thread {2}.".format(
-                message.id, ticket.recipient.dm_channel.id, ticket.thread.id, message.author
+            "Relaying message id {message.id} from dm channel {dm_channel.id}"
+            " with {message.author} to thread {thread.id}.".format(
+                message=message, thread=ticket.thread, dm_channel=ticket.recipient.dm_channel
             )
         )
         # make a reply if it was a reply
@@ -461,28 +463,36 @@ class TicketsCog(ModmailCog, name="Threads"):
                 )
                 sticker = None
 
-        kw = dict()
+        send_kwargs = dict()
         if sticker is not None:
-            kw["stickers"] = [sticker]
+            send_kwargs["stickers"] = [sticker]
 
         if message.activity is not None:
             embed.add_field(name="Activity Sent", value="\u200b")
 
         if (
             0 == len(embed.description) == len(embed.image) == len(embed.fields)
-            and kw.get("attachments") is None
-            and kw.get("stickers") is None
+            and send_kwargs.get("attachments") is None
+            and send_kwargs.get("stickers") is None
         ):
             logger.info(
                 f"SKIPPING relay of message id {message.id} from {message.author!s} due to nothing to relay."
             )
             return None
 
-        sent_message = await ticket.thread.send(embed=embed, reference=guild_reference_message, **kw)
+        sent_message = await ticket.thread.send(embed=embed, reference=guild_reference_message, **send_kwargs)
 
         # add messages to the dict
         ticket.messages[message] = sent_message
         return sent_message
+
+    async def mark_thread_responded(self, ticket: Ticket) -> bool:
+        """Mark thread as responded. Returns True upon success, and False if it was already marked."""
+        if (log_embeds := ticket.log_message.embeds)[0].colour == NO_REPONSE_COLOUR:
+            log_embeds[0].colour = HAS_RESPONSE_COLOUR
+            await ticket.log_message.edit(embeds=log_embeds)
+            return True
+        return False
 
     @is_modmail_thread()
     @commands.command(aliases=("r",))
@@ -513,9 +523,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         await self.relay_message_to_user(ticket, ctx.message, message)
 
-        if (log_embeds := ticket.log_message.embeds)[0].colour == NO_REPONSE_COLOUR:
-            log_embeds[0].colour = HAS_RESPONSE_COLOUR
-            await ticket.log_message.edit(embeds=log_embeds)
+        await self.mark_thread_responded(ticket)
 
     @is_modmail_thread()
     @commands.command(aliases=("e", "ed"))
@@ -556,6 +564,10 @@ class TicketsCog(ModmailCog, name="Threads"):
                 reference=message.to_reference(fail_if_not_exists=False),
             )
             return
+        if user_message.author != ctx.me:
+            raise commands.CommandError(
+                "DM message author must be me. It seems like this was a message that you received."
+            )
         embed = user_message.embeds[0]
         embed.description = content
         await user_message.edit(embed=embed)
@@ -578,7 +590,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         Delete a message in the thread.
 
         If the message is a reply and no message is provided, the bot will attempt to use the replied message.
-        However, if the reply is *not* to the bot, the last message will be used.
+        However, if the reply is *not* to the bot, no action is taken.
         """
         ticket = await self.fetch_ticket(ctx.channel.id)
         if messages is None:
@@ -814,7 +826,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         dm_channel = self.bot.get_partial_messageable(payload.channel_id, type=discord.DMChannel)
         await dm_channel.send(
-            embed=discord.Embed("Successfully edited message."),
+            embed=discord.Embed("Successfully edited message.", footer=f"Message ID: {payload.message_id}"),
             reference=discord.MessageReference(message_id=payload.message_id, channel_id=payload.channel_id),
         )
 
