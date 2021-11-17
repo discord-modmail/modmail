@@ -104,8 +104,8 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-!test.env
 .env
+!/tests/modmail/test.env
 .venv
 env/
 venv/
