@@ -113,11 +113,12 @@ jobs:
         [flake8] %(code)s: %(text)s'"
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         python_version: ['3.8', '3.9']
+        os: [ubuntu-latest, windows-latest, macos-latest]
     env:
       PYTHON_VERSION: ${{ matrix.python_version }}
     steps:
@@ -154,19 +155,19 @@ jobs:
       - name: Install dependencies using poetry
         if: steps.python_cache.outputs.cache-hit != 'true'
         run: |
-          pip install poetry
-          poetry install --no-interaction --no-ansi
+          python -m pip install poetry
+          python -m poetry install --no-interaction --no-ansi
 
       # Run tests with pytest-cov to generate a coverage report
       # This is saved to ./.coverage to be used by codecov to link a
       # coverage report to github.
       - name: Run tests and generate coverage report
-        run: pytest -n auto --dist loadfile --cov --disable-warnings -q
+        run: python -m pytest -n auto --dist loadfile --cov --disable-warnings -q
 
       # This step will publish the coverage reports to codecov.io and
       # print a "job" link in the output of the GitHub Action
       - name: Publish coverage report to codecov.io
-        run: codecov
+        run: python -m codecov
 
   artifact:
     name: Generate Artifact
