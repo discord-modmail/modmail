@@ -90,19 +90,20 @@ class TestUtilityMethods:
         """Ensure that get_tickets returns the correct ticket."""
         bot._tickets = dict()
         await cog.add_ticket(ticket)
-        received_ticket = cog.get_ticket(ticket.thread.id)
+        received_ticket = await cog.fetch_ticket(ticket.thread.id)
         assert ticket is received_ticket
         del received_ticket
 
-        received_ticket = cog.get_ticket(ticket.recipient.id)
+        received_ticket = await cog.fetch_ticket(ticket.recipient.id)
         assert ticket is received_ticket
 
-    def test_invalid_get_ticket(self, cog: threads.TicketsCog, ticket_dict: dict):
+    @pytest.mark.asyncio
+    async def test_invalid_get_ticket(self, cog: threads.TicketsCog, ticket_dict: dict):
         """Test invalid get_ticket ids raise a ThreadNotFoundError."""
         cog.bot._tickets = ticket_dict
 
         with pytest.raises(threads.ThreadNotFoundError):
-            cog.get_ticket(mocks.generate_realistic_id())
+            await cog.fetch_ticket(mocks.generate_realistic_id())
 
     # TODO: More tests for this method
     @pytest.mark.asyncio
@@ -207,7 +208,7 @@ class TestContactCommand:
         with unittest.mock.patch.object(
             cog, "create_ticket", side_effect=threads.ThreadAlreadyExistsError()
         ) as mock_create_ticket:
-            with unittest.mock.patch.object(cog, "get_ticket", return_value=ticket):
+            with unittest.mock.patch.object(cog, "fetch_ticket", return_value=ticket):
                 await cog.contact(cog, ctx, user)
         thread = ticket.thread
         assert 0 == ticket.thread.send.call_count
