@@ -14,6 +14,7 @@ from modmail.addons.errors import NoPluginTomlFoundError
 from modmail.addons.models import Plugin
 from modmail.addons.plugins import PLUGINS, find_plugins
 from modmail.config import CONFIG
+from modmail.dispatcher import Dispatcher
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ModmailCog
 from modmail.utils.extensions import BOT_MODE, EXTENSIONS, NO_UNLOAD, walk_extensions
@@ -38,11 +39,13 @@ class ModmailBot(commands.Bot):
 
     logger: ModmailLogger = logging.getLogger(__name__)
     mode: int
+    dispatcher: Dispatcher
 
     def __init__(self, **kwargs):
         self.config = CONFIG
         self.start_time: Optional[arrow.Arrow] = None  # arrow.utcnow()
         self.http_session: Optional[ClientSession] = None
+        self.dispatcher = Dispatcher()
 
         # keys: plugins, list values: all plugin files
         self.installed_plugins: Set[Plugin] = {}
@@ -55,14 +58,16 @@ class ModmailBot(commands.Bot):
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
+        # override passed kwargs if they are None
+        kwargs["case_insensitive"] = kwargs.get("case_insensitive", True)
+        # do not let the description be overridden.
+        kwargs["description"] = "Modmail bot by discord-modmail."
+        kwargs["status"] = kwargs.get("status", status)
+        kwargs["activity"] = kwargs.get("activity", activity)
+        kwargs["allowed_mentions"] = kwargs.get("allowed_mentions", allowed_mentions)
+        kwargs["command_prefix"] = kwargs.get("command_prefix", prefix)
+        kwargs["intents"] = kwargs.get("intents", REQUIRED_INTENTS)
         super().__init__(
-            case_insensitive=True,
-            description="Modmail bot by discord-modmail.",
-            status=status,
-            activity=activity,
-            allowed_mentions=allowed_mentions,
-            command_prefix=prefix,
-            intents=REQUIRED_INTENTS,
             **kwargs,
         )
 

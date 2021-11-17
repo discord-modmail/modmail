@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum, auto
+from typing import TYPE_CHECKING
 
 from discord.ext import commands
 
@@ -13,6 +14,10 @@ __all__ = (
     "BOT_MODE",
     "ModmailCog",
 )
+
+
+if TYPE_CHECKING:  # pragma: nocover
+    import modmail.bot
 
 
 class BitwiseAutoEnum(IntEnum):
@@ -76,4 +81,10 @@ class ModmailCog(commands.Cog):
     are equally valid here.
     """
 
-    pass
+    def __init__(self, bot: "modmail.bot.ModmailBot"):
+        self.dispatcher = bot.dispatcher
+        self.dispatcher.activate(self)
+
+    def cog_unload(self) -> None:
+        """Ensure dispatched class methods are unloaded when the cog is unloaded."""
+        self.dispatcher.deactivate(self)

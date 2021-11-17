@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Plugin installation and uninstall system (#69)
+- Added Dispatcher system, although it is not hooked into important features like thread creation yet. (#71)
+- Officially support python 3.10 (#119)
+- Officially support windows and macos (#121)
 
 ### Changed
 
 - Embedified the meta commands so they have a nicer UI (#78)
-
 
 ## [0.2.0] - 2021-09-29
 
