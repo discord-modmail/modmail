@@ -28,6 +28,17 @@ def ctx():
     return mocks.MockContext()
 
 
+@pytest.mark.parametrize("is_cooldown", [True, False])
+def test_reset_cooldown(ctx, cog, is_cooldown: bool):
+    """Test the cooldown is reset if the command is on a cooldown."""
+    ctx.command.is_on_cooldown.return_value = bool(is_cooldown)
+    cog._reset_command_cooldown(ctx)
+    assert 1 == ctx.command.is_on_cooldown.call_count
+    assert int(is_cooldown) == ctx.command.reset_cooldown.call_count
+    if int(is_cooldown) == 1:
+        ctx.command.reset_cooldown.assert_called_once_with(ctx)
+
+
 def test_error_embed():
     """Test the error embed method creates the correct embed."""
     title = "Something very drastic went very wrong!"
