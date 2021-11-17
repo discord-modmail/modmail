@@ -826,7 +826,10 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         dm_channel = self.bot.get_partial_messageable(payload.channel_id, type=discord.DMChannel)
         await dm_channel.send(
-            embed=discord.Embed("Successfully edited message.", footer=f"Message ID: {payload.message_id}"),
+            embed=discord.Embed(
+                "Successfully edited message.",
+                footer_text=f"Message ID: {payload.message_id}",
+            ),
             reference=discord.MessageReference(message_id=payload.message_id, channel_id=payload.channel_id),
         )
 
