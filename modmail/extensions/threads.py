@@ -1,14 +1,15 @@
 import asyncio
+import contextlib
 import datetime
 import inspect
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Generator, List, NoReturn, Optional, Set, Tuple, Union
 
 import arrow
 import discord
 from discord import Embed
 from discord.ext import commands
-from discord.ext.commands import Context, Greedy
+from discord.ext.commands import Context
 from discord.utils import escape_markdown
 
 from modmail.utils.cogs import ExtMetadata, ModmailCog
@@ -34,7 +35,7 @@ DM_FAILURE_MESSAGE = (
     "It is also possible that they do not share a server with the bot."
 )
 ON_SUCCESS_EMOJI = "\u2705"  # ✅
-FAILURE_EMOJI = "\u274c"  # :x:
+ON_FAILURE_EMOJI = "\u274c"  # :x:
 
 # This will be part of configuration later, so its stored in globals for now
 FORWARD_USER_TYPING = False  # Library bug prevents this from working right now
@@ -56,6 +57,70 @@ SEND_COLOUR = discord.Colour.teal()  # messages sent, shown in thread
 MAX_CACHED_MESSAGES_PER_THREAD = 10
 
 logger: "ModmailLogger" = logging.getLogger(__name__)
+
+
+class RepliedOrRecentMessageConverter(commands.Converter):
+    """
+    Custom converter to return discord Message from within modmail threads.
+
+    First attempts with the standard message converter, and upon failure,
+    will attempt to get the referenced message.
+    If that fails, will pop the ticket's recent messages.
+    """
+
+    def __init__(self, optional: bool = False, require_argument_empty: bool = False):
+        """
+        Set up state.
+
+        Optional
+        True - return tuple of message/errors
+        False - return tuple of message/None, raise errors
+
+        require_argument_empty
+        True - requires passed argument is effectively None
+        False - doesn't do above check
+        """
+        self.optional = optional
+        self.require_argument_empty = require_argument_empty
+
+    async def convert(self, ctx: Context, argument: str) -> Tuple[Optional[discord.Message], Optional[str]]:
+        """Converting implementation. See class docstring for more information."""
+        print(ctx.command.name)
+
+        def or_raise(err: Exception) -> Union[Tuple[None, Exception], NoReturn]:
+            if self.optional:
+                return None, err
+            else:
+                raise err
+
+        try:
+            return await commands.MessageConverter().convert(ctx, argument), None
+        except commands.CommandError:
+            pass
+
+        if self.require_argument_empty and len(argument):
+            return or_raise(commands.CommandError("Provided argument is not empty."))
+
+        if ctx.message.reference is not None:
+            ref = ctx.message.reference
+            message = ref.resolved or await ctx.channel.fetch_message(ref.message_id)
+        else:
+            ticket: Ticket = await ctx.bot.get_cog("Threads").fetch_ticket(ctx.channel.id)
+            try:
+                message = ticket.last_sent_messages[-1]
+            except IndexError:
+                return or_raise(commands.CommandError("There's no message here to action on!"))
+
+        # undo eating this parameter
+        # this means that the argument passed here will be passed to the next parameter
+        # but thankfully we can still get our result from here
+        ctx.view.undo()
+
+        if message.author.id != ctx.bot.user.id:
+            logger.info("Edit command contained a reply, but was not to one of my messages so skipping.")
+            return or_raise(commands.CommandError("The replied message is not a message I can modify."))
+
+        return message, None
 
 
 class TicketsCog(ModmailCog, name="Threads"):
@@ -301,6 +366,56 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         return thread_channel, relayed_msg
 
+    async def resolve_mirror_message_for_manipulation(
+        self,
+        ctx: Context,
+        ticket: Ticket,
+        message: discord.Message,
+    ) -> Optional[Tuple[discord.Message, discord.Message]]:
+        """Find the corresponding dm message and raise any errors if the bot did not send that message."""
+        try:
+            user_message = ticket.messages[message]
+        except KeyError:
+            try:
+                ticket.last_sent_messages.remove(message)
+            except ValueError:
+                pass
+            await ctx.send(
+                "Sorry, this is not a message that I can edit.",
+                reference=message.to_reference(fail_if_not_exists=False),
+            )
+
+            raise
+
+        if user_message.author.id != self.bot.user.id:
+            raise commands.CommandError(
+                "DM message author is me. It seems like this was a message that you received."
+            )
+        return user_message, message
+
+    @contextlib.asynccontextmanager
+    async def handle_success(self, ctx: Context) -> Generator[None, None, None]:
+        """If any exceptions are thrown, a failure emoji is added and the exception is reraised."""
+        try:
+            yield
+        except Exception:
+            await ctx.message.add_reaction(ON_FAILURE_EMOJI)
+            raise
+        else:
+            await ctx.message.add_reaction(ON_SUCCESS_EMOJI)
+
+    @contextlib.asynccontextmanager
+    async def remove_on_success(
+        self, ticket: Ticket, *messages: discord.Message
+    ) -> Generator[None, None, None]:
+        """Remove provided messages from last sent messages if no errors."""
+        yield
+        for message in messages:
+            try:
+                ticket.last_sent_messages.remove(message)
+            except ValueError:
+                pass
+
     async def relay_message_to_user(
         self, ticket: Ticket, message: discord.Message, contents: str = None, *, delete: bool = True
     ) -> discord.Message:
@@ -527,137 +642,98 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     @is_modmail_thread()
     @commands.command(aliases=("e", "ed"))
-    async def edit(self, ctx: Context, message: Optional[discord.Message] = None, *, content: str) -> None:
-        """Edit a message in the thread."""
+    @commands.max_concurrency(1, commands.BucketType.channel, wait=True)
+    async def edit(
+        self, ctx: Context, message: RepliedOrRecentMessageConverter(optional=True) = None, *, content: str
+    ) -> None:
+        """
+        Edit a message in the thread.
+
+        If the message is a reply and no message is provided, the bot will attempt to use the replied message.
+        However, if the reply is *not* to the bot, no action is taken.
+
+        If there is no reply or message provided, the bot will edit the last sent message.
+        """
+        if message is None:
+            message, err = await RepliedOrRecentMessageConverter().convert(ctx, "")
+        else:
+            message, err = message
+
+        if err is not None:
+            raise err
+
         ticket = await self.fetch_ticket(ctx.channel.id)
 
-        if message is None:
-            if ctx.message.reference is not None:
-                ref = ctx.message.reference
-                message = ref.resolved or await ctx.channel.fetch_message(ref.message_id)
+        # process and get proper message
+        messages = await self.resolve_mirror_message_for_manipulation(
+            ctx,
+            ticket,
+            message,
+        )
 
-                if message.author.id != self.bot.user.id:
-                    logger.info(
-                        "Edit command contained a reply, but was not to one of my messages so skipping."
-                    )
-                    return
-
-                # remove from last sent
-                try:
-                    ticket.last_sent_messages.remove(message)
-                except ValueError:
-                    pass
-
-            else:
-                try:
-                    message = ticket.last_sent_messages[-1]
-                except IndexError:
-                    await ctx.send("There's no message here to edit!")
-                    return
-
-        # edit user message
-        try:
-            user_message = ticket.messages[message]
-        except KeyError:
-            await ctx.send(
-                "Sorry, this is not a message that I can edit.",
-                reference=message.to_reference(fail_if_not_exists=False),
-            )
+        if messages is None:
             return
-        if user_message.author != ctx.me:
-            raise commands.CommandError(
-                "DM message author must be me. It seems like this was a message that you received."
-            )
-        embed = user_message.embeds[0]
-        embed.description = content
-        await user_message.edit(embed=embed)
-        del embed
 
-        # edit guild message
-        embed = message.embeds[0]
-        embed.description = content
-        await message.edit(embed=embed)
-        del embed
+        user_message, message = messages
 
-        await ctx.message.add_reaction(ON_SUCCESS_EMOJI)
+        async with self.handle_success(ctx):
+            # edit user message
+            embed = user_message.embeds[0]
+            embed.description = content
+            await user_message.edit(embed=embed)
+            del embed
+
+            # edit guild message
+            embed = message.embeds[0]
+            embed.description = content
+            await message.edit(embed=embed)
+            del embed
 
     @is_modmail_thread()
     @commands.command(aliases=("d", "del"))
+    @commands.max_concurrency(1, commands.BucketType.channel, wait=True)
     async def delete(
-        self, ctx: Context, messages: Greedy[discord.Message] = None, *, reason: str = None
+        self,
+        ctx: Context,
+        message: RepliedOrRecentMessageConverter(optional=True, require_argument_empty=True) = None,
     ) -> None:
         """
         Delete a message in the thread.
 
         If the message is a reply and no message is provided, the bot will attempt to use the replied message.
         However, if the reply is *not* to the bot, no action is taken.
+
+        If there is no reply or message provided, the bot will delete the last sent message.
         """
-        ticket = await self.fetch_ticket(ctx.channel.id)
-        if messages is None:
-            if ctx.message.reference is not None:
-                logger.debug(
-                    "Message param was not provided on the delete command, but a reference was provided. "
-                    "Checking if reference is one of my messages."
-                )
-                ref = ctx.message.reference
-                message = ref.resolved or await ctx.channel.fetch_message(ref.message_id)
-                if message.author.id != self.bot.user.id:
-                    logger.info(
-                        "Delete command contained a reply, but was not to one of my messages so skipping."
-                    )
-                    return
-
-                # remove from last sent
-                try:
-                    ticket.last_sent_messages.remove(message)
-                except ValueError:
-                    pass
-
-            else:
-                try:
-                    message = ticket.last_sent_messages.pop()
-                except IndexError:
-                    await ctx.send("There's no message here to delete!")
-                    return
-
-            messages = [message]
-
-        # delete multiple messages
-        dm_messages: List[discord.Message] = []
-        message_count = len(messages)
-        for message in messages.copy():
-            try:
-                if message.channel != ctx.channel:
-                    raise KeyError
-                msg = ticket.messages[message]
-
-                if msg.author != self.bot.user:
-                    raise KeyError
-                dm_messages.append(ticket.messages[message])
-
-            except KeyError:
-                if message_count >= 2:
-                    messages.remove(message)
-                else:
-                    await ctx.send(
-                        "Sorry, I cannot delete this message.",
-                        reference=message.to_reference(fail_if_not_exists=False),
-                    )
-                    return
-
-        for msg in dm_messages:
-            self.dm_deleted_messages.add(msg.id)
-            await msg.delete()
-
-        for msg in messages:
-            self.thread_deleted_messages.add(msg.id)
-
-        await ctx.channel.delete_messages(messages)
-
-        if len(messages) > 0:
-            await ctx.message.add_reaction(ON_SUCCESS_EMOJI)
+        if message is None:
+            message, err = await RepliedOrRecentMessageConverter().convert(ctx, "")
         else:
-            await ctx.message.add_reaction(FAILURE_EMOJI)
+            message, err = message
+
+        if err is not None:
+            raise err
+
+        ticket = await self.fetch_ticket(ctx.channel.id)
+
+        # process and get proper message
+        messages = await self.resolve_mirror_message_for_manipulation(
+            ctx,
+            ticket,
+            message,
+        )
+
+        if messages is None:
+            return
+
+        dm_message, thread_message = messages
+
+        async with self.handle_success(ctx):
+            async with self.remove_on_success(ticket, thread_message):
+                self.dm_deleted_messages.add(dm_message.id)
+                await dm_message.delete()
+
+                self.thread_deleted_messages.add(thread_message.id)
+                await thread_message.delete()
 
     async def close_thread(
         self,
