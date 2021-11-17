@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import signal
+import sys
 import typing as t
 
 import arrow
@@ -89,10 +90,8 @@ class ModmailBot(commands.Bot):
             self.logger.info("Generating database schema via Tortoise...")
             await Tortoise.generate_schemas()
         except Exception as e:
-            self.logger.error(
-                f"DB connection at {CONFIG.bot.sqlalchemy_database_uri} not successful, raised:\n{e}"
-            )
-            exit()
+            self.logger.error(f"DB connection at {CONFIG.bot.database_uri} not successful, raised:\n{e}")
+            sys.exit(e)
 
     async def start(self, token: str, reconnect: bool = True) -> None:
         """

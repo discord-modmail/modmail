@@ -165,7 +165,7 @@ $ psql -qd postgres
 Run the following queries to create the user and database:
 
 ```psql
-CREATE USER voting WITH SUPERUSER PASSWORD 'modmail';
+CREATE USER modmail WITH SUPERUSER PASSWORD 'modmail';
 CREATE DATABASE modmail WITH OWNER modmail;
 ```
 
@@ -217,7 +217,7 @@ $ poetry run alembic upgrade heads
 
 5. Open the file with any text editor and write the bot token and the database URL to the files in this format:
         * `TOKEN="my_token"`.
-        * `DATABASE_URI=postgresql+asyncpg://modmail:modmail@localhost:5432/modmail`
+        * `DATABASE_URI=postgres://modmail:modmail@localhost:5432/modmail`
 
 !!! note
         If you configured PostgreSQL in a different manner or you are not hosting it locally, then you will need to

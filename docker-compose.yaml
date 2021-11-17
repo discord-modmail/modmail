@@ -27,5 +27,7 @@ services:
     tty: true
     volumes:
       - .:/modmail
+    env_file:
+      - .env
     environment:
       database_uri: postgres://modmail:modmail@postgres:5432/modmail
