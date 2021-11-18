@@ -1,11 +1,17 @@
+import asyncio
 import logging
 import logging.handlers
+import os
 from pathlib import Path
 
 import coloredlogs
 
 from modmail.log import ModmailLogger
 
+
+# On Windows, the selector event loop is required for aiodns.
+if os.name == "nt":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 logging.TRACE = 5
 logging.NOTICE = 25
