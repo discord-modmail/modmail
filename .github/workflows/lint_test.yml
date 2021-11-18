@@ -161,7 +161,7 @@ jobs:
       # This is saved to ./.coverage to be used by codecov to link a
       # coverage report to github.
       - name: Run tests and generate coverage report
-        run: python -m pytest --dist=no --cov --showlocals
+        run: python -m pytest -n auto --dist loadfile --cov --disable-warnings --showlocals
 
       # This step will publish the coverage reports to codecov.io and
       # print a "job" link in the output of the GitHub Action
