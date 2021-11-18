@@ -241,13 +241,15 @@ def find_partial_plugins_from_dir(
 
 
 def find_plugins(
-    detection_path: pathlib.Path = BASE_PLUGIN_PATH, /, *, local: Optional[bool] = True
+    detection_path: pathlib.Path = None, /, *, local: Optional[bool] = True
 ) -> Generator[Plugin, None, None]:
     """
     Walks the local path, and determines which files are local plugins.
 
     Yields a list of plugins,
     """
+    if detection_path is None:
+        detection_path = BASE_PLUGIN_PATH
     all_plugins: Set[Plugin] = set()
 
     toml_plugins: List[Plugin] = []
@@ -296,7 +298,7 @@ def find_plugins(
 
 
 def walk_plugin_files(
-    detection_path: pathlib.Path = BASE_PLUGIN_PATH,
+    detection_path: pathlib.Path = None,
 ) -> Generator[Tuple[ModuleName, ExtMetadata], None, None]:
     """Yield plugin names from the modmail.plugins subpackage."""
     # walk all files in the plugins folder
@@ -304,6 +306,8 @@ def walk_plugin_files(
     # which are important for ease of development.
     # NOTE: We are not using Pathlib's glob utility as it doesn't
     #   support following symlinks, see: https://bugs.python.org/issue33428
+    if detection_path is None:
+        detection_path = BASE_PLUGIN_PATH
     for path in glob.iglob(f"{detection_path}/**/*.py", recursive=True):
 
         logger.trace(f"{path =}")

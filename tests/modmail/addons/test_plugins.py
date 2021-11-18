@@ -8,11 +8,10 @@ import pytest
 from modmail.addons.models import Plugin
 from modmail.addons.plugins import PLUGINS as GLOBAL_PLUGINS
 from modmail.addons.plugins import find_plugins, parse_plugin_toml_from_string
+from tests import mocks
 
 
-# load PLUGINS
-PLUGINS = copy(GLOBAL_PLUGINS)
-PLUGINS.update(find_plugins())
+pytestmark = pytest.mark.usefixtures("reroute_plugins")
 
 
 VALID_PLUGIN_TOML = """
@@ -53,11 +52,18 @@ def test_parse_plugin_toml_from_string(
 class TestPluginConversion:
     """Test the extension converter converts extensions properly."""
 
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize("plugin", [e.name for e in PLUGINS])
-    async def test_conversion_success(self, plugin: str) -> None:
-        """Test all plugins in the list are properly converted."""
-        with unittest.mock.patch("modmail.addons.plugins.PLUGINS", PLUGINS):
-            converted = await Plugin.convert(None, plugin)
+    @classmethod
+    def setup_class(cls):
+        """Set the class plugins var to the scanned plugins."""
+        cls.plugins = set(find_plugins())
 
-        assert plugin == converted.name
+    @pytest.mark.asyncio
+    async def test_conversion_success(self) -> None:
+        """Test all plugins in the list are properly converted."""
+        with unittest.mock.patch("modmail.addons.plugins.PLUGINS", self.plugins):
+
+            for plugin in self.plugins:
+                print(f"Current plugin: {plugin}")
+                converted = await Plugin.convert(mocks.MockContext(), plugin)
+
+                assert plugin.name == converted.name
