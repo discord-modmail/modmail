@@ -1,21 +1,20 @@
+import unittest.mock
 from copy import copy
 
 import pytest
 
+from modmail.addons.plugins import PLUGINS as GLOBAL_PLUGINS
+from modmail.addons.plugins import find_plugins
 from modmail.extensions.plugin_manager import PluginConverter
-from modmail.utils.plugins import PLUGINS as GLOBAL_PLUGINS
-from modmail.utils.plugins import walk_plugins
 
 
 # load EXTENSIONS
 PLUGINS = copy(GLOBAL_PLUGINS)
-PLUGINS.update(walk_plugins())
+PLUGINS.update(find_plugins())
 
 
 class TestPluginConverter:
     """Test the extension converter converts extensions properly."""
-
-    all_plugins = {x: y for x, y in walk_plugins()}
 
     @pytest.fixture(scope="class", name="converter")
     def converter(self) -> PluginConverter:
@@ -23,10 +22,10 @@ class TestPluginConverter:
         return PluginConverter()
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("plugin", [e.rsplit(".", 1)[-1] for e in all_plugins.keys()])
+    @pytest.mark.parametrize("plugin", [e.name for e in PLUGINS])
     async def test_conversion_success(self, plugin: str, converter: PluginConverter) -> None:
         """Test all plugins in the list are properly converted."""
-        converter.source_list = self.all_plugins
-        converted = await converter.convert(None, plugin)
+        with unittest.mock.patch("modmail.extensions.plugin_manager.PLUGINS", PLUGINS):
+            converted = await converter.convert(None, plugin)
 
-        assert converted.endswith(plugin)
+        assert plugin == converted.name

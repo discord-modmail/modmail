@@ -128,7 +128,10 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             extensions = sorted(ext for ext in self.all_extensions if ext not in self.bot.extensions.keys())
 
         msg, is_error = self.batch_manage(Action.LOAD, *extensions)
-        await responses.send_response(ctx, msg, not is_error)
+        if not is_error:
+            await responses.send_positive_response(ctx, msg)
+        else:
+            await responses.send_negatory_response(ctx, msg)
 
     @extensions_group.command(name="unload", aliases=("ul",), require_var_positional=True)
     async def unload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
@@ -154,7 +157,10 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             )
 
         msg, is_error = self.batch_manage(Action.UNLOAD, *extensions)
-        await responses.send_response(ctx, msg, not is_error)
+        if not is_error:
+            await responses.send_positive_response(ctx, msg)
+        else:
+            await responses.send_negatory_response(ctx, msg)
 
     @extensions_group.command(name="reload", aliases=("r", "rl"), require_var_positional=True)
     async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
@@ -169,7 +175,10 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             extensions = self.bot.extensions.keys() & self.all_extensions
 
         msg, is_error = self.batch_manage(Action.RELOAD, *extensions)
-        await responses.send_response(ctx, msg, not is_error)
+        if not is_error:
+            await responses.send_positive_response(ctx, msg)
+        else:
+            await responses.send_negatory_response(ctx, msg)
 
     @extensions_group.command(name="list", aliases=("all", "ls"))
     async def list_extensions(self, ctx: Context) -> None:
