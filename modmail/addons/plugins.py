@@ -314,7 +314,7 @@ def walk_plugin_files(
 
         # calculate the module name, dervived from the relative path
         relative_path = pathlib.Path(path).relative_to(BASE_PLUGIN_PATH)
-        module_name = relative_path.__str__().rstrip(".py").replace("/", ".")
+        module_name = ".".join(relative_path.parent.parts) + "." + relative_path.stem
         module_name = plugins.__name__ + "." + module_name
         logger.trace(f"{module_name =}")
 
