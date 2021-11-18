@@ -20,7 +20,6 @@ env:
   # Configure pip to cache dependencies and do a user install
   PIP_NO_CACHE_DIR: false
   PIP_USER: 1
-  PYTHON_VERSION: 3.8
 
   # Make sure package manager does not use virtualenv
   POETRY_VIRTUALENVS_CREATE: false
@@ -162,7 +161,7 @@ jobs:
       # This is saved to ./.coverage to be used by codecov to link a
       # coverage report to github.
       - name: Run tests and generate coverage report
-        run: python -m pytest -n auto --dist loadfile --cov --disable-warnings -q
+        run: python -m pytest -n auto --dist loadfile --cov --disable-warnings -v --showlocals
 
       # This step will publish the coverage reports to codecov.io and
       # print a "job" link in the output of the GitHub Action
