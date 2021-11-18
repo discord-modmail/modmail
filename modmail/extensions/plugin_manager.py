@@ -4,14 +4,13 @@ import asyncio
 import logging
 import shutil
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, Mapping, Set
+from typing import TYPE_CHECKING, Mapping
 
 from atoml.exceptions import ParseError
 from discord import Colour, Embed
 from discord.abc import Messageable
 from discord.ext import commands
 from discord.ext.commands import Context
-from rapidfuzz import fuzz, process
 
 import modmail.addons.utils as addon_utils
 from modmail import errors
@@ -64,64 +63,6 @@ class PluginDevPathConverter(ExtensionConverter):
         for plug in PluginDevPathConverter.source_list:
             modules.update({k: v for k, v in plug.modules.items()})
         self.source_list = modules
-
-
-class PluginConverter(commands.Converter):
-    """Convert a plugin name into a full plugin with path and related args."""
-
-    async def convert(self, ctx: Context, argument: str) -> Plugin:
-        """Converts a plugin into a full plugin with a path and all other attributes."""
-        loaded_plugs: Set[Plugin] = PLUGINS
-
-        # its possible to have a plugin with the same name as a folder of a plugin
-        # folder names are the priority
-        secondary_names = dict()
-        for plug in loaded_plugs:
-            if argument == plug.name:
-                return plug
-            secondary_names[plug.folder_name] = plug
-
-        if argument in secondary_names:
-            return secondary_names[argument]
-
-        # Determine close plugins
-        # Using a dict to prevent duplicates
-        arg_mapping: Dict[str, Plugin] = dict()
-        for plug in loaded_plugs:
-            for name in plug.name, plug.folder_name:
-                arg_mapping[name] = plug
-
-        result = process.extract(
-            argument,
-            arg_mapping.keys(),
-            scorer=fuzz.ratio,
-            score_cutoff=69,
-        )
-        logger.debug(f"{result = }")
-
-        if not len(result):
-            raise commands.BadArgument(f"`{argument}` is not in list of installed plugins.")
-
-        all_fully_matched_plugins: Set[Plugin] = set()
-        all_partially_matched_plugins: Dict[Plugin, float] = dict()
-        for res in result:
-            all_partially_matched_plugins[arg_mapping[res[0]]] = res[1]
-
-            if res[1] == 100:
-                all_fully_matched_plugins.add(arg_mapping[res[0]])
-
-        if len(all_fully_matched_plugins) != 1:
-            suggested = ""
-            for plug, percent in all_partially_matched_plugins.items():
-                suggested += f"`{plug.name}` ({round(percent)}%)\n"
-            raise commands.BadArgument(
-                f"`{argument}` is not in list of installed plugins."
-                f"\n\n**Suggested plugins**:\n{suggested}"
-                if len(suggested)
-                else ""
-            )
-
-        return await self.convert(ctx, all_fully_matched_plugins.pop().name)
 
 
 class PluginManager(ExtensionManager, name="Plugin Manager"):
@@ -340,7 +281,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             )
 
     @plugins_group.command(name="uninstall", aliases=("rm",))
-    async def uninstall_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
+    async def uninstall_plugin(self, ctx: Context, *, plugin: Plugin) -> None:
         """Uninstall a provided plugin, given the name of the plugin."""
         plugin: Plugin = plugin
 
@@ -350,7 +291,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             )
             return
 
-        plugin = await PluginConverter().convert(ctx, plugin.folder_name)
+        plugin = await Plugin.convert(ctx, plugin.folder_name)
         _, err = self.batch_manage(
             Action.UNLOAD, *plugin.modules.keys(), is_plugin=True, suppress_already_error=True
         )
@@ -362,7 +303,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         shutil.rmtree(plugin.installed_path)
 
-        plugin = await PluginConverter().convert(ctx, plugin.folder_name)
+        plugin = await Plugin.convert(ctx, plugin.folder_name)
         PLUGINS.remove(plugin)
 
         await responses.send_positive_response(ctx, f"Successfully uninstalled plugin {plugin}")
@@ -400,12 +341,12 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
             await responses.send_positive_response(ctx, f":thumbsup: Plugin {plugin!s} successfully {verb}d.")
 
     @plugins_group.command(name="enable")
-    async def enable_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
+    async def enable_plugin(self, ctx: Context, *, plugin: Plugin) -> None:
         """Enable a provided plugin, given the name or folder of the plugin."""
         await self._enable_or_disable_plugin(ctx, plugin, Action.ENABLE, True)
 
     @plugins_group.command(name="disable")
-    async def disable_plugin(self, ctx: Context, *, plugin: PluginConverter) -> None:
+    async def disable_plugin(self, ctx: Context, *, plugin: Plugin) -> None:
         """Disable a provided plugin, given the name or folder of the plugin."""
         await self._enable_or_disable_plugin(ctx, plugin, Action.DISABLE, False)
 

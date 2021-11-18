@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+import unittest.mock
+from copy import copy
+
 import pytest
 
 from modmail.addons.models import Plugin
-from modmail.addons.plugins import parse_plugin_toml_from_string
+from modmail.addons.plugins import PLUGINS as GLOBAL_PLUGINS
+from modmail.addons.plugins import find_plugins, parse_plugin_toml_from_string
+
+
+# load PLUGINS
+PLUGINS = copy(GLOBAL_PLUGINS)
+PLUGINS.update(find_plugins())
 
 
 VALID_PLUGIN_TOML = """
@@ -39,3 +48,16 @@ def test_parse_plugin_toml_from_string(
     assert plug.folder_name == folder
     assert plug.description == description
     assert plug.min_bot_version == min_bot_version
+
+
+class TestPluginConversion:
+    """Test the extension converter converts extensions properly."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("plugin", [e.name for e in PLUGINS])
+    async def test_conversion_success(self, plugin: str) -> None:
+        """Test all plugins in the list are properly converted."""
+        with unittest.mock.patch("modmail.addons.plugins.PLUGINS", PLUGINS):
+            converted = await Plugin.convert(None, plugin)
+
+        assert plugin == converted.name

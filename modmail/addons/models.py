@@ -1,15 +1,25 @@
 from __future__ import annotations
 
+import logging
 import re
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, NoReturn, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, NoReturn, Optional, Set, Union
+
+from discord.ext import commands
+from rapidfuzz import fuzz, process
+
+from modmail.utils.extensions import ModuleDict
 
 
 if TYPE_CHECKING:
     import pathlib
     import zipfile
 
-    from modmail.utils.extensions import ModuleDict
+    from modmail.log import ModmailLogger
+
+logger: ModmailLogger = logging.getLogger(__name__)
+
+PLUGINS = None
 
 
 class SourceTypeEnum(Enum):
@@ -191,3 +201,64 @@ class Plugin(Addon):
 
     def __eq__(self, other: Any):
         return hash(self) == hash(other)
+
+    @classmethod
+    async def convert(cls, ctx: commands.Context, argument: str) -> Plugin:
+        """Converts a plugin into a full plugin with a path and all other attributes."""
+        # have to do this here to prevent a recursive import
+        global PLUGINS
+        if PLUGINS is None:
+            logger.debug("Lazy import of global PLUGINS from modmail.addons.plugins")
+            from modmail.addons.plugins import PLUGINS
+
+        loaded_plugs: Set[Plugin] = PLUGINS
+
+        # its possible to have a plugin with the same name as a folder of a plugin
+        # folder names are the priority
+        secondary_names = dict()
+        for plug in loaded_plugs:
+            if argument == plug.name:
+                return plug
+            secondary_names[plug.folder_name] = plug
+
+        if argument in secondary_names:
+            return secondary_names[argument]
+
+        # Determine close plugins
+        # Using a dict to prevent duplicates
+        arg_mapping: Dict[str, Plugin] = dict()
+        for plug in loaded_plugs:
+            for name in plug.name, plug.folder_name:
+                arg_mapping[name] = plug
+
+        result = process.extract(
+            argument,
+            arg_mapping.keys(),
+            scorer=fuzz.ratio,
+            score_cutoff=69,
+        )
+        logger.debug(f"{result = }")
+
+        if not len(result):
+            raise commands.BadArgument(f"`{argument}` is not in list of installed plugins.")
+
+        all_fully_matched_plugins: Set[Plugin] = set()
+        all_partially_matched_plugins: Dict[Plugin, float] = dict()
+        for res in result:
+            all_partially_matched_plugins[arg_mapping[res[0]]] = res[1]
+
+            if res[1] == 100:
+                all_fully_matched_plugins.add(arg_mapping[res[0]])
+
+        if len(all_fully_matched_plugins) != 1:
+            suggested = ""
+            for plug, percent in all_partially_matched_plugins.items():
+                suggested += f"`{plug.name}` ({round(percent)}%)\n"
+            raise commands.BadArgument(
+                f"`{argument}` is not in list of installed plugins."
+                f"\n\n**Suggested plugins**:\n{suggested}"
+                if len(suggested)
+                else ""
+            )
+
+        return await cls.convert(ctx, all_fully_matched_plugins.pop().name)
