@@ -1,11 +1,12 @@
 import asyncio
 import logging
 import signal
+import socket
 from typing import Any, Optional, Set
 
+import aiohttp
 import arrow
 import discord
-from aiohttp import ClientSession
 from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
@@ -44,8 +45,11 @@ class ModmailBot(commands.Bot):
     def __init__(self, **kwargs):
         self.config = CONFIG
         self.start_time: Optional[arrow.Arrow] = None  # arrow.utcnow()
-        self.http_session: Optional[ClientSession] = None
+        self.http_session: Optional[aiohttp.ClientSession] = None
         self.dispatcher = Dispatcher()
+
+        self._connector = None
+        self._resolver = None
 
         # keys: plugins, list values: all plugin files
         self.installed_plugins: Set[Plugin] = {}
@@ -71,6 +75,24 @@ class ModmailBot(commands.Bot):
             **kwargs,
         )
 
+    async def create_connectors(self, *args, **kwargs) -> None:
+        """Re-create the connector and set up sessions before logging into Discord."""
+        # Use asyncio for DNS resolution instead of threads so threads aren't spammed.
+        self._resolver = aiohttp.AsyncResolver()
+
+        # Use AF_INET as its socket family to prevent HTTPS related problems both locally
+        # and in production.
+        self._connector = aiohttp.TCPConnector(
+            resolver=self._resolver,
+            family=socket.AF_INET,
+        )
+
+        # Client.login() will call HTTPClient.static_login() which will create a session using
+        # this connector attribute.
+        self.http.connector = self._connector
+
+        self.http_session = aiohttp.ClientSession(connector=self._connector)
+
     async def start(self, token: str, reconnect: bool = True) -> None:
         """
         Start the bot.
@@ -80,8 +102,8 @@ class ModmailBot(commands.Bot):
         """
         try:
             # create the aiohttp session
-            self.http_session = ClientSession(loop=self.loop)
-            self.logger.trace("Created ClientSession.")
+            await self.create_connectors()
+            self.logger.trace("Created aiohttp.ClientSession.")
             # set start time to when we started the bot.
             # This is now, since we're about to connect to the gateway.
             # This should also be before we load any extensions, since if they have a load time, it should
@@ -175,10 +197,16 @@ class ModmailBot(commands.Bot):
             except Exception:
                 self.logger.error(f"Exception occured while removing cog {cog.name}", exc_info=True)
 
+        await super().close()
+
         if self.http_session:
             await self.http_session.close()
 
-        await super().close()
+        if self._connector:
+            await self._connector.close()
+
+        if self._resolver:
+            await self._resolver.close()
 
     def load_extensions(self) -> None:
         """Load all enabled extensions."""
