@@ -66,6 +66,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         prefix: str = "```",
         suffix: str = "```",
         max_size: int = 2000,
+        title: str = None,
         linesep: str = "\n",
         only_users: Optional[List[Union[discord.Object, discord.abc.User]]] = None,
         only_roles: Optional[List[Union[discord.Object, discord.Role]]] = None,
@@ -91,6 +92,19 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
         # used if embed is None
         self.content = ""
+        if embed is not None:
+            if title:
+                raise TypeError("Cannot set title if embed is None.")
+            self.title = None
+        else:
+            self.title = title
+            # need to set the max_size down a few to be able to set a "footer"
+            # page indicator is "page xx of xx"
+            self.max_size -= 15
+            if self.title is not None:
+                self.max_size -= len(title)
+            if footer_text is not None:
+                self.max_size -= len(footer_text) + 1
 
         # temporary to support strings as contents. This will be changed when we added wrapping.
         if isinstance(contents, str):
@@ -157,6 +171,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         prefix: str = "",
         suffix: str = "",
         max_size: int = 4000,
+        title: str = None,
         linesep: str = "\n",
         only_users: Optional[List[Union[discord.Object, discord.abc.User]]] = None,
         only_roles: Optional[List[Union[discord.Object, discord.abc.Role]]] = None,
@@ -175,6 +190,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
             prefix=prefix,
             suffix=suffix,
             max_size=max_size,
+            title=title,
             linesep=linesep,
             only_users=only_users,
             only_roles=only_roles,
@@ -186,10 +202,6 @@ class ButtonPaginator(ui.View, DpyPaginator):
             channel = source_message.channel
 
         paginator.update_states()
-        if paginator.embed:
-            paginator.embed.description = paginator.pages[paginator.index]
-        else:
-            paginator.content = paginator.pages[paginator.index]
         # if there's only one page, don't send the view
         if len(paginator.pages) < 2:
             if paginator.embed:
@@ -239,18 +251,18 @@ class ButtonPaginator(ui.View, DpyPaginator):
         if the paginator is on the last page, the jump last/move forward buttons will be disabled.
         """
         # update the footer
+        page_indicator = f"Page {self.index+1}/{len(self._pages)}"
+        footer_text = (
+            f"{self.footer_text} ({page_indicator})" if self.footer_text is not None else page_indicator
+        )
         if self.embed is None:
-            self.content = self._pages[self.index]
+            self.content = (self.title or "") + "\n"
+            self.content += self._pages[self.index]
+            self.content += "\n" + footer_text
+
         else:
             self.embed.description = self._pages[self.index]
-            page_indicator = f"Page {self.index+1}/{len(self._pages)}"
-            self.embed.set_footer(
-                text=(
-                    f"{self.footer_text} ({page_indicator})"
-                    if self.footer_text is not None
-                    else page_indicator
-                )
-            )
+            self.embed.set_footer(text=footer_text)
 
         # determine if the jump buttons should be enabled
         more_than_two_pages = len(self._pages) > 2
@@ -287,6 +299,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         if self.embed:
             await interaction.message.edit(embed=self.embed, view=self)
         else:
+            print(len(self.content))
             await interaction.message.edit(content=self.content, view=self)
 
     @ui.button(label=JUMP_FIRST_LABEL, custom_id="pag_jump_first", style=ButtonStyle.primary)
