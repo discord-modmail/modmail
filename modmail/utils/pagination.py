@@ -230,18 +230,6 @@ class ButtonPaginator(ui.View, DpyPaginator):
         )
         return False
 
-    def get_footer(self) -> Optional[str]:
-        """Returns the footer text."""
-        if self.embed is None:
-            self.content = self._pages[self.index]
-            return None
-        self.embed.description = self._pages[self.index]
-        page_indicator = f"Page {self.index+1}/{len(self._pages)}"
-        footer_txt = (
-            f"{self.footer_text} ({page_indicator})" if self.footer_text is not None else page_indicator
-        )
-        return footer_txt
-
     def update_states(self) -> None:
         """
         Disable specific components depending on paginator page and length.
@@ -251,9 +239,18 @@ class ButtonPaginator(ui.View, DpyPaginator):
         if the paginator is on the last page, the jump last/move forward buttons will be disabled.
         """
         # update the footer
-        text = self.get_footer()
-        if self.embed:
-            self.embed.set_footer(text=text)
+        if self.embed is None:
+            self.content = self._pages[self.index]
+        else:
+            self.embed.description = self._pages[self.index]
+            page_indicator = f"Page {self.index+1}/{len(self._pages)}"
+            self.embed.set_footer(
+                text=(
+                    f"{self.footer_text} ({page_indicator})"
+                    if self.footer_text is not None
+                    else page_indicator
+                )
+            )
 
         # determine if the jump buttons should be enabled
         more_than_two_pages = len(self._pages) > 2
