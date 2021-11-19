@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import re
+import urllib.parse
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, NoReturn, Optional, Set, Union
 
@@ -85,10 +85,10 @@ class AddonSource:
         """Initialize the AddonSource."""
         self.zip_url = zip_url
         if self.zip_url is not None:
-            match = re.match(r"^(?:https?:\/\/)?(?P<url>(?P<domain>.*\..+?)\/(?P<path>.*))$", self.zip_url)
-            self.zip_url = match.group("url")
-            self.domain = match.group("domain")
-            self.path = match.group("path")
+            parsed_url = urllib.parse.urlparse(self.zip_url)
+            self.zip_url = urllib.parse.urlunparse(parsed_url)
+            self.domain = parsed_url.netloc
+            self.path = parsed_url.path
         else:
             self.domain = None
             self.path = None
@@ -120,8 +120,7 @@ class AddonSource:
     @classmethod
     def from_zip(cls, url: str) -> AddonSource:
         """Create an AddonSource from a zip file."""
-        match = re.match(r"^(?P<url>(?:https?:\/\/)?(?P<domain>.*\..+?)\/(?P<path>.*\.zip))$", url)
-        source = cls(match.group("url"), SourceTypeEnum.ZIP)
+        source = cls(url, SourceTypeEnum.ZIP)
         return source
 
     def __repr__(self) -> str:  # pragma: no cover
