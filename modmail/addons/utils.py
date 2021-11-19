@@ -44,7 +44,7 @@ async def download_zip_from_source(source: AddonSource, session: ClientSession) 
     if source.source_type not in (SourceTypeEnum.REPO, SourceTypeEnum.ZIP):
         raise TypeError("Unsupported source detected.")
 
-    async with session.get(f"https://{source.zip_url}") as resp:
+    async with session.get(source.zip_url, timeout=20) as resp:
         if resp.status != 200:
             raise HTTPError(resp)
         raw_bytes = await resp.read()
