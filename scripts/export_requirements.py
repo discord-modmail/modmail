@@ -16,10 +16,12 @@ import textwrap
 
 import tomli
 
+from ._utils import PROJECT_DIR, CheckFileEdit
 
-GENERATED_FILE = pathlib.Path("requirements.txt")
-CONSTRAINTS_FILE = pathlib.Path("modmail/constraints.txt")
-DOC_REQUIREMENTS = pathlib.Path("docs/.requirements.txt")
+
+GENERATED_FILE = PROJECT_DIR / "requirements.txt"
+CONSTRAINTS_FILE = PROJECT_DIR / "modmail/constraints.txt"
+DOC_REQUIREMENTS = PROJECT_DIR / "docs/.requirements.txt"
 
 VERSION_RESTRICTER_REGEX = re.compile(r"(?P<sign>[<>=!]{1,2})(?P<version>\d+\.\d+?)(?P<patch>\.\d+?|\.\*)?")
 PLATFORM_MARKERS_REGEX = re.compile(r'sys_platform\s?==\s?"(?P<platform>\w+)"')
@@ -128,6 +130,7 @@ def _export_doc_requirements(toml: dict, file: pathlib.Path, *packages) -> int:
     file = pathlib.Path(file)
     if not file.exists():
         # file does not exist
+        print(f"{file.relative_to(PROJECT_DIR)!s} must exist to export doc requirements")
         return 2
 
     with open(file) as f:
@@ -149,14 +152,18 @@ def _export_doc_requirements(toml: dict, file: pathlib.Path, *packages) -> int:
     except AttributeError as e:
         print(e)
         return 3
-    if new_contents == contents:
-        # don't write anything, just return 0
-        return 0
 
-    with open(file, "w") as f:
-        f.write(new_contents)
+    with CheckFileEdit(file) as check_file:
 
-    return 1
+        check_file.write(file, new_contents)
+
+    for file, diff in check_file.edited_files.items():
+        print(
+            f"Exported new documentation requirements to {file.relative_to(PROJECT_DIR)!s}.",
+            file=sys.stderr,
+        )
+        print(diff or "No diff to show.")
+        print()
 
 
 def export(
@@ -269,19 +276,17 @@ def export(
     else:
         exit_code = 0
 
-    if req_path.exists():
-        with open(req_path, "r") as f:
-            if req_txt == f.read():
-                # nothing to edit
-                # if exit_code is ever removed from here, this should return zero
-                return exit_code
+    with CheckFileEdit(req_path) as check_file:
+        check_file.write(req_path, req_txt)
 
-    if _write_file(req_path, req_txt):
-        print(f"Updated {req_path} with new requirements.")
-        return 1
-    else:
-        print(f"No changes were made to {req_path}")
-        return 0
+    for file, diff in check_file.edited_files.items():
+        print(
+            f"Exported new requirements to {file.relative_to(PROJECT_DIR)}.",
+            file=sys.stderr,
+        )
+        print(diff or "No diff to show.")
+        print()
+    return bool(len(check_file.edited_files)) or exit_code
 
 
 def main(path: os.PathLike, include_markers: bool = True, **kwargs) -> int:
