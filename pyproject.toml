@@ -44,6 +44,7 @@ flake8-todo = "~=0.7"
 isort = "^5.9.2"
 pep8-naming = "~=0.11"
 # testing
+aioresponses = "^0.7.2"
 coverage = { extras = ["toml"], version = "^6.0.2" }
 coveralls = "^3.3.1"
 pytest = "^6.2.4"
