@@ -30,6 +30,7 @@ env:
   POETRY_CACHE_DIR: ${{ github.workspace }}/.cache/py-user-base
   PYTHONUSERBASE: ${{ github.workspace }}/.cache/py-user-base
   PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit-cache
+  GIT_REF: ${{ github.head_ref }}
 
 jobs:
   lint:
@@ -47,6 +48,10 @@ jobs:
       # Checks out the repository in the current folder.
       - name: Checks out repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+          ref: ${{ env.GIT_REF }}
+
 
       # Set up the right version of Python
       - name: Set up Python ${{ env.PYTHON_VERSION }}
@@ -128,6 +133,9 @@ jobs:
       # Checks out the repository in the current folder.
       - name: Checks out repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+          ref: ${{ env.GIT_REF }}
 
       # Set up the right version of Python
       - name: Set up Python ${{ env.PYTHON_VERSION }}
