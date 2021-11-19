@@ -9,6 +9,7 @@ from modmail.addons.models import AddonSource, SourceTypeEnum
 from modmail.addons.utils import download_zip_from_source
 
 
+@pytest.mark.xfail
 @pytest.mark.parametrize(
     "source", [AddonSource.from_zip("https://github.com/discord-modmail/modmail/archive/main.zip")]
 )
