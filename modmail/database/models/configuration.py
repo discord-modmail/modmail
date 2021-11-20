@@ -14,7 +14,7 @@ class Configurations(Model):
         super().__init__(**kwargs)
 
     target_bot_id = fields.BigIntField(null=True)
-    target_server_id: fields.ForeignKeyRelation[Guilds] = fields.ForeignKeyField(
+    target_guild_id: fields.ForeignKeyRelation[Guilds] = fields.ForeignKeyField(
         "models.Guilds", related_name="configurations", to_field="id", null=True
     )
     config_key = fields.TextField()
