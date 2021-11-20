@@ -2,7 +2,7 @@ from tortoise import fields
 from tortoise.exceptions import ValidationError
 from tortoise.models import Model
 
-from .servers import Servers
+from .guilds import Guilds
 
 
 class Configurations(Model):
@@ -14,8 +14,8 @@ class Configurations(Model):
         super().__init__(**kwargs)
 
     target_bot_id = fields.BigIntField(null=True)
-    target_server_id: fields.ForeignKeyRelation[Servers] = fields.ForeignKeyField(
-        "models.Servers", related_name="configurations", to_field="id", null=True
+    target_server_id: fields.ForeignKeyRelation[Guilds] = fields.ForeignKeyField(
+        "models.Guilds", related_name="configurations", to_field="id", null=True
     )
     config_key = fields.TextField()
     config_value = fields.TextField()

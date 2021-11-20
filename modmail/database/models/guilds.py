@@ -9,8 +9,8 @@ if TYPE_CHECKING:
     from .tickets import Tickets
 
 
-class Servers(Model):
-    """Database model representing a discord server."""
+class Guilds(Model):
+    """Database model representing a discord guild."""
 
     id = fields.BigIntField(pk=True, null=False)
     name = fields.CharField(max_length=200)
