@@ -2,6 +2,7 @@ from tortoise import fields
 from tortoise.models import Model
 
 from .guilds import Guilds
+from .messages import Messages
 
 
 class Tickets(Model):
@@ -15,5 +16,9 @@ class Tickets(Model):
     )
     thread_id = fields.BigIntField(unique=True)
     author_id = fields.BigIntField()
-    creating_message_id = fields.BigIntField()
+    creating_message_id: fields.ForeignKeyRelation[Messages] = fields.ForeignKeyField(
+        "models.Messages",
+        related_name="ticket_creations",
+        to_field="id",
+    )
     creating_channel_id = fields.BigIntField()
