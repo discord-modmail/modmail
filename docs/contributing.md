@@ -150,6 +150,39 @@ $ poetry install
         This runs our register pre-commit hooks on every commit to automatically point out issues in code such as missing semicolons, trailing whitespace, and debug statements. By pointing these issues out before code review, this allows a code reviewer to focus on the architecture of a change while not wasting time with trivial style nitpicks.
 
 
+### PostgreSQL setup
+
+Install PostgreSQL according to its [documentation](https://www.postgresql.org/download/).
+
+Enter psql, a terminal-based front-end to PostgreSQL:
+
+<div class="termy">
+
+```console
+$ psql -qd postgres
+```
+
+Run the following queries to create the user and database:
+
+```psql
+CREATE USER modmail WITH SUPERUSER PASSWORD 'modmail';
+CREATE DATABASE modmail WITH OWNER modmail;
+```
+
+Finally, enter `/q` to exit psql.
+
+Once the Database is started, you need run migrations to init tables and columns which can be ran through:
+
+<div class="termy">
+
+```console
+$ poetry run alembic upgrade heads
+
+---> 100%
+```
+
+
+
 ### Set up modmail config
 
 1. Create a copy of `config-default.yml` named `config.yml` in the the `modmail/` directory.
@@ -182,7 +215,14 @@ $ poetry install
 !!!note
         The entire file name is literally `.env`
 
-5. Open the file with any text editor and write the bot token to the files in this format: `TOKEN="my_token"`.
+5. Open the file with any text editor and write the bot token and the database URL to the files in this format:
+        * `TOKEN="my_token"`.
+        * `DATABASE_URI='postgres://modmail:modmail@localhost:5432/modmail'`
+
+!!! note
+        If you configured PostgreSQL in a different manner or you are not hosting it locally, then you will need to
+determine the correct host and port yourself. The user, password, and database name should all still be `modmail` unless
+you deviated from the setup instructions in the previous section.
 
 ### Run The Project
 
@@ -261,6 +301,37 @@ your chapter weird.
 ## Python Styleguide
 
 <!-- TODO: ... -->
+
+
+## Applying database migrations
+Migrations are like a version control system for your database. Each migration defines a change to the database
+and how to undo it. By modifying your database through migrations, you create a consistent, testable, and shareable
+way to evolve your databases over time.
+
+You can easily create migrations through aerich's CLI. But before you do that, you need to generate the database
+schemas, this can simply be done by running the bot once (`task start`). Once that's done, you can use the CLI
+to generate the migration raw SQL file:
+
+<div class="termy">
+
+```console
+$ aerich migrate
+
+---> 100%
+
+Success migrate 1_202029051520102929_drop_column.sql
+```
+
+</div>
+
+Now, check your `migrations/models` folder. You should see your brand-new migration! Notice that it also
+contains a timestamp. This allows `aerich` to run your migrations in the correct order. Format of migrate filename
+is `{version_num}_{datetime}_{name|update}.sql`. If you are renaming a column, aerich would ask you for confirmation,
+you can then choose `True` to rename the column without a column drop and `False` to drop the column then create.
+Note that the latter may **lose** data.
+
+
+
 
 ## Changelog Requirement
 

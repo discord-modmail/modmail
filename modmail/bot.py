@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import signal
+import sys
 import typing as t
-from typing import Any
 
 import arrow
 import discord
@@ -10,6 +10,7 @@ from aiohttp import ClientSession
 from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
+from tortoise import BaseDBAsyncClient, Tortoise
 
 from modmail.config import CONFIG
 from modmail.dispatcher import Dispatcher
@@ -26,6 +27,16 @@ REQUIRED_INTENTS = Intents(
     members=True,
     emojis_and_stickers=True,
 )
+
+TORTOISE_ORM = {
+    "connections": {"default": CONFIG.bot.database_uri},
+    "apps": {
+        "models": {
+            "models": ["modmail.database.models", "aerich.models"],
+            "default_connection": "default",
+        },
+    },
+}
 
 
 class ModmailBot(commands.Bot):
@@ -65,6 +76,23 @@ class ModmailBot(commands.Bot):
             **kwargs,
         )
 
+    @property
+    def db(self, name: t.Optional[str] = "default") -> BaseDBAsyncClient:
+        """Get the default tortoise-orm connection."""
+        return Tortoise.get_connection(name)
+
+    async def init_db(self) -> None:
+        """Initiate the bot DB connection and check if the DB is alive."""
+        try:
+            self.logger.info("Initializing Tortoise...")
+            await Tortoise.init(TORTOISE_ORM)
+
+            self.logger.info("Generating database schema via Tortoise...")
+            await Tortoise.generate_schemas()
+        except Exception as e:
+            self.logger.error(f"DB connection at {CONFIG.bot.database_uri} not successful, raised:\n{e}")
+            sys.exit(e)
+
     async def start(self, token: str, reconnect: bool = True) -> None:
         """
         Start the bot.
@@ -73,6 +101,7 @@ class ModmailBot(commands.Bot):
         asyncrhonous event loop running, before connecting the bot to discord.
         """
         try:
+            await self.init_db()
             # create the aiohttp session
             self.http_session = ClientSession(loop=self.loop)
             self.logger.trace("Created ClientSession.")
@@ -122,7 +151,7 @@ class ModmailBot(commands.Bot):
         except NotImplementedError:
             pass
 
-        def stop_loop_on_completion(f: Any) -> None:
+        def stop_loop_on_completion(f: t.Any) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(self.start(*args, **kwargs), loop=loop)
@@ -167,6 +196,7 @@ class ModmailBot(commands.Bot):
         if self.http_session:
             await self.http_session.close()
 
+        await Tortoise.close_connections()
         await super().close()
 
     def load_extensions(self) -> None:

@@ -97,6 +97,7 @@ class BaseSettings(PydanticBaseSettings):
 class BotConfig(BaseSettings):
     prefix: str = "?"
     token: str = None
+    database_uri: Optional[str] = None
 
     class Config:
         # env_prefix = "bot."

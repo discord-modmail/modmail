@@ -2,18 +2,32 @@
 
 version: "3.7"
 
-x-restart-policy: &restart_policy
-  restart: unless-stopped
-
 services:
+  postgres:
+    image: postgres:13-alpine
+    ports:
+      - "127.0.0.1:7777:5432"
+    environment:
+      POSTGRES_DB: modmail
+      POSTGRES_PASSWORD: modmail
+      POSTGRES_USER: modmail
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U modmail" ]
+      interval: 2s
+      timeout: 1s
+      retries: 5
+
   modmail:
-    << : *restart_policy
-    container_name: modmail
     build:
       context: .
       dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    tty: true
     volumes:
       - .:/modmail
     env_file:
       - .env
-    tty: true
+    environment:
+      database_uri: postgres://modmail:modmail@postgres:5432/modmail
