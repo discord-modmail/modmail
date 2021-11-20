@@ -64,6 +64,7 @@ def test_get_title_from_name(exception_or_str: typing.Union[Exception, str], exp
     assert expected_str == result
 
 
+@pytest.mark.parametrize("reset_cooldown", [True, False])
 @pytest.mark.parametrize(
     ["error", "title", "description"],
     [
@@ -95,13 +96,22 @@ def test_get_title_from_name(exception_or_str: typing.Union[Exception, str], exp
 )
 @pytest.mark.asyncio
 async def test_handle_user_input_error(
-    cog: ErrorHandler, ctx: mocks.MockContext, error: commands.UserInputError, title: str, description: str
+    cog: ErrorHandler,
+    ctx: mocks.MockContext,
+    error: commands.UserInputError,
+    title: str,
+    description: str,
+    reset_cooldown: bool,
 ):
     """Test user input errors are handled properly."""
-    embed = await cog.handle_user_input_error(ctx=ctx, error=error, reset_cooldown=False)
+    with unittest.mock.patch.object(cog, "_reset_command_cooldown") as mock_cooldown_reset:
+        embed = await cog.handle_user_input_error(ctx=ctx, error=error, reset_cooldown=reset_cooldown)
 
     assert title == embed.title
     assert description == embed.description
+
+    if reset_cooldown:
+        assert 1 == mock_cooldown_reset.call_count
 
 
 @pytest.mark.parametrize(
