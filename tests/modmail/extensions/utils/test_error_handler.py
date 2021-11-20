@@ -105,15 +105,84 @@ async def test_handle_user_input_error(
 
 
 @pytest.mark.parametrize(
-    ["error", "perms"],
-    [],
+    ["error", "bot_perms", "should_send_channel", "member_perms", "should_send_user", "raise_forbidden"],
+    [
+        (
+            commands.BotMissingPermissions(["manage_guild"]),
+            discord.Permissions(read_messages=True, send_messages=True, embed_links=True),
+            1,
+            discord.Permissions(read_messages=True, send_messages=True, embed_links=True),
+            0,
+            False,
+        ),
+        (
+            commands.BotMissingPermissions(["administrator"]),
+            discord.Permissions(read_messages=True, send_messages=True, manage_guild=True),
+            1,
+            discord.Permissions(read_messages=True, send_messages=True, embed_links=True),
+            0,
+            False,
+        ),
+        (
+            commands.BotMissingPermissions(["mention_everyone"]),
+            discord.Permissions(read_messages=True, send_messages=True),
+            1,
+            discord.Permissions(read_messages=True, send_messages=True, embed_links=True),
+            0,
+            False,
+        ),
+        (
+            commands.BotMissingPermissions(["administrator"]),
+            discord.Permissions(read_messages=False, send_messages=False),
+            0,
+            discord.Permissions(read_messages=False),
+            0,
+            False,
+        ),
+        (
+            commands.BotMissingPermissions(["change_nickname"]),
+            discord.Permissions(read_messages=True, send_messages=True),
+            1,
+            discord.Permissions(read_messages=True, send_messages=True, administrator=True),
+            1,
+            False,
+        ),
+        (
+            commands.BotMissingPermissions(["administrator"]),
+            discord.Permissions(manage_threads=True, manage_channels=True),
+            0,
+            discord.Permissions(administrator=True),
+            1,
+            False,
+        ),
+        (
+            commands.BotMissingPermissions(["change_nickname"]),
+            discord.Permissions(read_messages=True, send_messages=True),
+            1,
+            discord.Permissions(read_messages=True, send_messages=True, administrator=True),
+            1,
+            True,
+        ),
+        (
+            commands.BotMissingPermissions(["administrator"]),
+            discord.Permissions(manage_threads=True, manage_channels=True),
+            0,
+            discord.Permissions(administrator=True),
+            1,
+            True,
+        ),
+    ],
 )
 @pytest.mark.asyncio
-async def test_handle_bot_missing_perms_only_send(
+async def test_handle_bot_missing_perms(
     cog: ErrorHandler,
     ctx: mocks.MockContext,
     error: commands.BotMissingPermissions,
-    perms: discord.Permissions,
+    bot_perms: discord.Permissions,
+    should_send_channel: int,
+    member_perms: discord.Permissions,
+    should_send_user: int,
+    raise_forbidden: bool,
 ):
     """
     Test error_handler.handle_bot_missing_perms.
@@ -123,95 +192,26 @@ async def test_handle_bot_missing_perms_only_send(
 
     def mock_permissions_for(member):
         assert isinstance(member, discord.Member)
-        return perms
-
-    ctx.channel.permissions_for = mock_permissions_for
-
-    await cog.handle_bot_missing_perms(ctx, error)
-
-    assert 1 == ctx.send.call_count + ctx.channel.send.call_count
-
-
-@pytest.mark.parametrize(
-    [
-        "error",
-        "perms",
-        "expected_send_to_channel",
-        "expected_send_to_author",
-        "raise_forbidden",
-    ],
-    [
-        [
-            commands.BotMissingPermissions(["manage_guild"]),
-            discord.Permissions(send_messages=True, embed_links=True),
-            1,
-            0,
-            False,
-        ],
-        [
-            commands.BotMissingPermissions(["manage_guild"]),
-            discord.Permissions(send_messages=True),
-            1,
-            0,
-            False,
-        ],
-        [
-            commands.BotMissingPermissions(["manage_guild"]),
-            discord.Permissions(manage_roles=True),
-            0,
-            1,
-            False,
-        ],
-        [
-            commands.BotMissingPermissions(["manage_guild"]),
-            discord.Permissions(0),
-            0,
-            0,
-            False,
-        ],
-        [
-            commands.BotMissingPermissions(["manage_guild"]),
-            discord.Permissions(manage_channels=True),
-            0,
-            1,
-            True,
-        ],
-    ],
-)
-@pytest.mark.asyncio
-async def test_handle_bot_missing_perms(
-    cog: ErrorHandler,
-    ctx: mocks.MockContext,
-    error: commands.BotMissingPermissions,
-    perms: discord.Permissions,
-    raise_forbidden: bool,
-    expected_send_to_channel: int,
-    expected_send_to_author: int,
-):
-    """
-    Test error_handler.handle_bot_missing_perms.
-
-    There are some cases here where the bot is unable to send messages, and that is tested below.
-    """
-
-    def mock_permissions_for(member, /):
-        assert isinstance(member, discord.Member)
-        return perms
-
-    def not_allowed(*args, **kwargs):
-        raise discord.Forbidden(unittest.mock.MagicMock(status=403), "no.")
-
-    ctx.channel.permissions_for = mock_permissions_for
+        if member is ctx.me:
+            return bot_perms
+        if member is ctx.author:
+            return member_perms
+        # fail since there is no other kind of user who should be passed here
+        pytest.fail("An invalid member or role was passed to ctx.channel.permissions_for")
 
     if raise_forbidden:
-        ctx.author.send.side_effect = not_allowed
-        ctx.message.author.send.side_effect = not_allowed
+        error_to_raise = discord.Forbidden(unittest.mock.MagicMock(status=403), "no.")
+        ctx.author.send.side_effect = error_to_raise
+        ctx.message.author.send.side_effect = error_to_raise
 
-    await cog.handle_bot_missing_perms(ctx, error)
+    with unittest.mock.patch.object(ctx.channel, "permissions_for", mock_permissions_for):
 
-    assert expected_send_to_channel == ctx.send.call_count + ctx.channel.send.call_count
+        await cog.handle_bot_missing_perms(ctx, error)
 
-    assert expected_send_to_author == ctx.author.send.call_count
+    assert should_send_channel == ctx.send.call_count + ctx.channel.send.call_count
+
+    # note: this may break depending on dev-mode and relay mode.
+    assert should_send_user == ctx.author.send.call_count
 
 
 @pytest.mark.parametrize(
@@ -246,14 +246,13 @@ async def test_handle_check_failure(
     In some cases, this method should result in calling a bot_missing_perms method
     because the bot cannot send messages.
     """
-    if isinstance(error, commands.BotMissingPermissions):
-        cog = copy.copy(cog)
-        cog.handle_bot_missing_perms = unittest.mock.AsyncMock()
-        assert await cog.handle_check_failure(ctx, error) is None
-        return
+    with unittest.mock.patch.object(cog, "handle_bot_missing_perms"):
+        if isinstance(error, commands.BotMissingPermissions):
+            assert await cog.handle_check_failure(ctx, error) is None
+            return
+        embed = await cog.handle_check_failure(ctx, error)
 
-    embed = await cog.handle_check_failure(ctx, error)
-    assert embed.title == expected_title
+        assert embed.title == expected_title
 
 
 @pytest.mark.parametrize(["error", "msg"], [[commands.CommandNotFound(), None]])

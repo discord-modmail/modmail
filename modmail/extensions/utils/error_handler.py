@@ -23,6 +23,8 @@ ERROR_TITLE_REGEX = re.compile(r"((?<=[a-z])[A-Z]|(?<=[a-zA-Z])[A-Z](?=[a-z]))")
 
 ANY_DEV_MODE = BOT_MODE & (BotModes.DEVELOP.value + BotModes.PLUGIN_DEV.value)
 
+MAYBE_DM_ON_PERM_ERROR = True
+
 
 class ErrorHandler(ModmailCog, name="Error Handler"):
     """Handles all errors across the bot."""
@@ -73,7 +75,6 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         """Handles bot missing permissions by dming the user if they have a permission which may be able to fix this."""  # noqa: E501
         embed = self.error_embed("Permissions Failure", str(error))
         bot_perms = ctx.channel.permissions_for(ctx.me)
-        responded = False
         if bot_perms >= discord.Permissions(send_messages=True, embed_links=True):
             await ctx.send(embeds=[embed])
             return True
@@ -93,13 +94,13 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         else:
             logger.error(f"Unable to send an error message to channel {ctx.channel}")
 
-        if not responded and ANY_DEV_MODE:  # pragma: nobranch
+        if MAYBE_DM_ON_PERM_ERROR or ANY_DEV_MODE:
             # non-general permissions
             perms = discord.Permissions(
                 administrator=True,
-                manage_threads=True,
-                manage_roles=True,
                 manage_channels=True,
+                manage_roles=True,
+                manage_threads=True,
             )
             if perms.value & ctx.channel.permissions_for(ctx.author).value:
                 logger.info(
