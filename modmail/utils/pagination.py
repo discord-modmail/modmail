@@ -252,9 +252,11 @@ class ButtonPaginator(ui.View, DpyPaginator):
         """
         # update the footer
         page_indicator = f"Page {self.index+1}/{len(self._pages)}"
-        footer_text = (
-            f"{self.footer_text} ({page_indicator})" if self.footer_text is not None else page_indicator
-        )
+        if self.footer_text:
+            footer_text = f"{self.footer_text} ({page_indicator})"
+        else:
+            footer_text = page_indicator
+
         if self.embed is None:
             self.content = (self.title or "") + "\n"
             self.content += self._pages[self.index]
