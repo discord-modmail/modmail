@@ -272,6 +272,84 @@ async def test_handle_check_failure(
         assert embed.title == expected_title
 
 
+class TestCommandInvokeError:
+    """
+    Collection of tests for ErrorHandler.handle_command_invoke_error.
+
+    This serves as nothing more but to group the tests for the single method
+    """
+
+    @pytest.mark.asyncio
+    async def test_forbidden(self, cog: ErrorHandler, ctx: mocks.MockContext):
+        """Test discord.Forbidden errors are not met with an attempt to send a message."""
+        error = commands.CommandInvokeError(unittest.mock.Mock(spec_set=discord.Forbidden))
+        with unittest.mock.patch.object(cog, "handle_bot_missing_perms"):
+            result = await cog.handle_command_invoke_error(ctx, error)
+
+        assert result is None
+        assert 0 == ctx.send.call_count
+
+    @pytest.mark.parametrize(
+        ["module", "title_words", "message_words", "exclude_words"],
+        [
+            [
+                "modmail.extensions.utils.error_handler",
+                ["internal", "error"],
+                ["internally", "wrong", "report", "developers"],
+                ["plugin"],
+            ],
+            [
+                "modmail.plugins.better_error_handler.main",
+                ["plugin", "error"],
+                ["plugin", "wrong", "plugin developers"],
+                None,
+            ],
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_error(
+        self,
+        cog: ErrorHandler,
+        ctx: mocks.MockContext,
+        command: commands.Command,
+        module: str,
+        title_words: list,
+        message_words: list,
+        exclude_words: list,
+    ):
+        """Test that the proper alerts are shared in the returned embed."""
+        embed = discord.Embed(description="you failed")
+        error = commands.CommandInvokeError(Exception("lul"))
+        ctx.command = command
+
+        # needs a mock cog for __module__
+        mock_cog = unittest.mock.NonCallableMock(spec_set=commands.Cog)
+        mock_cog.__module__ = module
+        ctx.command.cog = mock_cog
+
+        def error_embed(title, msg):
+            """Replace cog.error_embed and test that the correct params are passed."""
+            title = title.lower()
+            for word in title_words:
+                assert word in title
+
+            msg = msg.lower()
+            for word in message_words:
+                assert word in msg
+
+            if exclude_words:
+                for word in exclude_words:
+                    assert word not in title
+                    assert word not in msg
+
+            return embed
+
+        with unittest.mock.patch.object(cog, "error_embed", side_effect=error_embed):
+            result = await cog.handle_command_invoke_error(ctx, error)
+
+        assert result is embed
+
+
 class TestOnCommandError:
     """
     Collection of tests for ErrorHandler.on_command_error.
@@ -316,6 +394,11 @@ class TestOnCommandError:
                 "handle_command_invoke_error",
                 discord.Embed(description="<generic response>"),
             ],
+            [
+                unittest.mock.NonCallableMock(spec_set=commands.CommandInvokeError),
+                "handle_command_invoke_error",
+                None,
+            ],
         ],
     )
     @pytest.mark.asyncio
@@ -334,6 +417,8 @@ class TestOnCommandError:
 
         assert 1 == mock.call_count
         assert unittest.mock.call(ctx, error) == mock.call_args
+
+        assert int(bool(embed)) == ctx.send.call_count
 
         if embed is None:
             return
