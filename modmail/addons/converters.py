@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import re
 from typing import TYPE_CHECKING, Tuple, Type
@@ -10,15 +8,13 @@ from modmail.addons.models import Addon, AddonSource, Plugin, SourceTypeEnum
 
 
 if TYPE_CHECKING:
-    from discord.ext.commands import Context
-
     from modmail.log import ModmailLogger
 
-LOCAL_REGEX: re.Pattern = re.compile(r"^\@local (?P<addon>[^@\s]+)$")
-ZIP_REGEX: re.Pattern = re.compile(
+LOCAL_REGEX = re.compile(r"^\@local (?P<addon>[^@\s]+)$")
+ZIP_REGEX = re.compile(
     r"^(?:https?:\/\/)?(?P<url>(?P<domain>.*\..+?)\/(?P<path>.*\.zip)) (?P<addon>[^@\s]+)$"
 )
-REPO_REGEX: re.Pattern = re.compile(
+REPO_REGEX = re.compile(
     r"^(?:(?:https?:\/\/)?(?P<githost>github|gitlab)(?:\.com\/| )?)?"
     # github allows usernames from 1 to 39 characters, and projects of 1 to 100 characters
     # gitlab allows 255 characters in the username, and 255 max in a project path
@@ -27,7 +23,7 @@ REPO_REGEX: re.Pattern = re.compile(
     r"(?P<addon>[^@]+[^\s@])(?: \@(?P<reflike>[\w\.\-\S]*))?"
 )
 
-logger: ModmailLogger = logging.getLogger(__name__)
+logger: "ModmailLogger" = logging.getLogger(__name__)
 
 AddonClass = Type[Addon]
 
@@ -35,7 +31,7 @@ AddonClass = Type[Addon]
 class AddonConverter(commands.Converter):
     """A converter that takes an addon source, and gets a Addon object from it."""
 
-    async def convert(self, ctx: Context, argument: str) -> None:
+    async def convert(self, ctx: commands.Context, argument: str) -> None:
         """Convert an argument into an Addon."""
         raise NotImplementedError("Inheriting classes must overwrite this method.")
 
@@ -43,7 +39,7 @@ class AddonConverter(commands.Converter):
 class SourceAndPluginConverter(AddonConverter):
     """A plugin converter that takes a source, addon name, and returns a Plugin."""
 
-    async def convert(self, _: Context, argument: str) -> Tuple[Plugin, AddonSource]:
+    async def convert(self, _: commands.Context, argument: str) -> Tuple[Plugin, AddonSource]:
         """Convert a provided plugin and source to a Plugin."""
         match = LOCAL_REGEX.match(argument)
         if match is not None:

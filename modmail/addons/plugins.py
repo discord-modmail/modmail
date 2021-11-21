@@ -2,7 +2,7 @@
 # https://github.com/python-discord/bot/blob/a8869b4d60512b173871c886321b261cbc4acca9/bot/utils/extensions.py
 # MIT License 2021 Python Discord
 """
-Helper utililites for managing plugins.
+Helper utilities for managing plugins.
 
 TODO: Expand file to download plugins from github and gitlab from a list that is passed.
 """
@@ -31,7 +31,7 @@ from modmail.utils.cogs import ExtMetadata
 from modmail.utils.extensions import ModuleName, unqualify
 
 
-__all__ = [
+__all__ = (
     "VALID_ZIP_PLUGIN_DIRECTORIES",
     "BASE_PLUGIN_PATH",
     "PLUGINS",
@@ -42,7 +42,7 @@ __all__ = [
     "find_partial_plugins_from_dir",
     "find_plugins",
     "walk_plugin_files",
-]
+)
 
 
 logger: ModmailLogger = logging.getLogger(__name__)
@@ -66,11 +66,11 @@ PIP_NO_ROOT_WARNING = (
 ).encode()
 
 
-async def install_dependencies(plugin: Plugin) -> str:
+async def install_dependencies(plugin: Plugin) -> Optional[str]:
     """Installs provided dependencies from a plugin."""
     # check if there are any plugins to install
     if not len(plugin.dependencies):
-        return
+        return None
 
     if PYTHON_INTERPRETER is None:
         raise FileNotFoundError("Could not locate python interpreter.")
@@ -95,13 +95,10 @@ async def install_dependencies(plugin: Plugin) -> str:
         stderr=subprocess.PIPE,
     )
     stdout, stderr = await proc.communicate()
-    logger.debug(f"{stdout.decode() = }")
-
-    if stderr:
-        stderr = stderr.replace(PIP_NO_ROOT_WARNING, b"").strip()
-        if len(stderr.decode()) > 0:
-            logger.error(f"Received stderr: '{stderr.decode()}'")
-            raise Exception("Something went wrong when installing.")
+    stderr = stderr.replace(PIP_NO_ROOT_WARNING, b"").strip()
+    if len(decoded_stderr := stderr.decode()) > 0:
+        logger.error(f"Received stderr: '{decoded_stderr}'")
+        raise Exception("Something went wrong when installing.")
     return stdout.decode()
 
 
@@ -195,14 +192,13 @@ def find_partial_plugins_from_dir(
     # default is plugins.
     plugin_directory = None
     direct_children = [p for p in addon_repo_path.iterdir()]
-    logger.debug(f"{direct_children = }")
+
     for path_ in direct_children:
         if path_.name.rsplit("/", 1)[-1] in VALID_ZIP_PLUGIN_DIRECTORIES:
             plugin_directory = path_
             break
 
     if plugin_directory is None:
-        logger.debug(f"{direct_children = }")
         raise NoPluginDirectoryError(f"No {' or '.join(VALID_ZIP_PLUGIN_DIRECTORIES)} directory exists.")
 
     plugin_directory = addon_repo_path / plugin_directory
@@ -222,9 +218,7 @@ def find_partial_plugins_from_dir(
         else:
             raise NoPluginTomlFoundError(toml_path, "does not exist")
 
-    logger.debug(f"{all_plugins =}")
     for path in plugin_directory.iterdir():
-        logger.debug(f"plugin_directory: {path}")
         if path.is_dir():
             # use an existing toml plugin object
             if path.name in all_plugins:
@@ -254,24 +248,22 @@ def find_plugins(
 
     toml_plugins: List[Plugin] = []
     toml_path = LOCAL_PLUGIN_TOML
-    if toml_path.exists():
-        # parse the toml
-        with open(toml_path) as toml_file:
-            toml_plugins = parse_plugin_toml_from_string(toml_file.read(), local=True)
-    else:
+
+    if not toml_path.exists():
         raise NoPluginTomlFoundError(toml_path, "does not exist")
 
-    logger.debug(f"{toml_plugins =}")
+    # parse the toml
+    with open(toml_path) as toml_file:
+        toml_plugins = parse_plugin_toml_from_string(toml_file.read(), local=True)
+
     toml_plugin_names = [p.folder_name for p in toml_plugins]
     for path in detection_path.iterdir():
-        logger.debug(f"detection_path / path: {path}")
-        if path.is_dir():
+        if path.is_dir() and path.name in toml_plugin_names:
             # use an existing toml plugin object
-            if path.name in toml_plugin_names:
-                for p in toml_plugins:
-                    if p.folder_name == path.name:
-                        p.folder_path = path
-                        all_plugins.add(p)
+            for p in toml_plugins:
+                if p.folder_name == path.name:
+                    p.folder_path = path
+                    all_plugins.add(p)
 
     logger.debug(f"Local plugins detected: {[p.name for p in all_plugins]}")
 
@@ -293,8 +285,6 @@ def find_plugins(
                     plugin_.modules = {}
                     plugin_.modules.update(walk_plugin_files(dirpath))
                     yield plugin_
-
-    logger.debug(f"{all_plugins = }")
 
 
 def walk_plugin_files(
@@ -355,7 +345,8 @@ def walk_plugin_files(
                 else:
                     logger.error(
                         f"Plugin extension {imported.__name__!r} contains an invalid EXT_METADATA variable. "
-                        "Loading with metadata defaults. Please report this bug to the developers."
+                        "Loading with metadata defaults. "
+                        "Please report this error to the respective plugin developers."
                     )
                 yield imported.__name__, ExtMetadata()
                 continue

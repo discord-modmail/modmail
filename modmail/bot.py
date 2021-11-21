@@ -52,7 +52,7 @@ class ModmailBot(commands.Bot):
         self._resolver = None
 
         # keys: plugins, list values: all plugin files
-        self.installed_plugins: Set[Plugin] = {}
+        self.installed_plugins: Optional[Set[Plugin]] = None
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")

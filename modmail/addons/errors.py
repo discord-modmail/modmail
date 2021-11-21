@@ -24,3 +24,5 @@ class PluginNotFoundError(PluginError):
 
 class NoPluginTomlFoundError(PluginError):
     """Raised when a plugin.toml file is expected to exist but does not exist."""
+
+    pass

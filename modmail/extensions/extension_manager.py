@@ -5,7 +5,7 @@ import functools
 import logging
 from collections import defaultdict
 from enum import Enum
-from typing import Mapping, Optional, Tuple
+from typing import Mapping, Tuple, Union
 
 from discord import Colour, Embed
 from discord.ext import commands
@@ -298,7 +298,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         *,
         is_plugin: bool = False,
         suppress_already_error: bool = False,
-    ) -> Tuple[str, Optional[str]]:
+    ) -> Tuple[str, Union[str, bool, None]]:
         """Apply an action to an extension and return the status message and any error message."""
         verb = action.name.lower()
         error_msg = None

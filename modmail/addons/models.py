@@ -21,6 +21,8 @@ logger: ModmailLogger = logging.getLogger(__name__)
 
 PLUGINS = None
 
+SCORE_CUTOFF = 69
+
 
 class SourceTypeEnum(Enum):
     """Which source an addon is from."""
@@ -168,10 +170,7 @@ class Plugin(Addon):
     ):
         self.folder_name = folder
         self.description = description
-        if name is None:
-            self.name = self.folder_name
-        else:
-            self.name = name
+        self.name = self.folder_name if name is None else name
         self.folder_path = folder_path
         self.min_bot_version = min_bot_version
         self.local = local
@@ -179,7 +178,7 @@ class Plugin(Addon):
 
         self.dependencies = dependencies or []
 
-        self.modules = dict()
+        self.modules = {}
 
         # store any extra kwargs here
         # this is to ensure backwards compatiablilty with plugins that support older versions,
@@ -225,7 +224,7 @@ class Plugin(Addon):
 
         # Determine close plugins
         # Using a dict to prevent duplicates
-        arg_mapping: Dict[str, Plugin] = dict()
+        arg_mapping: Dict[str, Plugin] = {}
         for plug in loaded_plugs:
             for name in plug.name, plug.folder_name:
                 arg_mapping[name] = plug
@@ -234,7 +233,7 @@ class Plugin(Addon):
             argument,
             arg_mapping.keys(),
             scorer=fuzz.ratio,
-            score_cutoff=69,
+            score_cutoff=SCORE_CUTOFF,
         )
         logger.debug(f"{result = }")
 

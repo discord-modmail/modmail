@@ -6,14 +6,14 @@ from modmail.utils.cogs import BOT_MODE, BotModeEnum, ExtMetadata
 from modmail.utils.cogs import ModmailCog as _ModmailCog
 
 
-__all__ = [
+__all__ = (
     "PluginCog",
     BOT_MODE,
     BotModeEnum,
     ExtMetadata,
     ModmailBot,
     ModmailLogger,
-]
+)
 
 
 class PluginCog(_ModmailCog):

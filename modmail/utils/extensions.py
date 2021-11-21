@@ -19,8 +19,8 @@ EXT_METADATA = ExtMetadata
 ModuleName = NewType("ModuleName", str)
 ModuleDict = Dict[ModuleName, ExtMetadata]
 
-EXTENSIONS: ModuleDict = dict()
-NO_UNLOAD: List[ModuleName] = list()
+EXTENSIONS: ModuleDict = {}
+NO_UNLOAD: List[ModuleName] = []
 
 
 def unqualify(name: str) -> str:
