@@ -106,6 +106,7 @@ celerybeat.pid
 # Environments
 .env
 !template.env
+!/tests/modmail/test.env
 .venv
 env/
 venv/

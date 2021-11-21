@@ -50,8 +50,8 @@ repos:
     hooks:
     - id: generate_requirements.txt
       name: Generate requirements.txt
-      entry: python -m scripts.export_requirements
-      files: '(pyproject.toml|poetry.lock|requirements.txt|scripts\/export\_requirements\.py)$'
+      entry: python -m scripts.export_requirements --docs
+      files: '(pyproject.toml|poetry.lock|requirements.txt|scripts\/export\_requirements\.py|docs\/.requirements.txt)$'
       language: python
       pass_filenames: false
       require_serial: true

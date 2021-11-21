@@ -13,16 +13,17 @@ import os
 import pathlib
 import re
 import textwrap
-import typing
 
 import tomli
 
 
 GENERATED_FILE = pathlib.Path("requirements.txt")
+DOC_REQUIREMENTS = pathlib.Path("docs/.requirements.txt")
 
 VERSION_RESTRICTER_REGEX = re.compile(r"(?P<sign>[<>=!]{1,2})(?P<version>\d+\.\d+?)(?P<patch>\.\d+?|\.\*)?")
 PLATFORM_MARKERS_REGEX = re.compile(r'sys_platform\s?==\s?"(?P<platform>\w+)"')
 
+PACKAGE_REGEX = re.compile(r"^[^=<>~]+")
 # fmt: off
 MESSAGE = textwrap.indent(textwrap.dedent(
     f"""
@@ -55,7 +56,95 @@ def check_hash(hash: str, content: dict) -> bool:
     return hash == get_hash(content)
 
 
-def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Optional[int]:
+def _extract_packages_from_requirements(requirements: str) -> "tuple[set[str],list[str]]":
+    """Extract a list of packages from the provided requirements str."""
+    req = requirements.split("\n")
+    packages = set()
+    for i, line in enumerate(req.copy()):
+        if line.startswith("#"):
+            continue
+        if not len(line.strip()):
+            continue
+
+        # requirement files we will be parsing can have `;` or =<>~
+        match = PACKAGE_REGEX.match(line)
+        if match is None:
+            continue
+        # replace the line with the match
+        req[i] = match[0].strip()
+
+        # replacing `_` with `-` because pypi treats them as the same character
+        # poetry is supposed to do this, but does not always
+        package = req[i].lower().replace("_", "-")
+
+        packages.add(package)
+
+    return packages, req
+
+
+def _update_versions_in_requirements(requirements: "list[str]", packages: dict) -> str:
+    """Update the versions in requirements with the provided package to version mapping."""
+    for i, package in enumerate(requirements.copy()):
+        if package.startswith("#"):
+            continue
+        if not len(package.strip()):
+            continue
+        try:
+            requirements[i] = package + "==" + packages[package.lower().replace("_", "-")]
+        except KeyError:
+            raise AttributeError(f"{package} could not be found in poetry.lock") from None
+    return "\n".join(requirements)
+
+
+def _export_doc_requirements(toml: dict, file: pathlib.Path, *packages) -> int:
+    """
+    Export the provided packages versions.
+
+    Return values:
+    0 no changes
+    1 exported new requirements
+    2 file does not exist
+    3 invalid packages
+    """
+    file = pathlib.Path(file)
+    if not file.exists():
+        # file does not exist
+        return 2
+
+    with open(file) as f:
+        contents = f.read()
+
+    # parse the packages out of the requirements txt
+    packages, req = _extract_packages_from_requirements(contents)
+
+    # get the version of each package
+    packages_metadata: dict = toml["package"]
+    new_versions = {
+        package["name"]: package["version"]
+        for package in packages_metadata
+        if package["name"].lower().replace("_", "-") in packages
+    }
+
+    try:
+        new_contents = _update_versions_in_requirements(req, new_versions)
+    except AttributeError as e:
+        print(e)
+        return 3
+    if new_contents == contents:
+        # don't write anything, just return 0
+        return 0
+
+    with open(file, "w") as f:
+        f.write(new_contents)
+
+    return 1
+
+
+def main(
+    req_path: os.PathLike,
+    should_validate_hash: bool = True,
+    export_doc_requirements: bool = True,
+) -> int:
     """Read and export all required packages to their pinned version in requirements.txt format."""
     req_path = pathlib.Path(req_path)
 
@@ -149,16 +238,24 @@ def main(req_path: os.PathLike, should_validate_hash: bool = True) -> typing.Opt
         dependency_lines[k] = line
 
     req_txt += "\n".join(sorted(k + v.rstrip() for k, v in dependency_lines.items())) + "\n"
+
+    if export_doc_requirements:
+        exit_code = _export_doc_requirements(lockfile, DOC_REQUIREMENTS)
+    else:
+        exit_code = 0
+
     if req_path.exists():
         with open(req_path, "r") as f:
             if req_txt == f.read():
                 # nothing to edit
-                return 0
+                # if exit_code is ever removed from here, this should return zero
+                return exit_code
 
     with open(req_path, "w") as f:
         f.write(req_txt)
         print(f"Updated {req_path} with new requirements.")
-        return 1
+
+    return 1
 
 
 if __name__ == "__main__":
@@ -181,6 +278,19 @@ if __name__ == "__main__":
         default=GENERATED_FILE,
         help="File to export to.",
     )
+    parser.add_argument(
+        "--docs",
+        action="store_true",
+        dest="export_doc_requirements",
+        default=False,
+        help="Also export the documentation requirements. Defaults to false.",
+    )
 
     args = parser.parse_args()
-    sys.exit(main(args.output_file, should_validate_hash=not args.skip_hash_check))
+    sys.exit(
+        main(
+            args.output_file,
+            should_validate_hash=not args.skip_hash_check,
+            export_doc_requirements=args.export_doc_requirements,
+        )
+    )
