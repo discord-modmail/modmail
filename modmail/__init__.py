@@ -9,7 +9,9 @@ import coloredlogs
 from modmail.log import ModmailLogger
 
 
-# On Windows, the selector event loop is required for aiodns.
+# on windows aiodns's asyncio support relies on APIs like add_reader (which aiodns uses)
+# are not guaranteed to be available, and in particular are not available when using the
+# ProactorEventLoop on Windows, this method is only supported with Windows SelectorEventLoop
 if os.name == "nt":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
