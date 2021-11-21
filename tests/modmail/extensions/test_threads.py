@@ -97,13 +97,18 @@ class TestUtilityMethods:
         received_ticket = await cog.fetch_ticket(ticket.recipient.id)
         assert ticket is received_ticket
 
+    @pytest.mark.parametrize("should_raise", [True, False])
     @pytest.mark.asyncio
-    async def test_invalid_get_ticket(self, cog: threads.TicketsCog, ticket_dict: dict):
+    async def test_invalid_get_ticket(self, cog: threads.TicketsCog, ticket_dict: dict, should_raise: bool):
         """Test invalid get_ticket ids raise a ThreadNotFoundError."""
         cog.bot._tickets = ticket_dict
-
-        with pytest.raises(threads.ThreadNotFoundError):
-            await cog.fetch_ticket(mocks.generate_realistic_id())
+        try:
+            result = await cog.fetch_ticket(mocks.generate_realistic_id(), raise_exception=should_raise)
+        except threads.ThreadNotFoundError:
+            assert should_raise
+        else:
+            assert not should_raise
+            assert result is None
 
     # TODO: More tests for this method
     @pytest.mark.asyncio

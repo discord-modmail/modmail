@@ -106,6 +106,8 @@ class RepliedOrRecentMessageConverter(commands.Converter):
             message = ref.resolved or await ctx.channel.fetch_message(ref.message_id)
         else:
             ticket: Ticket = await ctx.bot.get_cog("Threads").fetch_ticket(ctx.channel.id)
+            if ticket is None:
+                return or_raise(commands.CommandError("There's no message here to action on!"))
             try:
                 message = ticket.last_sent_messages[-1]
             except IndexError:
@@ -174,11 +176,14 @@ class TicketsCog(ModmailCog, name="Threads"):
         self.bot._tickets[ticket.thread.id] = ticket
         return ticket
 
-    async def fetch_ticket(self, id: int, /) -> Optional[Ticket]:
+    async def fetch_ticket(self, id: int, /, raise_exception: bool = False) -> Optional[Ticket]:
         """
         Fetch a ticket from the tickets dict.
 
         In the future this will be hooked into the database.
+
+        By default, returns None if a ticket cannot be found.
+        However, if raise_exception is True, then this function will raise a ThreadNotFoundError
         """
         # given that this is an async method, it is expected to yield somewhere
         # this gives way to any waiting coroutines while here, temporarily
@@ -186,7 +191,9 @@ class TicketsCog(ModmailCog, name="Threads"):
         try:
             ticket = self.bot._tickets[id]
         except KeyError:
-            raise ThreadNotFoundError(f"Could not find thread from id {id}.") from None
+            if raise_exception:
+                raise ThreadNotFoundError(f"Could not find thread from id {id}.")
+            return None
         else:
             return ticket
 
@@ -811,9 +818,8 @@ class TicketsCog(ModmailCog, name="Threads"):
     async def close(self, ctx: Context, *, contents: str = None) -> None:
         """Close the current thread after `after` time from now."""
         # TODO: Implement after duration
-        try:
-            ticket = await self.fetch_ticket(ctx.channel.id)
-        except KeyError:
+        ticket = await self.fetch_ticket(ctx.channel.id)
+        if ticket is None:
             await ctx.send("Error: this thread is not in the list of tickets.")
             return
 
@@ -830,9 +836,8 @@ class TicketsCog(ModmailCog, name="Threads"):
         if message.guild:
             return
 
-        try:
-            ticket = await self.fetch_ticket(author.id)
-        except ThreadNotFoundError:
+        ticket = await self.fetch_ticket(author.id)
+        if ticket is None:
             # Thread doesn't exist, so create one.
             async with self.thread_create_lock:
                 try:
@@ -880,9 +885,8 @@ class TicketsCog(ModmailCog, name="Threads"):
             f'User ID {payload.data["author"]["id"]} has edited a message '
             f"in their dms with id {payload.message_id}"
         )
-        try:
-            ticket = await self.fetch_ticket(int(payload.data["author"]["id"]))
-        except ThreadNotFoundError:
+        ticket = await self.fetch_ticket(int(payload.data["author"]["id"]))
+        if ticket is None:
             logger.debug(
                 f"User {payload.data['author']['id']} edited a message in dms which "
                 "was related to a non-existant ticket."
@@ -937,9 +941,8 @@ class TicketsCog(ModmailCog, name="Threads"):
             f"A message from {author_id} in dm channel {payload.channel_id} has "
             f"been deleted with id {payload.message_id}."
         )
-        try:
-            ticket = await self.fetch_ticket(author_id)
-        except ThreadNotFoundError:
+        ticket = await self.fetch_ticket(author_id)
+        if ticket is None:
             logger.debug(
                 f"User {author_id} edited a message in dms which was related to a non-existant ticket."
             )
@@ -971,9 +974,8 @@ class TicketsCog(ModmailCog, name="Threads"):
             )
             return
 
-        try:
-            ticket = await self.fetch_ticket(payload.channel_id)
-        except ThreadNotFoundError:
+        ticket = await self.fetch_ticket(payload.channel_id)
+        if ticket is None:
             # not a valid ticket
             return
 
@@ -1007,9 +1009,9 @@ class TicketsCog(ModmailCog, name="Threads"):
         # only work in dms or a thread channel
 
         if FORWARD_MODERATOR_TYPING and isinstance(channel, discord.Thread):
-            try:
-                ticket = await self.fetch_ticket(channel.id)
-            except ThreadNotFoundError:
+
+            ticket = await self.fetch_ticket(channel.id)
+            if ticket is None:
                 # Thread doesn't exist, so there's nowhere to relay the typing event.
                 return
             logger.debug(f"Relaying typing event from {user!s} in {channel!s} to {ticket.recipient!s}.")
@@ -1018,9 +1020,8 @@ class TicketsCog(ModmailCog, name="Threads"):
         # ! Due to a library bug this tree will never be run
         # it can be tracked here: https://github.com/Rapptz/discord.py/issues/7432
         elif FORWARD_USER_TYPING and isinstance(channel, discord.DMChannel):
-            try:
-                ticket = await self.fetch_ticket(user.id)
-            except ThreadNotFoundError:
+            ticket = await self.fetch_ticket(user.id)
+            if ticket is None:
                 # User doesn't have a ticket, so nowhere to relay the event.
                 return
             else:
@@ -1078,9 +1079,8 @@ class TicketsCog(ModmailCog, name="Threads"):
                 automatically_archived = True
 
         # checks passed, closing the ticket
-        try:
-            ticket = await self.fetch_ticket(after.id)
-        except ThreadNotFoundError:
+        ticket = await self.fetch_ticket(after.id)
+        if ticket is not None:
             logger.debug(
                 "While closing a ticket, somehow checks passed but the thread did not exist... "
                 "This is likely due to missing audit log permissions."
@@ -1093,8 +1093,11 @@ class TicketsCog(ModmailCog, name="Threads"):
     @commands.command(name="debug_thread", enabled=DEV_MODE_ENABLED)
     async def debug(self, ctx: Context, attr: str = None) -> None:
         """Debug command. Requires a message reference (reply)."""
-        tick = await self.fetch_ticket(ctx.channel.id)
-        dm_msg = tick.messages[ctx.message.reference.message_id]
+        ticket = await self.fetch_ticket(ctx.channel.id)
+        if ticket is None:
+            await ctx.send("no ticket found associated with this channel.")
+            return
+        dm_msg = ticket.messages[ctx.message.reference.message_id]
 
         if attr is None:
             attribs: Dict[str] = {}
