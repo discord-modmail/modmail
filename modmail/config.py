@@ -610,12 +610,27 @@ def load_yaml(path: os.PathLike) -> dict:
     else:
         path = pathlib.Path(path)
 
+    # list of tuples containing a message, check, and stop checking.
+    # this is complicated in order to display the most errors at once to the user.
+    # this ensures that an attempt to load a yaml file is met with missing
+    # dependencies and non-existant file at the same time.
     states = [
-        ("The yaml library is not installed.", yaml is not None),
-        ("The provided yaml config path does not exist.", path.exists()),
-        ("The provided yaml config file is not a readable file.", path.is_file()),
+        ("The yaml library is not installed.", yaml is not None, False),
+        ("The provided yaml config path does not exist.", path.exists(), True),
+        ("The provided yaml config file is not a regular file.", path.is_file(), False),
     ]
-    if errors := "\n".join(msg for msg, check in states if not check):
+
+    errors = list()
+    for text, check, stop_checking in states:
+        if check:
+            continue
+        errors.append(text)
+        if stop_checking:
+            break
+
+    if errors:
+        # formulate an error message
+        errors = "Errors occured while attempting to load a yaml configuration:\n" + "\n".join(errors)
         raise ConfigLoadError(errors)
 
     try:
