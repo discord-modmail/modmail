@@ -28,6 +28,13 @@ def ctx():
     return mocks.MockContext()
 
 
+@pytest.fixture
+def command():
+    """Fixture for discord.ext.commands.Command."""
+    command = unittest.mock.NonCallableMock(spec_set=commands.Command(unittest.mock.AsyncMock(), name="mock"))
+    return command
+
+
 @pytest.mark.parametrize("is_cooldown", [True, False])
 def test_reset_cooldown(ctx, cog, is_cooldown: bool):
     """Test the cooldown is reset if the command is on a cooldown."""
@@ -265,22 +272,135 @@ async def test_handle_check_failure(
         assert embed.title == expected_title
 
 
-@pytest.mark.parametrize(["error", "msg"], [[commands.CommandNotFound(), None]])
-@pytest.mark.asyncio
-async def test_on_command_error(
-    cog: ErrorHandler, ctx: mocks.MockContext, error: commands.CommandError, msg: discord.Message
-):
-    """Test the general command error method."""
-    res = await cog.on_command_error(ctx, error)
-    assert msg == res
+class TestOnCommandError:
+    """
+    Collection of tests for ErrorHandler.on_command_error.
 
+    This serves as nothing more but to group the tests for the single method
+    """
 
-@pytest.mark.asyncio
-async def test_on_command_error_ignore_already_handled(cog: ErrorHandler, ctx: mocks.MockContext):
-    """Assert errors handled elsewhere are ignored."""
-    error = commands.NotOwner()
-    error.handled = True
-    assert await cog.on_command_error(ctx, error) is None
+    @pytest.mark.asyncio
+    async def test_ignore_already_handled(self, cog: ErrorHandler, ctx: mocks.MockContext):
+        """Assert errors handled elsewhere are ignored."""
+        error = commands.NotOwner()
+        error.handled = True
+        await cog.on_command_error(ctx, error)
+
+    @pytest.mark.asyncio
+    async def test_ignore_command_not_found(self, cog: ErrorHandler, ctx: mocks.MockContext):
+        """Test the command handler ignores command not found errors."""
+        await cog.on_command_error(ctx, commands.CommandNotFound())
+
+        assert 0 == ctx.send.call_count
+
+    @pytest.mark.parametrize(
+        ["error", "delegate", "embed"],
+        [
+            [
+                commands.UserInputError("User input the wrong thing I guess, not sure."),
+                "handle_user_input_error",
+                discord.Embed(description="si"),
+            ],
+            [
+                commands.CheckFailure("Checks failed, crosses passed."),
+                "handle_check_failure",
+                discord.Embed(description="also si"),
+            ],
+            [commands.CheckFailure("Checks failed, crosses passed."), "handle_check_failure", None],
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_errors_delegated(
+        self,
+        cog: ErrorHandler,
+        ctx: mocks.MockContext,
+        error: commands.CommandError,
+        delegate: str,
+        embed: typing.Optional[discord.Embed],
+    ):
+        """Test that the main error method delegates errors as appropriate to helper methods."""
+        with unittest.mock.patch.object(cog, delegate) as mock:
+            mock.return_value = embed
+            await cog.on_command_error(ctx, error)
+
+        assert 1 == mock.call_count
+        assert unittest.mock.call(ctx, error) == mock.call_args
+
+        if embed is None:
+            return
+
+        assert unittest.mock.call(embeds=[embed]) == ctx.send.call_args
+
+    @pytest.mark.parametrize(
+        ["embed", "error", "hidden", "disabled_reason"],
+        [
+            [
+                discord.Embed(description="hey its me your worst error"),
+                commands.DisabledCommand("disabled command, yert"),
+                True,
+                None,
+            ],
+            [
+                discord.Embed(description="hey its me your worst error"),
+                commands.DisabledCommand("disabled command, yert"),
+                False,
+                None,
+            ],
+            [
+                discord.Embed(description="hey its me your worst error"),
+                commands.DisabledCommand("disabled command, yert"),
+                False,
+                "Some message that should show up once the mock is right",
+            ],
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_disabled_command(
+        self,
+        cog: ErrorHandler,
+        ctx: mocks.MockContext,
+        command: commands.Command,
+        embed: discord.Embed,
+        error: commands.DisabledCommand,
+        hidden: bool,
+        disabled_reason: str,
+    ):
+        """Test disabled commands have the right error message."""
+
+        def error_embed(title: str, message: str):
+            if disabled_reason:
+                assert disabled_reason in message
+            return embed
+
+        ctx.command = command
+        ctx.invoked_with = command.name
+        ctx.command.hidden = hidden
+        ctx.command.extras = dict()
+        should_respond = not hidden
+        if disabled_reason:
+            ctx.command.extras["disabled_reason"] = disabled_reason
+
+        mock = unittest.mock.Mock(side_effect=error_embed)
+
+        with unittest.mock.patch.object(cog, "error_embed", mock):
+            await cog.on_command_error(ctx, error)
+
+        assert int(should_respond) == ctx.send.call_count
+        if should_respond:
+            assert unittest.mock.call(embeds=[embed]) == ctx.send.call_args
+
+    @pytest.mark.asyncio
+    async def test_default_embed(self, cog, ctx):
+        """Test the default embed calls the right methods the correct number of times."""
+        embed = discord.Embed(description="I need all of the errors!")
+        error = unittest.mock.NonCallableMock(spec_set=commands.ConversionError)
+
+        with unittest.mock.patch.object(cog, "error_embed") as mock:
+            mock.return_value = embed
+            await cog.on_command_error(ctx, error)
+
+        assert 1 == ctx.send.call_count
+        assert unittest.mock.call(embeds=[embed]) == ctx.send.call_args
 
 
 class TestErrorHandler:
