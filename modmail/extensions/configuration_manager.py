@@ -1,6 +1,5 @@
 import inspect
 import logging
-import operator
 import string
 import types
 import typing
@@ -25,6 +24,27 @@ EXT_METADATA = ExtMetadata()
 logger: ModmailLogger = logging.getLogger(__name__)
 
 KeyT = str
+
+
+def _recursive_getattr(obj: typing.Any, attribute: str) -> typing.Any:
+    """Get an attribute recursively. All `.` in attribute will be accessed recursively."""
+    for name in attribute.split("."):
+        obj = getattr(obj, name)
+    return obj
+
+
+def _recursive_setattr(obj: typing.Any, attribute: str, value: typing.Any) -> typing.Any:
+    """
+    Get an attribute recursively.
+
+    All `.` in attribute will be accessed recursively up to the final, which will be set.
+    """
+    if "." in attribute:
+        root, attr = attribute.rsplit(".", 1)
+        obj = _recursive_getattr(obj, root)
+
+    setattr(obj, attr, value)
+    return value
 
 
 class UnableToModifyConfig(commands.CommandError):
@@ -197,18 +217,13 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
 
         Raises an UnableToModifyConfig error if there is an issue
         """
-        if "." in option:
-            root, name = option.rsplit(".", 1)
-        else:
-            root = ""
-            name = option
-
         if new_value in [marshmallow.missing, attr.NOTHING]:
             raise UnableToModifyConfig(
-                f"`{option}` is a required configuration variable and cannot be reset."
+                f"`{option.rsplit('.', 1)[-1]}` is a required configuration variable and cannot be reset."
             ) from None
+
         try:
-            setattr(operator.attrgetter(root)(self.bot.config.user), name, new_value)
+            _recursive_setattr(self.bot.config.user, option, new_value)
         except (attr.exceptions.FrozenAttributeError, attr.exceptions.FrozenInstanceError):
             raise UnableToModifyConfig(
                 f"Unable to set `{option}` as it is frozen and cannot be edited during runtime."
@@ -219,7 +234,7 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
     @config_group.command(name="set_default", aliases=("set-default",))
     async def set_default(self, ctx: Context, option: KeyConverter) -> None:
         """Reset the provided configuration value to the default."""
-        value = operator.attrgetter(option)(self.bot.config.default)
+        value = _recursive_getattr(self.bot.config.default, option)
         await self.set_config_value(option, value)
 
         await responses.send_positive_response(
@@ -258,7 +273,7 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
     @config_group.command(name="get", aliases=("show",))
     async def get_config(self, ctx: Context, option: KeyConverter) -> None:
         """Display an existing configuration value."""
-        value = operator.attrgetter(option)(self.bot.config.user)
+        value = _recursive_getattr(self.bot.config.user, option)
         await responses.send_general_response(ctx, f"value: `{value}`", embed=discord.Embed(title=option))
 
 
