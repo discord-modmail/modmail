@@ -306,7 +306,16 @@ class TestOnCommandError:
                 "handle_check_failure",
                 discord.Embed(description="also si"),
             ],
-            [commands.CheckFailure("Checks failed, crosses passed."), "handle_check_failure", None],
+            [
+                commands.CheckFailure("Checks failed, crosses passed."),
+                "handle_check_failure",
+                None,
+            ],
+            [
+                unittest.mock.NonCallableMock(spec_set=commands.CommandInvokeError),
+                "handle_command_invoke_error",
+                discord.Embed(description="<generic response>"),
+            ],
         ],
     )
     @pytest.mark.asyncio
