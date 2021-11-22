@@ -234,6 +234,8 @@ class TestContactCommand:
     async def test_check_can_dm_user_false(self, ctx, bot, cog, ticket):
         """Check if the thread is notified if a user is unable to be dmed upon creation."""
         user = mocks.MockUser(name="spammer", discriminator="5555")
+        user.__str__ = lambda user: user.name + "#" + user.discriminator
+
         with unittest.mock.patch.object(cog, "create_ticket", return_value=ticket) as mock_create_ticket:
             with unittest.mock.patch.object(
                 threads, "check_can_dm_user", return_value=False

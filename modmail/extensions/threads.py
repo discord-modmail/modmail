@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import copy
 import datetime
 import inspect
 import logging
@@ -30,7 +31,7 @@ DEV_MODE_ENABLED = BOT_MODE & BotModes.DEVELOP
 
 BASE_JUMP_URL = "https://discord.com/channels"
 DM_FAILURE_MESSAGE = (
-    "**{0}** is not able to be DMed! This is because they have either blocked the bot, "
+    "**{user!s}** is not able to be DMed! This is because they have either blocked the bot, "
     "or they are only accepting direct messages from friends.\n"
     "It is also possible that they do not share a server with the bot."
 )
@@ -51,10 +52,12 @@ NO_REPONSE_COLOUR = discord.Colour.red()
 HAS_RESPONSE_COLOUR = discord.Colour.yellow()
 CLOSED_COLOUR = discord.Colour.green()
 
-RECEIVE_COLOUR = discord.Colour.dark_teal()  # messages received from dms
-SEND_COLOUR = discord.Colour.teal()  # messages sent, shown in thread
+FORWARDED_DM_COLOR = discord.Colour.dark_teal()  # messages received from dms
+INTERNAL_REPLY_COLOR = discord.Colour.teal()  # messages sent, shown in thread
 
 MAX_CACHED_MESSAGES_PER_THREAD = 10
+
+IMAGE_EXTENSIONS = (".png", ".apng", ".gif", ".webm", "jpg", ".jpeg")
 
 logger: "ModmailLogger" = logging.getLogger(__name__)
 
@@ -242,9 +245,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             return
 
         if not await check_can_dm_user(recipient):
-            await ticket.thread.send(
-                DM_FAILURE_MESSAGE.format(f"{escape_markdown(recipient.name)}#{recipient.discriminator}")
-            )
+            await ticket.thread.send(DM_FAILURE_MESSAGE.format(user=escape_markdown(str(recipient))))
 
     async def create_ticket(
         self,
@@ -327,7 +328,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         await self.init_relay_channel()
 
         recipient = recipient or message.author
-        if send_kwargs.get("allowed_mentions") is not None:
+        if send_kwargs.get("allowed_mentions") is None:
             send_kwargs["allowed_mentions"] = discord.AllowedMentions(
                 everyone=False, users=False, roles=True, replied_user=False
             )
@@ -466,7 +467,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             delete = False
             for a in message.attachments:
                 # featuring the first image attachment as the embed image
-                if a.url.lower().endswith((".png", ".apng", ".gif", ".webm", "jpg", ".jpeg")):
+                if a.url.lower().endswith(IMAGE_EXTENSIONS):
                     if not embeds[0].image:
                         embeds[0].set_image(url=a.url)
                         continue
@@ -489,10 +490,13 @@ class TicketsCog(ModmailCog, name="Threads"):
                     embeds.append(Embed().set_image(url=sticker.url))
 
         sent_message = await ticket.recipient.send(embeds=embeds, reference=dm_reference_message)
+        # deep copy embeds to not have an internal race condition.
+        embeds = copy.deepcopy(embeds)
 
         # also relay it in the thread channel
         embeds[0].set_footer(text=f"User ID: {message.author.id}")
-        embeds[0].colour = SEND_COLOUR
+
+        embeds[0].colour = INTERNAL_REPLY_COLOR
         guild_message = await ticket.thread.send(embeds=embeds, reference=guild_reference_message)
 
         if delete:
@@ -537,7 +541,7 @@ class TicketsCog(ModmailCog, name="Threads"):
             author=message.author,
             timestamp=message.created_at,
             footer_text=f"Message ID: {message.id}",
-            colour=RECEIVE_COLOUR,
+            colour=FORWARDED_DM_COLOR,
         )
         if contents is None:
             embed.description = contents = str(f"{message.content}")
@@ -545,8 +549,8 @@ class TicketsCog(ModmailCog, name="Threads"):
             attachments = message.attachments
 
             for a in attachments:
-                if a.url.endswith((".png", ".apng", ".gif", ".webm", "jpg", ".jpeg")):
-                    if not len(embed.image):
+                if a.url.lower().endswith(IMAGE_EXTENSIONS):
+                    if not embed.image:
                         embed.set_image(url=a.proxy_url)
                         continue
                 embed.add_field(name=a.filename, value=a.proxy_url, inline=False)
@@ -688,13 +692,11 @@ class TicketsCog(ModmailCog, name="Threads"):
             embed = user_message.embeds[0]
             embed.description = content
             await user_message.edit(embed=embed)
-            del embed
 
             # edit guild message
             embed = message.embeds[0]
             embed.description = content
             await message.edit(embed=embed)
-            del embed
 
     @is_modmail_thread()
     @commands.command(aliases=("d", "del"))
@@ -747,16 +749,19 @@ class TicketsCog(ModmailCog, name="Threads"):
         ticket: Ticket,
         closer: Optional[Union[discord.User, discord.Member]] = None,
         time: Optional[datetime.datetime] = None,
-        discord_thread_already_archived: bool = False,
         notify_user: Optional[bool] = None,
         automatically_archived: bool = False,
         *,
         contents: str = None,
+        keep_thread_closed: bool = False,
     ) -> None:
         """
         Close the current thread after `after` time from now.
 
         Note: This method destroys the Ticket object.
+
+        If keep_thread_closed is True, this method will not send any messages in the thread,
+        since that would re-open the thread.
         """
         if notify_user is None:
             notify_user = bool(ticket.has_sent_initial_message or len(ticket.messages) > 0)
@@ -776,7 +781,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         async with self.thread_create_delete_lock:
             # clean up variables
-            if not discord_thread_already_archived:
+            if not keep_thread_closed:
                 await ticket.thread.send(embed=thread_close_embed)
             if notify_user:
                 # user may have dms closed
