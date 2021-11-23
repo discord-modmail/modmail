@@ -78,7 +78,7 @@ def cli_add_news(ctx: click.Context, message: str, editor: str, type: str, pr: i
 
             break
 
-    save_news_fragment(ctx, pr, nonceify(message), message, type)
+    save_news_fragment(ctx, pr, message, type)
 
 
 @cli_main.command("build")

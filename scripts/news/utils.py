@@ -1,9 +1,9 @@
-import base64
-import datetime
 import glob
-import hashlib
+import itertools
+import tempfile
 import textwrap
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from datetime import datetime, timezone
+from typing import Any, Dict, Generator, List, Mapping, Optional, Tuple, Union
 
 import click
 import requests
@@ -20,24 +20,11 @@ __all__ = (
     "get_project_meta",
     "glob_fragments",
     "err",
-    "nonceify",
     "out",
     "render_fragments",
     "save_news_fragment",
     "validate_pull_request_number",
 )
-
-
-def nonceify(body: str) -> str:
-    """
-    Nonceify the news body!
-
-    Generate hopefully-unique string of characters meant to prevent filename collisions. by computing the
-    MD5 hash of the text, converting it to base64 (using the "urlsafe" alphabet), and taking the first
-    6 characters of that.
-    """
-    digest = hashlib.md5(body.encode("utf-8")).digest()  # noqa: S303
-    return base64.urlsafe_b64encode(digest)[0:6].decode("ascii")
 
 
 def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
@@ -126,7 +113,7 @@ def glob_fragments(version: str, sections: Dict[str, str]) -> List[str]:
 def get_metadata_from_news(path: Path) -> dict:
     """Get metadata information from a news entry."""
     new_fragment_file = path.stem
-    date, gh_pr, nonce = new_fragment_file.split(".")
+    date, gh_pr, increment = new_fragment_file.partition(".")
     news_type = path.parent.name
 
     with open(path, "r", encoding="utf-8") as file:
@@ -136,7 +123,7 @@ def get_metadata_from_news(path: Path) -> dict:
         "date": date,
         "gh_pr": gh_pr,
         "news_type": news_type,
-        "nonce": nonce,
+        "increment": increment,
         "news_entry": news_entry,
     }
 
@@ -157,10 +144,9 @@ def render_fragments(
     metadata: Dict[str, list],
     wrap: bool,
     version_data: Tuple[str, str],
-    date: Union[str, datetime.datetime],
+    date: Union[str, datetime],
 ) -> str:
     """Render the fragments into a news file."""
-    print(template)
     with open(template, mode="r") as template_file:
         jinja_template = Template(template_file.read(), trim_blocks=True)
 
@@ -189,10 +175,29 @@ def render_fragments(
     return "\n".join(done).rstrip() + "\n"
 
 
-def save_news_fragment(ctx: click.Context, gh_pr: int, nonce: str, news_entry: str, news_type: str) -> None:
+def _uniquify(path: Path, sep: str = ".") -> Path:
+    """Expands name portion of filename with numeric '.(x)' suffix to return a unique path."""
+
+    def name_sequence() -> Generator[str, Any, None]:
+        count = itertools.count(start=1)
+        yield ""
+        while True:
+            yield "{s}{n:d}".format(s=sep, n=next(count))
+
+    orig = tempfile._name_sequence
+    with tempfile._once_lock:
+        tempfile._name_sequence = name_sequence()
+        dirname, filename, ext = path.parent, path.stem, path.suffix
+        fd, filename = tempfile.mkstemp(dir=dirname, prefix=filename, suffix=ext)
+        tempfile._name_sequence = orig
+
+    return Path(filename)
+
+
+def save_news_fragment(ctx: click.Context, gh_pr: int, news_entry: str, news_type: str) -> None:
     """Save received changelog data to a news file."""
-    date = datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    path = Path(REPO_ROOT, f"news/next/{news_type}/{date}.pr-{gh_pr}.{nonce}.md")
+    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    path = Path(REPO_ROOT, f"news/next/{news_type}/{date}.pr-{gh_pr}.md")
     if not path.parents[1].exists():
         err(NO_NEWS_PATH_ERROR, fg="blue")
         ctx.exit(1)
@@ -203,9 +208,16 @@ def save_news_fragment(ctx: click.Context, gh_pr: int, nonce: str, news_entry: s
         if make_news_type_dir:
             path.parents[0].mkdir(exist_ok=True)
     elif path.exists():
-        # The file exists
-        err(f"{ERROR_MSG_PREFIX} {Path(os.path.relpath(path, start=Path.cwd()))} already exists")
-        ctx.exit(1)
+        # a changelog for that PR already
+        one_more = click.prompt(
+            f"A changelog for this PR already exists "
+            f"at {Path(os.path.relpath(path, start=Path.cwd()))}, "
+            f"do you want to make another one?"
+        )
+        if one_more:
+            path = _uniquify(path)
+        else:
+            ctx.exit(1)
 
     text = str(news_entry)
     with open(path, "wt", encoding="utf-8") as file:
