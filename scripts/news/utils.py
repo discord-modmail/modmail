@@ -2,18 +2,30 @@ import base64
 import datetime
 import glob
 import hashlib
-import os
-import sys
 import textwrap
-import traceback
-from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
+import click
+import requests
 import tomli
 from click import Context, Option, echo, style
 from jinja2 import Template
 
-from . import ERROR_MSG_PREFIX
+from .constants import *
+
+
+__all__ = (
+    "NotRequiredIf",
+    "get_metadata_from_news",
+    "get_project_meta",
+    "glob_fragments",
+    "err",
+    "nonceify",
+    "out",
+    "render_fragments",
+    "save_news_fragment",
+    "validate_pull_request_number",
+)
 
 
 def nonceify(body: str) -> str:
@@ -64,7 +76,7 @@ class NotRequiredIf(Option):
             kwargs.get("help", "")
             + " NOTE: This argument is mutually exclusive with %s" % self.not_required_if
         ).strip()
-        super(NotRequiredIf, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def handle_parse_result(
         self, ctx: Context, opts: Mapping[str, Any], args: List[str]
@@ -84,7 +96,7 @@ class NotRequiredIf(Option):
             else:
                 self.prompt = None
 
-        return super(NotRequiredIf, self).handle_parse_result(ctx, opts, args)
+        return super().handle_parse_result(ctx, opts, args)
 
 
 def sanitize_section(section: str) -> str:
@@ -92,12 +104,12 @@ def sanitize_section(section: str) -> str:
     return section.replace("/", "-").lower()
 
 
-def glob_fragments(version: str, sections: List[str]) -> List[str]:
+def glob_fragments(version: str, sections: Dict[str, str]) -> List[str]:
     """Glob all news fragments present on the repo."""
     filenames = []
     base = os.path.join("news", version)
 
-    if version != "next":
+    if version.lower() != "next":
         wildcard = base + ".md"
         filenames.extend(glob.glob(wildcard))
     else:
@@ -105,18 +117,17 @@ def glob_fragments(version: str, sections: List[str]) -> List[str]:
             wildcard = os.path.join(base, sanitize_section(section), "*.md")
             entries = glob.glob(wildcard)
             entries.sort(reverse=True)
-            deletables = [x for x in entries if x.endswith("/README.md")]
-            for filename in deletables:
-                entries.remove(filename)
+            entries = [x for x in entries if not x.endswith("/README.md")]
             filenames.extend(entries)
 
     return filenames
 
 
-def get_metadata_from_file(path: Path) -> dict:
+def get_metadata_from_news(path: Path) -> dict:
     """Get metadata information from a news entry."""
     new_fragment_file = path.stem
-    date, gh_pr, news_type, nonce = new_fragment_file.split(".")
+    date, gh_pr, nonce = new_fragment_file.split(".")
+    news_type = path.parent.name
 
     with open(path, "r", encoding="utf-8") as file:
         news_entry = file.read()
@@ -140,26 +151,8 @@ def get_project_meta() -> Tuple[str, str]:
     return name, version
 
 
-def load_toml_config() -> Dict[str, Any]:
-    """Load the news TOML configuration file and exit if found to be invalid."""
-    config_path = Path(Path.cwd(), "scripts/news/config.toml")
-
-    try:
-        with open(config_path, mode="r") as file:
-            toml_dict = tomli.loads(file.read())
-    except tomli.TOMLDecodeError as e:
-        message = "Invalid news configuration at {0}\n{1}".format(
-            config_path,
-            "".join(traceback.format_exception_only(type(e), e)),
-        )
-        err(message)
-        sys.exit(1)
-    else:
-        return toml_dict
-
-
 def render_fragments(
-    section_names: Dict[str, dict],
+    sections: Dict[str, str],
     template: Path,
     metadata: Dict[str, list],
     wrap: bool,
@@ -173,7 +166,7 @@ def render_fragments(
 
     version_data = {"name": version_data[0], "version": version_data[1], "date": date}
     res = jinja_template.render(
-        section_names={_type: config["name"] for _type, config in section_names.items()},
+        sections=sections.copy(),
         version_data=version_data,
         metadata=metadata,
     )
@@ -194,3 +187,52 @@ def render_fragments(
             done.append(line)
 
     return "\n".join(done).rstrip() + "\n"
+
+
+def save_news_fragment(ctx: click.Context, gh_pr: int, nonce: str, news_entry: str, news_type: str) -> None:
+    """Save received changelog data to a news file."""
+    date = datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    path = Path(REPO_ROOT, f"news/next/{news_type}/{date}.pr-{gh_pr}.{nonce}.md")
+    if not path.parents[1].exists():
+        err(NO_NEWS_PATH_ERROR, fg="blue")
+        ctx.exit(1)
+    elif not path.parents[0].exists():
+        make_news_type_dir = click.confirm(
+            f"Should I make the new type DIR for the news type at {path.parents[0]}"
+        )
+        if make_news_type_dir:
+            path.parents[0].mkdir(exist_ok=True)
+    elif path.exists():
+        # The file exists
+        err(f"{ERROR_MSG_PREFIX} {Path(os.path.relpath(path, start=Path.cwd()))} already exists")
+        ctx.exit(1)
+
+    text = str(news_entry)
+    with open(path, "wt", encoding="utf-8") as file:
+        file.write(text)
+
+    out(
+        f"All done! ✨ 🍰 ✨ Created news fragment at {Path(os.path.relpath(path, start=Path.cwd()))}"
+        "\nYou are now ready for commit the changelog!"
+    )
+
+
+def validate_pull_request_number(
+    ctx: click.Context, _param: click.Parameter, value: Optional[int]
+) -> Optional[int]:
+    """Check if the given pull request number exists on the github repository."""
+    r = requests.get(PR_ENDPOINT.format(number=value))
+    if r.status_code == 403:
+        if r.headers.get("X-RateLimit-Remaining") == "0":
+            err(f"{ERROR_MSG_PREFIX} Ratelimit reached, please retry in a few minutes.")
+            ctx.exit()
+        err(f"{ERROR_MSG_PREFIX} Cannot access pull request.")
+        ctx.exit()
+    elif r.status_code in (404, 410):
+        err(f"{ERROR_MSG_PREFIX} PR not found.")
+        ctx.exit()
+    elif r.status_code != 200:
+        err(f"{ERROR_MSG_PREFIX} Error while fetching issue, retry again after sometime.")
+        ctx.exit()
+
+    return value

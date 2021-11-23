@@ -9,7 +9,7 @@
 ---
 
 {% for section, fragments in metadata.items() %}
-### {{ section_names[section] }}
+### {{ sections[section] }}
 {% for fragment in fragments %}
 - {{ fragment["news_entry"].strip("\n") }} (#{{ fragment["gh_pr"].split("-")[1] }})
 {% endfor %}
