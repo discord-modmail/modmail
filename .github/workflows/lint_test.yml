@@ -164,10 +164,15 @@ jobs:
       - name: Run tests and generate coverage report
         run: python -m pytest -n auto --dist loadfile --cov --disable-warnings -q
 
-      # This step will publish the coverage reports to codecov.io and
+      # This step will publish the coverage reports to coveralls.io and
       # print a "job" link in the output of the GitHub Action
-      - name: Publish coverage report to codecov.io
-        run: python -m codecov
+      - name: Publish coverage report to coveralls.io
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: coverage-${{ runner.os }}-python-${{ env.PYTHON_VERSION }}
+          COVERALLS_PARALLEL: true
+          COVERALLS_SERVICE_NAME: github
+        run: python -m coveralls
 
       - name: Coverage HTML
         run: python -m coverage html
@@ -177,6 +182,21 @@ jobs:
         with:
           name: coverage-${{ runner.os }}-python-${{ env.PYTHON_VERSION }}
           path: htmlcov
+
+
+  coveralls:
+    name: Indicate completion to coveralls.io
+    needs: test
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+    - name: Coveralls Finished
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_SERVICE_NAME: github
+      run: |
+        python3 -m pip install --upgrade coveralls
+        python3 -m coveralls --finish
 
   artifact:
     name: Generate Artifact
