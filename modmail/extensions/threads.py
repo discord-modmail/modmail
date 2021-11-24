@@ -704,7 +704,7 @@ class TicketsCog(ModmailCog, name="Threads"):
     async def delete(
         self,
         ctx: Context,
-        message: RepliedOrRecentMessageConverter(optional=True, require_argument_empty=True) = None,
+        message: RepliedOrRecentMessageConverter(require_argument_empty=True) = None,
     ) -> None:
         """
         Delete a message in the thread.
@@ -766,7 +766,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         if notify_user is None:
             notify_user = bool(ticket.has_sent_initial_message or len(ticket.messages) > 0)
 
-        if not closer:
+        if closer:
             thread_close_embed = discord.Embed(
                 title="Thread Closed",
                 description=contents or f"{closer.mention} has closed this Modmail thread.",
@@ -1053,7 +1053,6 @@ class TicketsCog(ModmailCog, name="Threads"):
         # threads get the support to change their parent channel, which would be great.
         if before.parent_id != self.relay_channel.id:
             return
-
         # ignore the bot closing threads
         # NOTE: archiver_id is always gonna be None.
         # HACK: Grab an item from the audit log to get this user.
@@ -1074,7 +1073,8 @@ class TicketsCog(ModmailCog, name="Threads"):
             elif self.bot.user == archiver:
                 logger.trace("Received a thread archive event which was caused by me. Skipping actions.")
                 return
-        else:
+
+        if archiver is None:
             # check the last message id
             now = arrow.utcnow().datetime
             last_message_time = discord.Object(after.last_message_id).created_at
@@ -1085,7 +1085,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
         # checks passed, closing the ticket
         ticket = await self.fetch_ticket(after.id)
-        if ticket is not None:
+        if ticket is None:
             logger.debug(
                 "While closing a ticket, somehow checks passed but the thread did not exist... "
                 "This is likely due to missing audit log permissions."
