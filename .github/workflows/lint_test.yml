@@ -169,6 +169,15 @@ jobs:
       - name: Publish coverage report to codecov.io
         run: python -m codecov
 
+      - name: Coverage HTML
+        run: python -m coverage html
+
+      - name: Upload coverage as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-${{ runner.os }}-python-${{ env.PYTHON_VERSION }}
+          path: htmlcov
+
   artifact:
     name: Generate Artifact
     if: always()
