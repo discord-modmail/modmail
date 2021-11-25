@@ -210,7 +210,7 @@ def export_env_and_app_json_conf() -> int:
         ENV_EXPORT_FILE.unlink(missing_ok=True)
         ENV_EXPORT_FILE.touch()
 
-        exported = get_env_vars(default.__class__)
+        exported = get_env_vars(type(default))
 
         app_json_env = dict()
 

@@ -146,7 +146,7 @@ class KeyConverter(commands.Converter):
         # depending on common problems, it is *possible* to add `_` but would require fuzzy matching over
         # all of the keys since that can also be a valid character name.
 
-        fields = get_all_conf_options(config.default().__class__)
+        fields = get_all_conf_options(type(config.default()))
 
         new_arg = ""
         for c in arg.lower():
@@ -172,7 +172,7 @@ class ConfigurationManager(ModmailCog, name="Configuration Manager"):
     def __init__(self, bot: ModmailBot):
         self.bot = bot
 
-        self.config_fields = get_all_conf_options(config.default().__class__)
+        self.config_fields = get_all_conf_options(type(config.default()))
 
     @commands.group(name="config", aliases=("cfg", "conf"), invoke_without_command=True)
     async def config_group(self, ctx: Context) -> None:
