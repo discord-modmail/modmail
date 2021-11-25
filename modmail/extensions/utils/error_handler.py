@@ -45,7 +45,7 @@ class ErrorHandler(ModmailCog, name="Error Handler"):
         Eg NSFWChannelRequired returns NSFW Channel Required
         """
         if not isinstance(error, str):
-            error = error.__class__.__name__
+            error = type(error).__name__
         return re.sub(ERROR_TITLE_REGEX, r" \1", error)
 
     @staticmethod
