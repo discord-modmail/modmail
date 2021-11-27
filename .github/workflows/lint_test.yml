@@ -168,7 +168,10 @@ jobs:
       # This step will publish the coverage reports to coveralls.io and
       # print a "job" link in the output of the GitHub Action
       - name: Publish coverage report to coveralls.io
+        # upload coverage even if a test run failed
+        # this is a test, and may be removed in the future
         if: always() && (steps.run_tests.outcome == 'success' || steps.run_tests.outcome == 'failure')
+        # important that we don't fail the workflow when coveralls is down
         continue-on-error: true
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -177,22 +180,31 @@ jobs:
           COVERALLS_SERVICE_NAME: github
         run: python -m coveralls
 
-  coveralls:
+  coveralls-finish:
     name: Indicate completion to coveralls.io
     runs-on: ubuntu-latest
     needs: test
+    # we don't want to fail the workflow when coveralls is down
     continue-on-error: true
     # we always want to ensure we attempt to send a finish to coveralls
     if: always()
-    container: python:3-slim
     steps:
+      # Set up a consistent version of Python
+    - name: Set up Python 3.9
+      id: python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
     - name: Coveralls Finished
       continue-on-error: true
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_SERVICE_NAME: github
+      # NOTE: this has a small thing where this will not always be the same with the poetry.lock file
+      # given how this is installed for one api request, its not worth pinning to me.
+      # any bugs caused by this can be solved when they occur
       run: |
-        python3 -m pip install --upgrade coveralls -qqq
+        python3 -m pip install --upgrade coveralls
         python3 -m coveralls --finish
 
   artifact:
