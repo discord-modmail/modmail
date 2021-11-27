@@ -92,3 +92,4 @@ report = { cmd = "coverage report", help = "Show coverage report from previously
 scripts = { cmd = 'python -m scripts', help = 'Run the scripts wrapper cli.' }
 test = { cmd = "pytest -n auto --dist loadfile", help = "Runs tests and save results to a coverage report" }
 test_mocks = { cmd = 'pytest tests/test_mocks.py', help = 'Runs the tests on the mock files. They are excluded from the main test suite.' }
+lock = { cmd = 'poetry lock --no-update && task export --docs', help = 'Relock the dependencies without updating them. Also runs the export scripts' }
