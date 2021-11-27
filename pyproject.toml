@@ -87,6 +87,7 @@ docs = { cmd = "mkdocs serve", help = "Run the docs on a local automatically rel
 export = { cmd = "python -m scripts.export_requirements", help = "Export the requirements from poetry.lock to requirements.txt" }
 flake8 = { cmd = "python -m flake8", help = "Lints code with flake8" }
 lint = { cmd = "pre-commit run --all-files", help = "Checks all files for CI errors" }
+lock = { cmd = 'poetry lock --no-update && task export --docs', help = 'Relock the dependencies without updating them. Also runs the export scripts' }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Installs the precommit hook" }
 report = { cmd = "coverage report", help = "Show coverage report from previously run tests." }
 scripts = { cmd = 'python -m scripts', help = 'Run the scripts wrapper cli.' }
