@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added Dispatcher system, although it is not hooked into important features like thread creation yet. (#71)
+- Officially support python 3.10 (#119)
+- Officially support windows and macos (#121)
 
 ### Changed
 
