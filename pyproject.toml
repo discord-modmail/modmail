@@ -44,8 +44,8 @@ flake8-todo = "~=0.7"
 isort = "^5.9.2"
 pep8-naming = "~=0.11"
 # testing
-codecov = "^2.1.11"
 coverage = { extras = ["toml"], version = "^6.0.2" }
+coveralls = "^3.3.1"
 pytest = "^6.2.4"
 pytest-asyncio = "^0.15.1"
 pytest-cov = "^3.0.0"
@@ -65,7 +65,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.run]
 branch = true
-source_pkgs = ['modmail', 'tests.modmail']
+source_pkgs = ['modmail', 'tests']
 omit = ["modmail/plugins/**.*"]
 
 [tool.pytest.ini_options]
@@ -81,7 +81,6 @@ include = '\.pyi?$'
 [tool.taskipy.tasks]
 start = { cmd = "python -m modmail", help = "Run bot" }
 black = { cmd = "black --check .", help = "dry run of black" }
-codecov-validate = { cmd = "curl --data-binary @.codecov.yml https://codecov.io/validate", help = "Validate `.codecov.yml` with their api." }
 cov-server = { cmd = "coverage html", help = "Start an http.server for viewing coverage data." }
 post_cov-server = "python -m http.server 8012 --bind 127.0.0.1 --directory htmlcov"
 docs = { cmd = "mkdocs serve", help = "Run the docs on a local automatically reloading server" }
