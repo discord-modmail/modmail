@@ -92,11 +92,14 @@ jobs:
       # black and flake8 action. As pre-commit does not support user installs,
       # we set PIP_USER=0 to not do a user install.
       - name: Run pre-commit hooks
+        id: pre-commit
         run: export PIP_USER=0; SKIP="no-commit-to-branch,black,flake8" pre-commit run --all-files
 
       # Run black seperately as we don't want to reformat the files
       # just error if something isn't formatted correctly.
       - name: Check files with black
+        id: black
+        if: always() && (steps.pre-commit.outcome == 'success' || steps.pre-commit.outcome == 'failure')
         run: black . --check --diff --color
 
       # Run flake8 and have it format the linting errors in the format of
@@ -108,6 +111,8 @@ jobs:
       # Format used:
       # ::error file={filename},line={line},col={col}::{message}
       - name: Run flake8
+        id: flake8
+        if: always() && (steps.pre-commit.outcome == 'success' || steps.pre-commit.outcome == 'failure')
         run: "flake8 \
         --format='::error file=%(path)s,line=%(row)d,col=%(col)d::\
         [flake8] %(code)s: %(text)s'"
