@@ -31,9 +31,12 @@ FORWARD_LABEL = "  \u276f  "  # >
 JUMP_LAST_LABEL = " \u276f\u276f "  # >>
 STOP_PAGINATE_EMOJI = "\u274c"  # [:x:] This is an emoji, which is treated differently from the above
 
-logger: ModmailLogger = logging.getLogger(__name__)
+NO_EMBED_FOOTER_BUMP = 15
 
 _AUTOGENERATE = object()
+
+
+logger: ModmailLogger = logging.getLogger(__name__)
 
 
 class ButtonPaginator(ui.View, DpyPaginator):
@@ -78,6 +81,8 @@ class ButtonPaginator(ui.View, DpyPaginator):
         If source message is provided and only_users is NOT provided, the paginator will respond
             to the author of the source message. To override this, pass an empty list to `only_users`.
 
+        By default, an embed is created. However, a custom embed can
+        be passed, or None can be passed to not use an embed.
         """
         self.index = 0
         self._pages: List[str] = []
@@ -92,11 +97,11 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
         # used if embed is None
         self.content = ""
-        if embed is None:
+        if self.embed is None:
             self.title = title
             # need to set the max_size down a few to be able to set a "footer"
             # page indicator is "page xx of xx"
-            self.max_size -= 15
+            self.max_size -= NO_EMBED_FOOTER_BUMP + len(self.title or "")
             if self.title is not None:
                 self.max_size -= len(title)
             if footer_text is not None:
