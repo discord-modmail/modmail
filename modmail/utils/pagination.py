@@ -92,11 +92,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
 
         # used if embed is None
         self.content = ""
-        if embed is not None:
-            if title:
-                raise TypeError("Cannot set title if embed is None.")
-            self.title = None
-        else:
+        if embed is None:
             self.title = title
             # need to set the max_size down a few to be able to set a "footer"
             # page indicator is "page xx of xx"
@@ -301,7 +297,6 @@ class ButtonPaginator(ui.View, DpyPaginator):
         if self.embed:
             await interaction.message.edit(embed=self.embed, view=self)
         else:
-            print(len(self.content))
             await interaction.message.edit(content=self.content, view=self)
 
     @ui.button(label=JUMP_FIRST_LABEL, custom_id="pag_jump_first", style=ButtonStyle.primary)
