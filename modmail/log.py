@@ -1,6 +1,7 @@
+import functools
 import logging
 import pathlib
-from typing import Any
+from typing import Any, Dict
 
 
 __all__ = [
@@ -18,7 +19,8 @@ logging.addLevelName(logging.NOTICE, "NOTICE")
 DEFAULT = logging.INFO
 
 
-def _get_env() -> dict:
+@functools.lru_cache(maxsize=32)
+def _get_env() -> Dict[str, str]:
     import os
 
     try:
@@ -57,11 +59,11 @@ def set_logger_levels() -> None:
     """
     Set all loggers to the provided environment variables.
 
-    eg MODMAIL_TRACE_LOGGERS will be split by `,` and each logger will be set to the trace level
+    eg MODMAIL_LOGGERS_TRACE will be split by `,` and each logger will be set to the trace level
     This is applied for every logging level.
     """
     env_vars = _get_env()
-    fmt_key = "MODMAIL_{level}_LOGGERS"
+    fmt_key = "MODMAIL_LOGGERS_{level}"
 
     for level in ["trace", "debug", "info", "notice", "warning", "error", "critical"]:
         level = level.upper()
@@ -85,19 +87,24 @@ def get_log_dir() -> pathlib.Path:
     """
     env_vars = _get_env()
     key = "MODMAIL_LOGGING_DIRECTORY"
-    if env_vars.get(key, None) is not None:
-        return pathlib.Path(env_vars[key]).expanduser()
+    if log_dir := env_vars.get(key, None):
+        # return the log dir if its absolute, otherwise use the root/cwd trick
+        path = pathlib.Path(log_dir).expanduser()
+        if path.is_absolute():
+            return path
 
-    import modmail
+    log_dir = log_dir or "logs"
 
-    path = pathlib.Path(modmail.__file__).parent.parent
+    # Get the directory above the bot module directory
+    path = pathlib.Path(__file__).parents[1]
     cwd = pathlib.Path.cwd()
     try:
         cwd.relative_to(path)
     except ValueError:
-        return cwd / "logs"
+        log_path = path / log_dir
     else:
-        return path / "logs"
+        log_path = cwd / log_dir
+    return log_path.resolve()
 
 
 class ModmailLogger(logging.Logger):
