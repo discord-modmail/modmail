@@ -1,6 +1,7 @@
 import pathlib
 import re
 import sys
+from os import environ
 from typing import Tuple
 
 import requests
@@ -11,6 +12,9 @@ SKIP_NEWS_LABEL = "skip changelog"
 GH_API_URL = "https://api.github.com/"
 HEADERS = {"accept": "application/vnd.github.v3+json"}
 REPO_ORG_NAME = "discord-modmail/modmail"
+
+if GITHUB_TOKEN := environ.get("GITHUB_TOKEN"):
+    HEADERS["Authorization"] = f"token {GITHUB_TOKEN}"
 
 
 FILENAME_RE = re.compile(
