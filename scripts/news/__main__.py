@@ -1,12 +1,24 @@
+import os
 from collections import defaultdict
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 import click
 
 from . import __version__
-from .constants import *
-from .utils import *
+from .constants import NEWS_NEXT, REPO_ROOT, SECTIONS, TEMPLATE, TEMPLATE_FILE_PATH
+from .utils import (
+    NotRequiredIf,
+    err,
+    get_metadata_from_news,
+    get_project_meta,
+    glob_fragments,
+    out,
+    render_fragments,
+    save_news_fragment,
+    validate_pull_request_number,
+)
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]), invoke_without_command=True)
