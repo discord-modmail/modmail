@@ -19,7 +19,7 @@ from .constants import ERROR_MSG_PREFIX, NO_NEWS_PATH_ERROR, PR_ENDPOINT, REPO_R
 __all__ = (
     "NotRequiredIf",
     "get_metadata_from_news",
-    "get_project_meta",
+    "get_project_version",
     "glob_fragments",
     "err",
     "out",
@@ -115,7 +115,10 @@ def glob_fragments(version: str, sections: Dict[str, str]) -> List[str]:
 def get_metadata_from_news(path: Path) -> dict:
     """Get metadata information from a news entry."""
     new_fragment_file = path.stem
-    date, gh_pr, increment = new_fragment_file.partition(".")
+    date, gh_pr, = new_fragment_file.split(
+        "."
+    )[:2]
+    gh_pr = gh_pr.split("-")[1]
     news_type = path.parent.name
 
     with open(path, "r", encoding="utf-8") as file:
@@ -123,21 +126,19 @@ def get_metadata_from_news(path: Path) -> dict:
 
     return {
         "date": date,
-        "gh_pr": gh_pr,
+        "url": PR_ENDPOINT.format(number=gh_pr),
+        "gh_pr": f"GH-{gh_pr}",
         "news_type": news_type,
-        "increment": increment,
         "news_entry": news_entry,
     }
 
 
-def get_project_meta() -> Tuple[str, str]:
-    """Get the project version and name from pyproject.toml file."""
+def get_project_version() -> str:
+    """Get the project version  from pyproject.toml file."""
     with open("pyproject.toml", "rb") as pyproject:
         file_contents = tomli.load(pyproject)
 
-    version = file_contents["tool"]["poetry"]["version"]
-    name = file_contents["tool"]["poetry"]["name"]
-    return name, version
+    return file_contents["tool"]["poetry"]["version"]
 
 
 def render_fragments(
@@ -145,17 +146,17 @@ def render_fragments(
     template: Path,
     metadata: Dict[str, list],
     wrap: bool,
-    version_data: Tuple[str, str],
+    version: str,
     date: Union[str, datetime],
 ) -> str:
     """Render the fragments into a news file."""
     with open(template, mode="r") as template_file:
         jinja_template = Template(template_file.read(), trim_blocks=True)
 
-    version_data = {"name": version_data[0], "version": version_data[1], "date": date}
     res = jinja_template.render(
         sections=sections.copy(),
-        version_data=version_data,
+        version=version,
+        date=date,
         metadata=metadata,
     )
 

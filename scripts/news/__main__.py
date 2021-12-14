@@ -7,12 +7,20 @@ from typing import Optional
 import click
 
 from . import __version__
-from .constants import NEWS_NEXT, REPO_ROOT, SECTIONS, TEMPLATE, TEMPLATE_FILE_PATH
+from .constants import (
+    DOCS_CHANGELOG,
+    HEADER,
+    LATEST_CHANGELOG,
+    NEWS_NEXT,
+    SECTIONS,
+    TEMPLATE,
+    TEMPLATE_FILE_PATH,
+)
 from .utils import (
     NotRequiredIf,
     err,
     get_metadata_from_news,
-    get_project_meta,
+    get_project_version,
     glob_fragments,
     out,
     render_fragments,
@@ -124,24 +132,28 @@ def cli_build_news(ctx: click.Context, edit: Optional[bool], keep: bool) -> None
         fragment["path"] = path
         file_metadata[news_type].append(fragment)
 
-    name, version = get_project_meta()
     version_news = render_fragments(
         sections=SECTIONS,
         template=TEMPLATE_FILE_PATH,
         metadata=file_metadata,
         wrap=True,
-        version_data=(name, version),
+        version=get_project_version(),
         date=date,
     )
-    news_path = Path(REPO_ROOT, f"news/{version}.md")
 
-    with open(news_path, mode="w") as file:
-        file.write(version_news)
+    with open(LATEST_CHANGELOG, mode="r+") as file:
+        content = file.read()
+        file.seek(0, 0)
+        changelog_content = version_news + "\n" + content
+        file.write(changelog_content)
 
-    out(f"All done! ✨ 🍰 ✨ Created {name}-v{version} news at {news_path}")
+    with open(DOCS_CHANGELOG, mode="w+") as file:
+        file.write(HEADER + "\n" + changelog_content)
+
+    out("All done! ✨ 🍰 ✨")
 
     if edit:
-        click.edit(filename=str(news_path))
+        click.edit(filename=str(LATEST_CHANGELOG))
 
     if not keep:
         for news_fragment in NEWS_NEXT.glob("*/*.md"):

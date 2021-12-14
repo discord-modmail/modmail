@@ -13,6 +13,8 @@ BAD_RESPONSE = {
 TEMPLATE_FILE_PATH = Path(Path(__file__).parent, "template.md.jinja")
 REPO_ROOT = Path(modmail.__file__).parent.parent
 NEWS_NEXT = Path(REPO_ROOT, "news/next")
+LATEST_CHANGELOG = Path(REPO_ROOT, "news/latest.md")
+DOCS_CHANGELOG = Path(REPO_ROOT, "docs/changelog.md")
 
 ERROR_MSG_PREFIX = "Oh no! 💥 💔 💥"
 TEMPLATE = """
@@ -36,3 +38,12 @@ SECTIONS = {
     "breaking": "Breaking Changes",
     "internal": "Internal",
 }
+
+HEADER = """\
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+"""

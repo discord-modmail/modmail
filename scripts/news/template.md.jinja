@@ -1,16 +1,10 @@
-{% if top_line %}
-# {{ top_line }}
-{% elif version_data.name %}
-# {{ version_data.name }} {{ version_data.version }} ({{ version_data.date }})
-{% else %}
-# {{ version_data.version }} ({{ version_data.date }})
-{% endif %}
+## {{ version }} ({{ date }})
 
 ---
 
 {% for section, fragments in metadata.items() %}
 ### {{ sections[section] }}
 {% for fragment in fragments %}
-- {{ fragment["news_entry"].strip("\n") }} (#{{ fragment["gh_pr"].split("-")[1] }})
+- {{ fragment["news_entry"].strip("\n") }} ([{{ fragment["gh_pr"] }}]({{ fragment["url"] }}))
 {% endfor %}
 {% endfor %}
