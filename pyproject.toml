@@ -58,6 +58,9 @@ mkdocs-material = ">=7.1.9,<8.0.0"
 mkdocs-markdownextradata-plugin = ">=0.1.7,<0.2.0"
 # Scripts
 click = "^8.0.3"
+# Custom changelogger
+Jinja2 = "^3.0.2"
+requests = "^2.26.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -93,3 +96,4 @@ report = { cmd = "coverage report", help = "Show coverage report from previously
 scripts = { cmd = 'python -m scripts', help = 'Run the scripts wrapper cli.' }
 test = { cmd = "pytest -n auto --dist loadfile", help = "Runs tests and save results to a coverage report" }
 test_mocks = { cmd = 'pytest tests/test_mocks.py', help = 'Runs the tests on the mock files. They are excluded from the main test suite.' }
+news-create = { cmd = "python -m scripts.news add", help = "Create a new news fragment for your PR to discord-modmail!"}

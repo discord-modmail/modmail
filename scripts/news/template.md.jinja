@@ -1,0 +1,10 @@
+## {{ version }} ({{ date }})
+
+---
+
+{% for section, fragments in metadata.items() %}
+### {{ sections[section] }}
+{% for fragment in fragments %}
+- {{ fragment["news_entry"].strip("\n") }} ([{{ fragment["gh_pr"] }}]({{ fragment["url"] }}))
+{% endfor %}
+{% endfor %}
