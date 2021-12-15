@@ -62,7 +62,7 @@ class ButtonPaginator(ui.View, DpyPaginator):
         contents: Union[List[str], str],
         /,
         source_message: Optional[discord.Message] = None,
-        embed: Optional[Embed] = _AUTOGENERATE,
+        embed: Union[Embed, bool, None] = _AUTOGENERATE,
         timeout: float = 180,
         *,
         footer_text: str = None,
@@ -90,9 +90,11 @@ class ButtonPaginator(ui.View, DpyPaginator):
         self.suffix = suffix
         self.max_size = max_size
         self.linesep = linesep
-        if embed is _AUTOGENERATE:
+        if embed is _AUTOGENERATE or embed is True:
             self.embed = Embed()
         else:
+            if embed is False:
+                embed = None
             self.embed = embed
 
         # used if embed is None
