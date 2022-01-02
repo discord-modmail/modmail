@@ -15,7 +15,7 @@ colorama==0.4.4 ; python_version >= "2.7" and python_version != "3.0" and python
 coloredlogs==15.0.1 ; python_version >= "2.7" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2" and python_version != "3.3" and python_version != "3.4"
 desert==2020.11.18 ; python_version >= "3.6"
 discord.py @ https://github.com/Rapptz/discord.py/archive/master.zip ; python_full_version >= "3.8.0"
-environs==9.3.3 ; python_version >= "3.6"
+environs==9.3.5 ; python_version >= "3.6"
 humanfriendly==10.0 ; python_version >= "2.7" and python_version != "3.0" and python_version != "3.1" and python_version != "3.2" and python_version != "3.3" and python_version != "3.4"
 idna==3.2 ; python_version >= "3.5"
 marshmallow-enum==1.5.1
