@@ -16,7 +16,9 @@ import marshmallow
 import marshmallow.fields
 import marshmallow.validate
 
+from modmail.errors import ConfigLoadError
 from modmail.log import ModmailLogger
+from modmail.utils.converters import BetterPartialEmojiConverter
 
 
 _log_optional_deps = logging.getLogger("modmail.optional_dependencies")
@@ -103,35 +105,9 @@ USER_CONFIG_FILES = [
 ]
 
 
-class BetterPartialEmojiConverter(discord.ext.commands.converter.EmojiConverter):
-    """
-    Converts to a :class:`~discord.PartialEmoji`.
-
-    This is done by extracting the animated flag, name and ID from the emoji.
-    """
-
-    async def convert(self, _: discord.ext.commands.context.Context, argument: str) -> discord.PartialEmoji:
-        """Convert a provided argument into an emoji object."""
-        match = discord.PartialEmoji._CUSTOM_EMOJI_RE.match(argument)
-        if match is not None:
-            groups = match.groupdict()
-            animated = bool(groups["animated"])
-            emoji_id = int(groups["id"])
-            name = groups["name"]
-            return discord.PartialEmoji(name=name, animated=animated, id=emoji_id)
-
-        return discord.PartialEmoji(name=argument)
-
-
 def _generate_default_dict() -> defaultdict:
     """For defaultdicts to default to a defaultdict."""
     return defaultdict(_generate_default_dict)
-
-
-class ConfigLoadError(Exception):
-    """Exception if the configuration failed to load from a local file."""
-
-    pass
 
 
 class _ColourField(marshmallow.fields.Field):
@@ -152,18 +128,16 @@ class _ColourField(marshmallow.fields.Field):
             if not isinstance(argument, str):
                 argument = str(argument)
 
-            if argument[0] == "#":
+            if argument.startswith("#"):
                 return self.parse_hex_number(argument[1:])
 
-            if argument[0:2] == "0x":
+            if argument.startswith("0x"):
                 rest = argument[2:]
                 # Legacy backwards compatible syntax
-                if rest.startswith("#"):
-                    return self.parse_hex_number(rest[1:])
                 return self.parse_hex_number(rest)
 
             arg = argument.lower()
-            if arg[0:3] == "rgb":
+            if arg.startswith("rgb"):
                 return self.parse_rgb(arg)
 
             arg = arg.replace(" ", "_")
@@ -374,7 +348,7 @@ class DeveloperConfig:
     @log_level.validator
     def _log_level_validator(self, a: attr.Attribute, value: int) -> None:
         """Validate that log_level is within 0 to 50."""
-        if value not in range(0, 50 + 1):
+        if value not in range(51):
             raise ValueError("log_level must be an integer within 0 to 50, inclusive.")
 
 
@@ -556,7 +530,7 @@ def load_env(
     if not existing_config_dict:
         existing_config_dict = defaultdict(_generate_default_dict)
 
-    new_config_dict = attr.asdict(
+    return attr.asdict(
         _build_class(
             BaseConfig,
             dotenv_file=env_file,
@@ -564,8 +538,6 @@ def load_env(
             skip_dotenv_if_none=skip_dotenv_if_none,
         )
     )
-
-    return new_config_dict
 
 
 def load_toml(path: os.PathLike = None) -> defaultdict:
@@ -577,7 +549,7 @@ def load_toml(path: os.PathLike = None) -> defaultdict:
     logger.trace(f"function `load_toml` called to load toml file {path}")
 
     if path is None:
-        path = (CONFIG_DIRECTORY / (USER_CONFIG_FILE_NAME + ".toml"),)
+        path = CONFIG_DIRECTORY / (USER_CONFIG_FILE_NAME + ".toml")
     else:
         # fully resolve path
         path = pathlib.Path(path)
@@ -606,7 +578,7 @@ def load_yaml(path: os.PathLike) -> dict:
     """
     logger.trace(f"function `load_yaml` called to load yaml file {path}")
     if path is None:
-        path = (CONFIG_DIRECTORY / (USER_CONFIG_FILE_NAME + ".yaml"),)
+        path = CONFIG_DIRECTORY / (USER_CONFIG_FILE_NAME + ".yaml")
     else:
         path = pathlib.Path(path)
 
@@ -620,7 +592,7 @@ def load_yaml(path: os.PathLike) -> dict:
         ("The provided yaml config file is not a regular file.", path.is_file(), False),
     ]
 
-    errors = list()
+    errors = []
     for text, check, stop_checking in states:
         if check:
             continue

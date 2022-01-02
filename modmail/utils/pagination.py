@@ -13,7 +13,7 @@ from discord import ButtonStyle, ui
 from discord.embeds import Embed, EmbedProxy
 from discord.ext.commands import Paginator as DpyPaginator
 
-from modmail.utils.errors import InvalidArgumentError, MissingAttributeError
+from modmail.errors import InvalidArgumentError, MissingAttributeError
 
 
 if TYPE_CHECKING:
