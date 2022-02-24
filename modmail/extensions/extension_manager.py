@@ -298,7 +298,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         *,
         is_plugin: bool = False,
         suppress_already_error: bool = False,
-    ) -> Tuple[str, Union[str, bool, None]]:
+    ) -> Tuple[str, Union[str, bool]]:
         """Apply an action to an extension and return the status message and any error message."""
         verb = action.name.lower()
         error_msg = None

@@ -1,10 +1,10 @@
 import logging
 import re
-from typing import TYPE_CHECKING, Tuple, Type
+from typing import TYPE_CHECKING, Tuple
 
 from discord.ext import commands
 
-from modmail.addons.models import Addon, AddonSource, Plugin, SourceTypeEnum
+from modmail.addons.models import AddonSource, Plugin, SourceTypeEnum
 
 
 if TYPE_CHECKING:
@@ -25,8 +25,6 @@ REPO_REGEX = re.compile(
 
 logger: "ModmailLogger" = logging.getLogger(__name__)
 
-AddonClass = Type[Addon]
-
 
 class AddonConverter(commands.Converter):
     """A converter that takes an addon source, and gets a Addon object from it."""
@@ -41,23 +39,23 @@ class SourceAndPluginConverter(AddonConverter):
 
     async def convert(self, _: commands.Context, argument: str) -> Tuple[Plugin, AddonSource]:
         """Convert a provided plugin and source to a Plugin."""
-        match = LOCAL_REGEX.match(argument)
-        if match is not None:
+        if match := LOCAL_REGEX.match(argument):
             logger.debug("Matched as a local file, creating a Plugin without a source url.")
+            addon = match.group("addon")
             source = AddonSource(None, SourceTypeEnum.LOCAL)
-            return Plugin(match.group("addon")), source
-        match = ZIP_REGEX.fullmatch(argument)
-        if match is not None:
+        elif match := ZIP_REGEX.fullmatch(argument):
             logger.debug("Matched as a zip, creating a Plugin from zip.")
+            addon = match.group("addon")
             source = AddonSource.from_zip(match.group("url"))
-            return Plugin(match.group("addon")), source
-
-        match = REPO_REGEX.fullmatch(argument)
-        if match is None:
+        elif match := REPO_REGEX.fullmatch(argument):
+            addon = match.group("addon")
+            source = AddonSource.from_repo(
+                match.group("user"),
+                match.group("repo"),
+                match.group("reflike"),
+                match.group("githost") or "github",
+            )
+        else:
             raise commands.BadArgument(f"{argument} is not a valid source and plugin.")
-        return Plugin(match.group("addon")), AddonSource.from_repo(
-            match.group("user"),
-            match.group("repo"),
-            match.group("reflike"),
-            match.group("githost") or "github",
-        )
+
+        return Plugin(addon), source

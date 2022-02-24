@@ -41,6 +41,7 @@ __all__ = (
     "update_local_toml_enable_or_disable",
     "find_partial_plugins_from_dir",
     "find_plugins",
+    "install_dependencies",
     "walk_plugin_files",
 )
 

@@ -213,7 +213,7 @@ class Plugin(Addon):
 
         # its possible to have a plugin with the same name as a folder of a plugin
         # folder names are the priority
-        secondary_names = dict()
+        secondary_names = {}
         for plug in loaded_plugs:
             if argument == plug.name:
                 return plug

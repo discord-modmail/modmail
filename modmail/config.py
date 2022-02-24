@@ -72,7 +72,7 @@ def toml_user_config_source(settings: PydanticBaseSettings) -> Dict[str, Any]:
         with open(USER_CONFIG_PATH) as f:
             return atoml.loads(f.read()).value
     else:
-        return dict()
+        return {}
 
 
 class BaseSettings(PydanticBaseSettings):

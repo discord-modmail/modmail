@@ -153,9 +153,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
 
         # remove all fully unloaded plugins from the list
         for plug in PLUGINS.copy():
-            safe_to_remove = []
-            for mod in plug.modules:
-                safe_to_remove.append(mod not in self.bot.extensions)
+            safe_to_remove = [mod not in self.bot.extensions for mod in plug.modules]
             if all(safe_to_remove):
                 PLUGINS.remove(plug)
 
@@ -198,9 +196,9 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         logger.debug(f"Received command to download plugin {plugin.name} from https://{source.zip_url}")
         try:
             directory = await addon_utils.download_and_unpack_source(source, self.bot.http_session)
-        except errors.HTTPError:
+        except errors.HTTPError as e:
             await responses.send_negatory_response(
-                ctx, f"Downloading {source.zip_url} did not give a 200 response code."
+                ctx, f"Downloading {source.zip_url} expected 200, received {e.response.status}."
             )
             return
 
@@ -240,7 +238,11 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         if plugin.dependencies and len(plugin.dependencies):
             # install dependencies since they exist
             message = await ctx.send(
-                embed=Embed("Installing dependencies.", title="Pending install", colour=Colour.yellow())
+                embed=Embed(
+                    description="Installing dependencies.",
+                    title="Pending install",
+                    colour=Colour.yellow(),
+                )
             )
             try:
                 await install_dependencies(plugin)
@@ -262,12 +264,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
         # check if the manage was successful
         failed = []
         for mod, metadata in plugin.modules.items():
-            if mod in self.bot.extensions:
-                fail = False
-            elif metadata.load_if_mode & BOT_MODE:
-                fail = False
-            else:
-                fail = True
+            fail = not (mod in self.bot.extensions or metadata.load_if_mode & BOT_MODE)
 
             failed.append(fail)
 
@@ -363,7 +360,7 @@ class PluginManager(ExtensionManager, name="Plugin Manager"):
                     continue
                 plug_status.append(status)
 
-            if len(plug_status) == 0:
+            if not plug_status:
                 status = StatusEmojis.unknown
             elif all(plug_status):
                 status = StatusEmojis.fully_loaded

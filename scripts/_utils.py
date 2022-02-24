@@ -25,7 +25,7 @@ class CheckFileEdit:
         for f in files:
             self.files.append(pathlib.Path(f))
         self.return_value: typing.Optional[int] = None
-        self.edited_files: typing.Dict[pathlib.Path] = dict()
+        self.edited_files: typing.Dict[pathlib.Path] = {}
 
     def __enter__(self):
         self.file_contents = {}
