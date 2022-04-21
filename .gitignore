@@ -105,6 +105,7 @@ celerybeat.pid
 
 # Environments
 .env
+!template.env
 !/tests/modmail/test.env
 .venv
 env/
@@ -134,10 +135,11 @@ dmypy.json
 .idea/
 
 # logs
-logs
+/logs/
 
 # Configuration
-*config.toml
+/modmail_config.toml
+/modmail_config.yaml
 
 # Custom docker compose override
 docker-compose.override.yml
