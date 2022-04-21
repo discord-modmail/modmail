@@ -18,6 +18,10 @@ import click
 # value: tuple of module name, help description
 commands: "dict[str, tuple[str, str | None]]" = {
     "export_req": ("scripts.export_requirements", "Export requirements to requirements.txt"),
+    "export_config": (
+        "scripts.export_new_config_to_default_config",
+        "Export default configuration to template files.",
+    ),
 }
 
 

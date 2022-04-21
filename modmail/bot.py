@@ -11,11 +11,12 @@ from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
 
-from modmail.config import CONFIG
+from modmail.config import config
 from modmail.dispatcher import Dispatcher
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
+from modmail.utils.threads import Ticket
 
 
 REQUIRED_INTENTS = Intents(
@@ -38,9 +39,11 @@ class ModmailBot(commands.Bot):
     logger: ModmailLogger = logging.getLogger(__name__)
     dispatcher: Dispatcher
 
+    _tickets: t.Dict[int, Ticket] = dict()
+
     def __init__(self, **kwargs):
-        self.config = CONFIG
-        self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
+        self.config = config()
+        self.start_time: arrow.Arrow = arrow.utcnow()
         self.http_session: t.Optional[aiohttp.ClientSession] = None
         self.dispatcher = Dispatcher()
 
@@ -51,7 +54,7 @@ class ModmailBot(commands.Bot):
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
         # listen to messages mentioning the bot or matching the prefix
         # ! NOTE: This needs to use the configuration system to get the prefix from the db once it exists.
-        prefix = commands.when_mentioned_or(CONFIG.bot.prefix)
+        prefix = self.determine_prefix
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
@@ -67,6 +70,15 @@ class ModmailBot(commands.Bot):
         super().__init__(
             **kwargs,
         )
+
+    @staticmethod
+    async def determine_prefix(bot: "ModmailBot", message: discord.Message) -> t.List[str]:
+        """Dynamically get the updated prefix on every command."""
+        prefixes = []
+        if bot.config.user.bot.prefix_when_mentioned:
+            prefixes.extend(commands.when_mentioned(bot, message))
+        prefixes.append(bot.config.user.bot.prefix)
+        return prefixes
 
     async def create_connectors(self, *args, **kwargs) -> None:
         """Re-create the connector and set up sessions before logging into Discord."""

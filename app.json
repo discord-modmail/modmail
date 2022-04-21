@@ -1,8 +1,13 @@
 {
     "env": {
-        "TOKEN": {
-            "description": "Discord bot token. This is from https://discord.com/developers/applications",
+        "MODMAIL_BOT_TOKEN": {
+            "description": "Discord bot token. Required to log in to discord.\nThis is obtainable from https://discord.com/developers/applications",
             "required": true
+        },
+        "MODMAIL_BOT_PREFIX": {
+            "description": "Command prefix.",
+            "required": false,
+            "value": "?"
         }
     },
     "name": "Modmail Bot",
