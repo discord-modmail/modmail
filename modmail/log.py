@@ -1,7 +1,7 @@
 import functools
 import logging
 import pathlib
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 
 __all__ = [
@@ -17,6 +17,17 @@ logging.addLevelName(logging.TRACE, "TRACE")
 logging.addLevelName(logging.NOTICE, "NOTICE")
 
 DEFAULT = logging.INFO
+
+
+def get_log_level_from_name(name: Union[str, int]) -> int:
+    """Find the logging level given the provided name."""
+    if isinstance(name, int):
+        return name
+    name = name.upper()
+    value = getattr(logging, name, "")
+    if not isinstance(value, int):
+        raise TypeError("name must be an existing logging level.")
+    return value
 
 
 @functools.lru_cache(maxsize=32)
@@ -43,8 +54,8 @@ def get_logging_level() -> None:
         level = DEFAULT
     except ValueError:
         level = level.upper()
-        if hasattr(logging, level) and isinstance(getattr(logging, level), int):
-            return getattr(logging, level)
+        if hasattr(logging, level) and isinstance(level := getattr(logging, level), int):
+            return level
         print(
             f"Environment variable {key} must be able to be converted into an integer.\n"
             f"To resolve this issue, set {key} to an integer value, or remove it from the environment.\n"
