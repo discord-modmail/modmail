@@ -31,7 +31,7 @@ def _get_env():
 def _get_env_vars() -> dict:
     result = {}
     for key, value in os.environ.items():
-        # not using upper() here is not a bug since the config system is case sensitive
+        # not using upper() since the config system is case sensitive
         if key.startswith(_modmail_env_prefix):
             result[key] = value
     return result
