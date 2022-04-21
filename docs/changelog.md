@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking
+- Bot now requires a `RELAY_CHANNEL_ID` configuration variable. (#53)
+    - This is where tickets with users will be relayed.
+    - At a later point in time, this will be additionally included in a configuration command.
+
 ### Added
+- Threads system (#53)
 - Plugin installation and uninstall system (#69)
+    - Messages can now be relayed between a user and a server.
+    - NOTE: There is not a database yet, so none of these messages are stored.
 - Added Dispatcher system, although it is not hooked into important features like thread creation yet. (#71)
 - Officially support python 3.10 (#119)
 - Officially support windows and macos (#121)
@@ -17,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Embedified the meta commands so they have a nicer UI (#78)
+- Improved the logging system to allow trace logging and a specific logging directory to be configured. (#118)
 
 ## [0.2.0] - 2021-09-29
 
