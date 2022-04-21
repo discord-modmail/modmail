@@ -3,28 +3,37 @@
 # MIT License 2021 Python Discord
 import functools
 import logging
-import typing as t
 from collections import defaultdict
 from enum import Enum
+from typing import Mapping, Tuple, Union
 
-from discord import AllowedMentions, Colour, Embed
+from discord import Colour, Embed
 from discord.ext import commands
 from discord.ext.commands import Context
 
 import modmail.config
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
-from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, unqualify, walk_extensions
+from modmail.utils import responses
+from modmail.utils.cogs import BotModeEnum, ExtMetadata, ModmailCog
+from modmail.utils.extensions import BOT_MODE, EXTENSIONS, NO_UNLOAD, ModuleDict, unqualify, walk_extensions
 from modmail.utils.pagination import ButtonPaginator
 
 
 log: ModmailLogger = logging.getLogger(__name__)
 
 
-BASE_PATH_LEN = __name__.count(".")
+EXT_METADATA = ExtMetadata(load_if_mode=BotModeEnum.DEVELOP, no_unload=True)
 
-EXT_METADATA = ExtMetadata(load_if_mode=BotModes.DEVELOP, no_unload=True)
+
+class StatusEmojis:
+    """Status emojis for extension statuses."""
+
+    fully_loaded: str = ":green_circle:"
+    partially_loaded: str = ":yellow_circle:"
+    unloaded: str = ":red_circle:"
+    disabled: str = ":brown_circle:"
+    unknown: str = ":black_circle:"
 
 
 Emojis = modmail.config.config().user.emojis
@@ -37,6 +46,12 @@ class Action(Enum):
     LOAD = functools.partial(ModmailBot.load_extension)
     UNLOAD = functools.partial(ModmailBot.unload_extension)
     RELOAD = functools.partial(ModmailBot.reload_extension)
+
+    # for plugins
+    ENABLE = functools.partial(ModmailBot.load_extension)
+    DISABLE = functools.partial(ModmailBot.unload_extension)
+
+    INSTALL = functools.partial(ModmailBot.reload_extension)
 
 
 class ExtensionConverter(commands.Converter):
@@ -91,11 +106,11 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
     type = "extension"
     module_name = "extensions"  # modmail/extensions
+    all_extensions: ModuleDict
 
     def __init__(self, bot: ModmailBot):
         self.bot = bot
         self.all_extensions = EXTENSIONS
-        self.refresh_method = walk_extensions
 
     def get_black_listed_extensions(self) -> list:
         """Returns a list of all unload blacklisted extensions."""
@@ -106,40 +121,35 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         """Load, unload, reload, and list loaded extensions."""
         await ctx.send_help(ctx.command)
 
-    @extensions_group.command(name="load", aliases=("l",))
+    @extensions_group.command(name="load", aliases=("l",), require_var_positional=True)
     async def load_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         r"""
         Load extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all unloaded extensions will be loaded.
         """
-        if not extensions:
-            await ctx.send_help(ctx.command)
-            return
-
         if "*" in extensions:
             extensions = sorted(ext for ext in self.all_extensions if ext not in self.bot.extensions.keys())
 
-        msg = self.batch_manage(Action.LOAD, *extensions)
-        await ctx.send(msg)
+        msg, is_error = self.batch_manage(Action.LOAD, *extensions)
+        if not is_error:
+            await responses.send_positive_response(ctx, msg)
+        else:
+            await responses.send_negatory_response(ctx, msg)
 
-    @extensions_group.command(name="unload", aliases=("ul",))
+    @extensions_group.command(name="unload", aliases=("ul",), require_var_positional=True)
     async def unload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         r"""
         Unload currently loaded extensions given their fully qualified or unqualified names.
 
         If '\*' is given as the name, all loaded extensions will be unloaded.
         """
-        if not extensions:
-            await ctx.send_help(ctx.command)
-            return
-
         blacklisted = [ext for ext in self.get_black_listed_extensions() if ext in extensions]
 
         if blacklisted:
             bl_msg = "\n".join(blacklisted)
-            await ctx.send(
-                f"{Emojis.failure} The following {self.type}(s) may not be unloaded:```\n{bl_msg}```"
+            await responses.send_negatory_response(
+                ctx, f"{Emojis.failure} The following {self.type}(s) may not be unloaded:```\n{bl_msg}```"
             )
             return
 
@@ -150,9 +160,13 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 if ext not in (self.get_black_listed_extensions())
             )
 
-        await ctx.send(self.batch_manage(Action.UNLOAD, *extensions))
+        msg, is_error = self.batch_manage(Action.UNLOAD, *extensions)
+        if not is_error:
+            await responses.send_positive_response(ctx, msg)
+        else:
+            await responses.send_negatory_response(ctx, msg)
 
-    @extensions_group.command(name="reload", aliases=("r", "rl"))
+    @extensions_group.command(name="reload", aliases=("r", "rl"), require_var_positional=True)
     async def reload_extensions(self, ctx: Context, *extensions: ExtensionConverter) -> None:
         r"""
         Reload extensions given their fully qualified or unqualified names.
@@ -161,14 +175,14 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         If '\*' is given as the name, all currently loaded extensions will be reloaded.
         """
-        if not extensions:
-            await ctx.send_help(ctx.command)
-            return
-
         if "*" in extensions:
-            extensions = self.bot.extensions.keys() & self.all_extensions.keys()
+            extensions = self.bot.extensions.keys() & self.all_extensions
 
-        await ctx.send(self.batch_manage(Action.RELOAD, *extensions))
+        msg, is_error = self.batch_manage(Action.RELOAD, *extensions)
+        if not is_error:
+            await responses.send_positive_response(ctx, msg)
+        else:
+            await responses.send_negatory_response(ctx, msg)
 
     @extensions_group.command(name="list", aliases=("all", "ls"))
     async def list_extensions(self, ctx: Context) -> None:
@@ -199,6 +213,23 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             lines or f"There are no {self.type}s installed.", ctx.message, embed=embed
         )
 
+    def _resync_extensions(self) -> None:
+        """Resyncs extensions. Useful for when the files are dynamically updated."""
+        log.debug(f"Refreshing list of {self.type}s.")
+
+        # make sure the new walk contains all currently loaded extensions, so they can be unloaded
+        all_exts: ModuleDict = {}
+        for name, metadata in self.all_extensions.items():
+            if name in self.bot.extensions:
+                all_exts[name] = metadata
+
+        # re-walk the extensions
+        for name, metadata in walk_extensions():
+            all_exts[name] = metadata
+
+        self.all_extensions.clear()
+        self.all_extensions.update(all_exts)
+
     @extensions_group.command(name="refresh", aliases=("rewalk", "rescan"))
     async def resync_extensions(self, ctx: Context) -> None:
         """
@@ -206,31 +237,20 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         Typical use case is in the event that the existing extensions have changed while the bot is running.
         """
-        log.debug(f"Refreshing list of {self.type}s.")
+        self._resync_extensions()
+        await responses.send_positive_response(ctx, f":ok_hand: Refreshed list of {self.type}s.")
 
-        # make sure the new walk contains all currently loaded extensions, so they can be unloaded
-        loaded_extensions = {}
-        for name, should_load in self.all_extensions.items():
-            if name in self.bot.extensions:
-                loaded_extensions[name] = should_load
-
-        # now that we know what the list was, we can clear it
-        self.all_extensions.clear()
-        # put the loaded extensions back in
-        self.all_extensions.update(loaded_extensions)
-        # now we can re-walk the extensions
-        self.all_extensions.update(self.refresh_method())
-        await ctx.send(f":ok_hand: Refreshed list of {self.type}s.")
-
-    def group_extension_statuses(self) -> t.Mapping[str, str]:
+    def group_extension_statuses(self) -> Mapping[str, str]:
         """Return a mapping of extension names and statuses to their categories."""
         categories = defaultdict(list)
 
-        for ext in self.all_extensions:
+        for ext, metadata in self.all_extensions.items():
             if ext in self.bot.extensions:
-                status = ":green_circle:"
+                status = StatusEmojis.fully_loaded
+            elif metadata.load_if_mode & BOT_MODE:
+                status = StatusEmojis.disabled
             else:
-                status = ":red_circle:"
+                status = StatusEmojis.unloaded
 
             root, name = ext.rsplit(".", 1)
             if root.split(".", 1)[1] == self.module_name:
@@ -241,21 +261,26 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         return dict(categories)
 
-    def batch_manage(self, action: Action, *extensions: str) -> str:
+    def batch_manage(
+        self,
+        action: Action,
+        *extensions: str,
+        **kw,
+    ) -> Tuple[str, bool]:
         """
         Apply an action to multiple extensions and return a message with the results.
 
-        If only one extension is given, it is deferred to `manage()`.
+        Any extra kwargs are passed to `manage()` which handles all passed modules.
         """
         if len(extensions) == 1:
-            msg, _ = self.manage(action, extensions[0])
-            return msg
+            msg, failures = self.manage(action, extensions[0], **kw)
+            return msg, bool(failures)
 
         verb = action.name.lower()
         failures = {}
 
         for extension in sorted(extensions):
-            _, error = self.manage(action, extension)
+            _, error = self.manage(action, extension, **kw)
             if error:
                 failures[extension] = error
 
@@ -268,24 +293,41 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
         log.debug(f"Batch {verb}ed {self.type}s.")
 
-        return msg
+        return msg, bool(failures)
 
-    def manage(self, action: Action, ext: str) -> t.Tuple[str, t.Optional[str]]:
+    def manage(
+        self,
+        action: Action,
+        ext: str,
+        *,
+        is_plugin: bool = False,
+        suppress_already_error: bool = False,
+    ) -> Tuple[str, Union[str, bool]]:
         """Apply an action to an extension and return the status message and any error message."""
         verb = action.name.lower()
         error_msg = None
-
+        msg = None
+        not_quite = False
         try:
             action.value(self.bot, ext)
         except (commands.ExtensionAlreadyLoaded, commands.ExtensionNotLoaded):
-            if action is Action.RELOAD:
+            if suppress_already_error:
+                pass
+            elif action is Action.RELOAD:
                 # When reloading, have a special error.
                 msg = (
                     f"{Emojis.failure} {self.type.capitalize()} "
                     f"`{ext}` is not loaded, so it was not {verb}ed."
                 )
+                not_quite = True
+            elif action is Action.INSTALL:
+                # extension wasn't loaded, so load it
+                # this is used for plugins
+                Action.LOAD.value(self.bot, ext)
+
             else:
-                msg = f"{Emojis.failure} {self.type.capitalize()} `{ext}` is already {verb}ed."
+                msg = f"{Emojis.failure} {self.type.capitalize()} `{ext}` is already {verb.rstrip('e')}ed."
+                not_quite = True
         except Exception as e:
             if hasattr(e, "original"):
                 # If original exception is present, then utilize it
@@ -295,11 +337,12 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
 
             error_msg = f"{e.__class__.__name__}: {e}"
             msg = f"{Emojis.failure} Failed to {verb} {self.type} `{ext}`:\n```\n{error_msg}```"
-        else:
-            msg = f"{Emojis.success} {self.type.capitalize()} successfully {verb}ed: `{ext}`."
+
+        if msg is None:
+            msg = f"{Emojis.success} {self.type.capitalize()} successfully {verb.rstrip('e')}ed: `{ext}`."
 
         log.debug(error_msg or msg)
-        return msg, error_msg
+        return msg, error_msg or not_quite
 
     # This cannot be static (must have a __func__ attribute).
     async def cog_check(self, ctx: Context) -> bool:
@@ -311,8 +354,12 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
     async def cog_command_error(self, ctx: Context, error: Exception) -> None:
         """Handle BadArgument errors locally to prevent the help command from showing."""
         if isinstance(error, commands.BadArgument):
-            await ctx.send(str(error), allowed_mentions=AllowedMentions.none())
+            await responses.send_negatory_response(ctx, str(error))
             error.handled = True
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send_help(ctx.command)
+        else:
+            raise error
 
 
 def setup(bot: ModmailBot) -> None:

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from discord import InteractionType
 
-from modmail.utils.cogs import ModmailCog
+from modmail.utils.cogs import ExtMetadata, ModmailCog
 
 
 if TYPE_CHECKING:
@@ -16,6 +16,8 @@ if TYPE_CHECKING:
     from modmail.log import ModmailLogger
 
 logger: ModmailLogger = logging.getLogger(__name__)
+
+EXT_METADATA = ExtMetadata
 
 
 class PaginatorManager(ModmailCog):

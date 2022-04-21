@@ -1,14 +1,24 @@
+from __future__ import annotations
+
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
-from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
+from modmail.utils.cogs import BOT_MODE, BotModeEnum, ExtMetadata
+from modmail.utils.cogs import ModmailCog as _ModmailCog
 
 
-__all__ = ["PluginCog", ModmailBot, ModmailLogger, BotModes, ExtMetadata]
+__all__ = (
+    "PluginCog",
+    BOT_MODE,
+    BotModeEnum,
+    ExtMetadata,
+    ModmailBot,
+    ModmailLogger,
+)
 
 
-class PluginCog(ModmailCog):
+class PluginCog(_ModmailCog):
     """
-    The base class that all cogs must inherit from.
+    The base class that all Plugin cogs must inherit from.
 
     A cog is a collection of commands, listeners, and optional state to
     help group commands together. More information on them can be found on

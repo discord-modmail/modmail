@@ -9,7 +9,7 @@ from discord.ext import commands
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils import responses
-from modmail.utils.cogs import BotModes, ExtMetadata, ModmailCog
+from modmail.utils.cogs import BotModeEnum, ExtMetadata, ModmailCog
 from modmail.utils.extensions import BOT_MODE
 
 
@@ -21,7 +21,7 @@ ERROR_COLOUR = responses.DEFAULT_FAILURE_COLOUR
 
 ERROR_TITLE_REGEX = re.compile(r"((?<=[a-z])[A-Z]|(?<=[a-zA-Z])[A-Z](?=[a-z]))")
 
-ANY_DEV_MODE = BOT_MODE & (BotModes.DEVELOP.value + BotModes.PLUGIN_DEV.value)
+ANY_DEV_MODE = BOT_MODE & (BotModeEnum.DEVELOP.value + BotModeEnum.PLUGIN_DEV.value)
 
 MAYBE_DM_ON_PERM_ERROR = True
 

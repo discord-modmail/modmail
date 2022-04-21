@@ -3,6 +3,7 @@ import logging
 import signal
 import socket
 import typing as t
+from typing import Optional, Set
 
 import aiohttp
 import arrow
@@ -11,11 +12,14 @@ from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
 
+from modmail.addons.errors import NoPluginTomlFoundError
+from modmail.addons.models import Plugin
+from modmail.addons.plugins import PLUGINS, find_plugins
 from modmail.config import config
 from modmail.dispatcher import Dispatcher
 from modmail.log import ModmailLogger
-from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
-from modmail.utils.plugins import PLUGINS, walk_plugins
+from modmail.utils.cogs import ModmailCog
+from modmail.utils.extensions import BOT_MODE, EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.threads import Ticket
 
 
@@ -37,6 +41,7 @@ class ModmailBot(commands.Bot):
     """
 
     logger: ModmailLogger = logging.getLogger(__name__)
+    mode: int
     dispatcher: Dispatcher
 
     _tickets: t.Dict[int, Ticket] = dict()
@@ -49,6 +54,9 @@ class ModmailBot(commands.Bot):
 
         self._connector = None
         self._resolver = None
+
+        # keys: plugins, list values: all plugin files
+        self.installed_plugins: Optional[Set[Plugin]] = None
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
@@ -178,7 +186,12 @@ class ModmailBot(commands.Bot):
 
     async def close(self) -> None:
         """Safely close HTTP session, unload plugins and extensions when the bot is shutting down."""
-        plugins = self.extensions & PLUGINS.keys()
+        plugins = []
+        for plug in PLUGINS:
+            plugins.extend([mod for mod in plug.modules])
+
+        plugins = self.extensions.keys() & plugins
+
         for plug in list(plugins):
             try:
                 self.unload_extension(plug)
@@ -210,31 +223,48 @@ class ModmailBot(commands.Bot):
 
     def load_extensions(self) -> None:
         """Load all enabled extensions."""
+        self.mode = BOT_MODE
         EXTENSIONS.update(walk_extensions())
 
-        # set up no_unload global too
-        for ext, value in EXTENSIONS.items():
-            if value[1]:
+        for ext, metadata in EXTENSIONS.items():
+            # set up no_unload global too
+            if metadata.no_unload:
                 NO_UNLOAD.append(ext)
 
-        for extension, value in EXTENSIONS.items():
-            if value[0]:
-                self.logger.debug(f"Loading extension {extension}")
-                self.load_extension(extension)
+            if metadata.load_if_mode & BOT_MODE:
+                self.logger.info(f"Loading extension {ext}")
+                self.load_extension(ext)
+            else:
+                self.logger.debug(f"SKIPPING load of extension {ext} due to BOT_MODE.")
 
     def load_plugins(self) -> None:
         """Load all enabled plugins."""
-        PLUGINS.update(walk_plugins())
+        self.installed_plugins = PLUGINS
+        dont_load_at_start = []
+        try:
+            PLUGINS.update(find_plugins())
+        except NoPluginTomlFoundError:
+            # no local plugins
+            pass
+        else:
+            for plug in self.installed_plugins:
+                if plug.enabled:
+                    continue
+                self.logger.debug(f"Not loading {plug.__str__()} on start since it's not enabled.")
+                dont_load_at_start.extend(plug.modules)
 
-        for plugin, should_load in PLUGINS.items():
-            if should_load:
-                self.logger.debug(f"Loading plugin {plugin}")
-                try:
-                    # since we're loading user generated content,
-                    # any errors here will take down the entire bot
-                    self.load_extension(plugin)
-                except Exception:
-                    self.logger.error("Failed to load plugin {0}".format(plugin), exc_info=True)
+        for plug in PLUGINS:
+            for mod, metadata in plug.modules.items():
+                if metadata.load_if_mode & self.mode and mod not in dont_load_at_start:
+                    self.logger.debug(f"Loading plugin {mod}")
+                    try:
+                        # since we're loading user generated content,
+                        # any errors here will take down the entire bot
+                        self.load_extension(mod)
+                    except Exception:
+                        self.logger.error(f"Failed to load plugin {mod!s}", exc_info=True)
+                else:
+                    self.logger.debug(f"SKIPPED loading plugin {mod}")
 
     def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         """
@@ -243,12 +273,10 @@ class ModmailBot(commands.Bot):
         Utilizes the default discord.py loader beneath, but also checks so we can warn when we're
         loading a non-ModmailCog cog.
         """
-        from modmail.utils.cogs import ModmailCog
-
         if not isinstance(cog, ModmailCog):
             self.logger.warning(
-                f"Cog {cog.name} is not a ModmailCog. All loaded cogs should always be"
-                f" instances of ModmailCog."
+                f"Cog {cog.qualified_name} is not a ModmailCog. All loaded cogs should always be"
+                " instances of ModmailCog."
             )
         super().add_cog(cog, override=override)
         self.logger.info(f"Cog loaded: {cog.qualified_name}")

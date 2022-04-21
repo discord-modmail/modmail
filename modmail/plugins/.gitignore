@@ -3,10 +3,7 @@
 # don't ignore this file
 !/.gitignore
 
-# ignore the local folder, but not the readme
-local/**
-!local/
-!local/README.md
-
-# ensure this file is uploaded so `plugins` is considered a module
+# ensure __init__.py is uploaded so `plugins` is considered a module
 !/__init__.py
+# keep our helper file in here
+!/helpers.py

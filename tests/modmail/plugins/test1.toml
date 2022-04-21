@@ -1,0 +1,3 @@
+[[plugins]]
+name = 'working plug'
+directory = 'working_plugin'

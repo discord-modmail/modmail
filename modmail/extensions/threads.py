@@ -14,7 +14,7 @@ from discord.ext.commands import Context
 from discord.utils import escape_markdown
 
 from modmail.utils.cogs import ExtMetadata, ModmailCog
-from modmail.utils.extensions import BOT_MODE, BotModes
+from modmail.utils.extensions import BOT_MODE, BotModeEnum
 from modmail.utils.threads import Ticket, is_modmail_thread
 from modmail.utils.threads.errors import ThreadAlreadyExistsError, ThreadNotFoundError
 from modmail.utils.time import TimeStampEnum, get_discord_formatted_timestamp
@@ -27,7 +27,7 @@ if TYPE_CHECKING:  # pragma: nocover
 
 EXT_METADATA = ExtMetadata()
 
-DEV_MODE_ENABLED = BOT_MODE & BotModes.DEVELOP
+DEV_MODE_ENABLED = BOT_MODE & BotModeEnum.DEVELOP
 
 BASE_JUMP_URL = "https://discord.com/channels"
 DM_FAILURE_MESSAGE = (

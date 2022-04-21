@@ -16,14 +16,15 @@ packages = [{ include = "modmail" }]
 python = "^3.8"
 aiohttp = { extras = ["speedups"], version = "^3.7.4" }
 arrow = "^1.1.1"
+atoml = "^1.0.3"
 colorama = "^0.4.3"
 coloredlogs = "^15.0"
 "discord.py" = { url = "https://github.com/Rapptz/discord.py/archive/45d498c1b76deaf3b394d17ccf56112fa691d160.zip" }
-python-dotenv = "^0.19.2"
-atoml = "^1.0.3"
 attrs = "^21.2.0"
 desert = "^2020.11.18"
 marshmallow = "~=3.13.0"
+rapidfuzz = "^2.0.10"
+python-dotenv = "^0.19.2"
 PyYAML = { version = "^5.4.1", optional = true }
 typing-extensions = "^3.10.0.2"
 marshmallow-enum = "^1.5.1"
@@ -56,6 +57,7 @@ pytest = "^6.2.4"
 pytest-asyncio = "^0.15.1"
 pytest-cov = "^3.0.0"
 pytest-dependency = "^0.5.1"
+pytest-raises = "^0.11"
 pytest-sugar = "^0.9.4"
 pytest-xdist = { version = "^2.3.0", extras = ["psutil"] }
 # Documentation
@@ -73,6 +75,9 @@ build-backend = "poetry.core.masonry.api"
 branch = true
 source_pkgs = ['modmail', 'tests']
 omit = ["modmail/plugins/**.*"]
+
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING", "pragma: no cover"]
 
 [tool.pytest.ini_options]
 addopts = "--cov --cov-report="

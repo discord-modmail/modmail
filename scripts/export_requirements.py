@@ -16,9 +16,12 @@ import textwrap
 
 import tomli
 
+from ._utils import PROJECT_DIR, CheckFileEdit
 
-GENERATED_FILE = pathlib.Path("requirements.txt")
-DOC_REQUIREMENTS = pathlib.Path("docs/.requirements.txt")
+
+GENERATED_FILE = PROJECT_DIR / "requirements.txt"
+CONSTRAINTS_FILE = PROJECT_DIR / "modmail/constraints.txt"
+DOC_REQUIREMENTS = PROJECT_DIR / "docs/.requirements.txt"
 
 VERSION_RESTRICTER_REGEX = re.compile(r"(?P<sign>[<>=!]{1,2})(?P<version>\d+\.\d+?)(?P<patch>\.\d+?|\.\*)?")
 PLATFORM_MARKERS_REGEX = re.compile(r'sys_platform\s?==\s?"(?P<platform>\w+)"')
@@ -54,6 +57,24 @@ def check_hash(hash: str, content: dict) -> bool:
         return content_hash
 
     return hash == get_hash(content)
+
+
+def _write_file(path: os.PathLike, contents: str, skip_if_identical: bool = True) -> bool:
+    """
+    Write to a supplied file.
+
+    If skip_if_equal is True, will not write if the contents will not change. (Default: True)
+    """
+    path = pathlib.Path(path)
+    if path.exists():
+        with open(path, "r") as f:
+            if contents == f.read():
+                # nothing to edit
+                return False
+
+    with open(path, "w") as f:
+        f.write(contents)
+        return True
 
 
 def _extract_packages_from_requirements(requirements: str) -> "tuple[set[str],list[str]]":
@@ -109,6 +130,7 @@ def _export_doc_requirements(toml: dict, file: pathlib.Path, *packages) -> int:
     file = pathlib.Path(file)
     if not file.exists():
         # file does not exist
+        print(f"{file.relative_to(PROJECT_DIR)!s} must exist to export doc requirements")
         return 2
 
     with open(file) as f:
@@ -130,19 +152,25 @@ def _export_doc_requirements(toml: dict, file: pathlib.Path, *packages) -> int:
     except AttributeError as e:
         print(e)
         return 3
-    if new_contents == contents:
-        # don't write anything, just return 0
-        return 0
 
-    with open(file, "w") as f:
-        f.write(new_contents)
+    with CheckFileEdit(file) as check_file:
 
-    return 1
+        check_file.write(file, new_contents)
+
+    for file, diff in check_file.edited_files.items():
+        print(
+            f"Exported new documentation requirements to {file.relative_to(PROJECT_DIR)!s}.",
+            file=sys.stderr,
+        )
+        print(diff or "No diff to show.")
+        print()
 
 
-def main(
+def export(
     req_path: os.PathLike,
     should_validate_hash: bool = True,
+    *,
+    include_markers: bool = True,
     export_doc_requirements: bool = True,
 ) -> int:
     """Read and export all required packages to their pinned version in requirements.txt format."""
@@ -188,54 +216,58 @@ def main(
             line += "=="
             line += dep["version"]
 
-        if (pyvers := dep["python-versions"]) != "*":
-            # TODO: add support for platform and python combined version markers
-            line += " ; "
-            final_version_index = pyvers.count(", ")
-            for count, version in enumerate(pyvers.split(", ")):
-                match = VERSION_RESTRICTER_REGEX.match(version)
+        if include_markers:
+            if (pyvers := dep["python-versions"]) != "*":
+                # TODO: add support for platform and python combined version markers
+                line += " ; "
+                final_version_index = pyvers.count(", ")
+                for count, version in enumerate(pyvers.split(", ")):
+                    match = VERSION_RESTRICTER_REGEX.match(version)
 
-                if (patch := match.groupdict().get("patch", None)) is not None and not patch.endswith("*"):
-                    version_kind = "python_full_version"
-                else:
-                    version_kind = "python_version"
+                    if (patch := match.groupdict().get("patch", None)) is not None and not patch.endswith(
+                        "*"
+                    ):
+                        version_kind = "python_full_version"
+                    else:
+                        version_kind = "python_version"
 
-                patch = patch if patch is not None else ""
-                patch = patch if not patch.endswith("*") else ""
-                line += version_kind + " "
-                line += match.group("sign") + " "
-                line += '"' + match.group("version") + patch + '"'
-                line += " "
-                if count < final_version_index:
-                    line += "and "
+                    patch = patch if patch is not None else ""
+                    patch = patch if not patch.endswith("*") else ""
+                    line += version_kind + " "
+                    line += match.group("sign") + " "
+                    line += '"' + match.group("version") + patch + '"'
+                    line += " "
+                    if count < final_version_index:
+                        line += "and "
 
-        if (dep_deps := dep.get("dependencies", None)) is not None:
+            if (dep_deps := dep.get("dependencies", None)) is not None:
 
-            for k, v in copy.copy(dep_deps).items():
-                if hasattr(v, "get") and v.get("markers", None) is not None:
-                    pass
-                else:
-                    del dep_deps[k]
-            if len(dep_deps):
-                to_add_markers.update(dep_deps)
+                for k, v in copy.copy(dep_deps).items():
+                    if hasattr(v, "get") and v.get("markers", None) is not None:
+                        pass
+                    else:
+                        del dep_deps[k]
+                if len(dep_deps):
+                    to_add_markers.update(dep_deps)
 
         dependency_lines[dep["name"]] = line
 
-    # add the sys_platform lines
-    # platform markers only matter based on what requires the dependency
-    # in order to support these properly, they have to be added to an already existing line
-    # for example, humanfriendly requires pyreadline on windows only,
-    # so sys_platform == win needs to be added to pyreadline
-    for k, v in to_add_markers.items():
-        line = dependency_lines[k]
-        markers = PLATFORM_MARKERS_REGEX.match(v["markers"])
-        if markers is not None:
-            if ";" not in line:
-                line += " ; "
-            elif "python_" in line or "sys_platform" in line:
-                line += "and "
-            line += 'sys_platform == "' + markers.group("platform") + '"'
-        dependency_lines[k] = line
+    if include_markers:
+        # add the sys_platform lines
+        # platform markers only matter based on what requires the dependency
+        # in order to support these properly, they have to be added to an already existing line
+        # for example, humanfriendly requires pyreadline on windows only,
+        # so sys_platform == win needs to be added to pyreadline
+        for k, v in to_add_markers.items():
+            line = dependency_lines[k]
+            markers = PLATFORM_MARKERS_REGEX.match(v["markers"])
+            if markers is not None:
+                if ";" not in line:
+                    line += " ; "
+                elif "python_" in line or "sys_platform" in line:
+                    line += "and "
+                line += 'sys_platform == "' + markers.group("platform") + '"'
+            dependency_lines[k] = line
 
     req_txt += "\n".join(sorted(k + v.rstrip() for k, v in dependency_lines.items())) + "\n"
 
@@ -244,18 +276,25 @@ def main(
     else:
         exit_code = 0
 
-    if req_path.exists():
-        with open(req_path, "r") as f:
-            if req_txt == f.read():
-                # nothing to edit
-                # if exit_code is ever removed from here, this should return zero
-                return exit_code
+    with CheckFileEdit(req_path) as check_file:
+        check_file.write(req_path, req_txt)
 
-    with open(req_path, "w") as f:
-        f.write(req_txt)
-        print(f"Updated {req_path} with new requirements.")
+    for file, diff in check_file.edited_files.items():
+        print(
+            f"Exported new requirements to {file.relative_to(PROJECT_DIR)}.",
+            file=sys.stderr,
+        )
+        print(diff or "No diff to show.")
+        print()
+    return bool(len(check_file.edited_files)) or exit_code
 
-    return 1
+
+def main(path: os.PathLike, include_markers: bool = True, **kwargs) -> int:
+    """Export a requirements.txt and constraints.txt file."""
+    if not include_markers:
+        path = path or CONSTRAINTS_FILE
+    kwargs["include_markers"] = include_markers
+    return export(path, **kwargs)
 
 
 if __name__ == "__main__":
@@ -287,10 +326,12 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    # I am aware that the second method will only run if the first method returns 0. This is intended.
     sys.exit(
         main(
             args.output_file,
             should_validate_hash=not args.skip_hash_check,
             export_doc_requirements=args.export_doc_requirements,
         )
+        or main(CONSTRAINTS_FILE, include_markers=False, should_validate_hash=not args.skip_hash_check)
     )

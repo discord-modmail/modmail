@@ -56,10 +56,18 @@ plugins:
 
 # Page tree
 nav:
-- Home: README.md
-- Contributing: contributing.md
-- Security: security.md
-- Changelog: changelog.md
+  - Home: README.md
+  - Changelog: changelog.md
+  - Security: security.md
+  - Addons:
+      - Overview: addons/README.md
+      - Installation: addons/installation.md
+      - Creating Plugins: addons/plugins.md
+  - Contributing:
+      - Guidelines: contributing.md
+      - Creating an Extension: contributing/creating_an_extension.md
+
+
 
 # Extensions
 markdown_extensions:
