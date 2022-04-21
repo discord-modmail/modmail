@@ -16,6 +16,7 @@ from modmail.dispatcher import Dispatcher
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
 from modmail.utils.plugins import PLUGINS, walk_plugins
+from modmail.utils.threads import Ticket
 
 
 REQUIRED_INTENTS = Intents(
@@ -38,9 +39,11 @@ class ModmailBot(commands.Bot):
     logger: ModmailLogger = logging.getLogger(__name__)
     dispatcher: Dispatcher
 
+    _tickets: t.Dict[int, Ticket] = dict()
+
     def __init__(self, **kwargs):
         self.config = config()
-        self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
+        self.start_time: arrow.Arrow = arrow.utcnow()
         self.http_session: t.Optional[aiohttp.ClientSession] = None
         self.dispatcher = Dispatcher()
 

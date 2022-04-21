@@ -19,3 +19,7 @@ production = true
 [emojis]
 failure = ":x:"
 success = ":thumbsup:"
+
+[threads]
+relay_channel_id = 0
+thread_mention_role_id = 0

@@ -6,6 +6,7 @@ import pathlib
 import types
 import typing
 from collections import defaultdict
+from typing import Optional
 
 import attr
 import desert
@@ -383,6 +384,26 @@ class EmojiConfig:
     )
 
 
+@attr.mutable(slots=True)
+class ThreadConfig:
+    """Thread configuration."""
+
+    thread_mention_role_id: Optional[int] = attr.ib(
+        default=0,
+        metadata={
+            METADATA_TABLE: ConfigMetadata(
+                description="Role to mention on ticket creation.",
+            )
+        },
+        converter=int,
+    )
+    relay_channel_id: Optional[int] = attr.ib(
+        default=0,
+        metadata={METADATA_TABLE: ConfigMetadata(description="Channel to use for creating tickets.")},
+        converter=int,
+    )
+
+
 @attr.s(auto_attribs=True, slots=True)
 class BaseConfig:
     """
@@ -406,6 +427,7 @@ class BaseConfig:
         },
     )
     emojis: EmojiConfig = EmojiConfig()
+    threads: ThreadConfig = ThreadConfig()
 
 
 # build configuration
