@@ -24,7 +24,7 @@ repos:
           - pyyaml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.2.0
     hooks:
       - id: check-case-conflict
       - id: check-added-large-files
@@ -65,19 +65,19 @@ repos:
       - id: python-use-type-annotations
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.9.3
+    rev: 5.10.1
     hooks:
       - id: isort
 
   - repo: https://github.com/asottile/blacken-docs
-    rev: v1.11.0
+    rev: v1.12.1
     hooks:
       - id: blacken-docs
         additional_dependencies:
           - black
 
   - repo: https://github.com/psf/black
-    rev: 21.8b0
+    rev: 22.3.0
     hooks:
       - id: black
         language_version: python3

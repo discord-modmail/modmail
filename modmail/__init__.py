@@ -28,7 +28,7 @@ logging.addLevelName(logging.TRACE, "TRACE")
 logging.addLevelName(logging.NOTICE, "NOTICE")
 
 
-LOG_FILE_SIZE = 8 * (2 ** 10) ** 2  # 8MB, discord upload limit
+LOG_FILE_SIZE = 8 * (2**10) ** 2  # 8MB, discord upload limit
 
 # this logging level is set to logging.TRACE because if it is not set to the lowest level,
 # the child level will be limited to the lowest level this is set to.
