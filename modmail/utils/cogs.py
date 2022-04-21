@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from discord.ext import commands
 
-from modmail.config import CONFIG
+from modmail.config import config
 
 
 __all__ = (
@@ -60,8 +60,9 @@ def determine_bot_mode() -> int:
     The configuration system uses true/false values, so we need to turn them into an integer for bitwise.
     """
     bot_mode = 0
+    _config = config()
     for mode in BotModeEnum:
-        if getattr(CONFIG.dev.mode, str(mode).rsplit(".", maxsplit=1)[-1].lower(), True):
+        if getattr(_config.user.dev.mode, mode.name.lower(), True):
             bot_mode += mode.value
     return bot_mode
 

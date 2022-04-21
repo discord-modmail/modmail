@@ -11,6 +11,7 @@ from discord import Colour, Embed
 from discord.ext import commands
 from discord.ext.commands import Context
 
+import modmail.config
 from modmail.bot import ModmailBot
 from modmail.log import ModmailLogger
 from modmail.utils import responses
@@ -33,6 +34,9 @@ class StatusEmojis:
     unloaded: str = ":red_circle:"
     disabled: str = ":brown_circle:"
     unknown: str = ":black_circle:"
+
+
+Emojis = modmail.config.config().user.emojis
 
 
 class Action(Enum):
@@ -81,12 +85,12 @@ class ExtensionConverter(commands.Converter):
                 matches.append(ext)
 
         if not matches:
-            raise commands.BadArgument(f":x: Could not find the {self.type} `{argument}`.")
+            raise commands.BadArgument(f"{Emojis.failure} Could not find the {self.type} `{argument}`.")
 
         if len(matches) > 1:
             names = "\n".join(sorted(matches))
             raise commands.BadArgument(
-                f":x: `{argument}` is an ambiguous {self.type} name. "
+                f"{Emojis.failure} `{argument}` is an ambiguous {self.type} name. "
                 f"Please use one of the following fully-qualified names.```\n{names}```"
             )
 
@@ -145,7 +149,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
         if blacklisted:
             bl_msg = "\n".join(blacklisted)
             await responses.send_negatory_response(
-                ctx, f":x: The following {self.type}(s) may not be unloaded:```\n{bl_msg}```"
+                ctx, f"{Emojis.failure} The following {self.type}(s) may not be unloaded:```\n{bl_msg}```"
             )
             return
 
@@ -280,7 +284,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             if error:
                 failures[extension] = error
 
-        emoji = ":x:" if failures else ":thumbsup:"
+        emoji = Emojis.failure if failures else Emojis.success
         msg = f"{emoji} {len(extensions) - len(failures)} / {len(extensions)} {self.type}s {verb}ed."
 
         if failures:
@@ -311,7 +315,10 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 pass
             elif action is Action.RELOAD:
                 # When reloading, have a special error.
-                msg = f":x: {self.type.capitalize()} `{ext}` is not loaded, so it was not {verb}ed."
+                msg = (
+                    f"{Emojis.failure} {self.type.capitalize()} "
+                    f"`{ext}` is not loaded, so it was not {verb}ed."
+                )
                 not_quite = True
             elif action is Action.INSTALL:
                 # extension wasn't loaded, so load it
@@ -319,7 +326,7 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
                 Action.LOAD.value(self.bot, ext)
 
             else:
-                msg = f":x: {self.type.capitalize()} `{ext}` is already {verb.rstrip('e')}ed."
+                msg = f"{Emojis.failure} {self.type.capitalize()} `{ext}` is already {verb.rstrip('e')}ed."
                 not_quite = True
         except Exception as e:
             if hasattr(e, "original"):
@@ -329,10 +336,10 @@ class ExtensionManager(ModmailCog, name="Extension Manager"):
             log.exception(f"{self.type.capitalize()} '{ext}' failed to {verb}.")
 
             error_msg = f"{e.__class__.__name__}: {e}"
-            msg = f":x: Failed to {verb} {self.type} `{ext}`:\n```\n{error_msg}```"
+            msg = f"{Emojis.failure} Failed to {verb} {self.type} `{ext}`:\n```\n{error_msg}```"
 
         if msg is None:
-            msg = f":thumbsup: {self.type.capitalize()} successfully {verb.rstrip('e')}ed: `{ext}`."
+            msg = f"{Emojis.success} {self.type.capitalize()} successfully {verb.rstrip('e')}ed: `{ext}`."
 
         log.debug(error_msg or msg)
         return msg, error_msg or not_quite

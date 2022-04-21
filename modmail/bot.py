@@ -2,7 +2,8 @@ import asyncio
 import logging
 import signal
 import socket
-from typing import Any, Optional, Set
+import typing as t
+from typing import Optional, Set
 
 import aiohttp
 import arrow
@@ -14,7 +15,7 @@ from discord.ext import commands
 from modmail.addons.errors import NoPluginTomlFoundError
 from modmail.addons.models import Plugin
 from modmail.addons.plugins import PLUGINS, find_plugins
-from modmail.config import CONFIG
+from modmail.config import config
 from modmail.dispatcher import Dispatcher
 from modmail.log import ModmailLogger
 from modmail.utils.cogs import ModmailCog
@@ -43,9 +44,9 @@ class ModmailBot(commands.Bot):
     dispatcher: Dispatcher
 
     def __init__(self, **kwargs):
-        self.config = CONFIG
-        self.start_time: Optional[arrow.Arrow] = None  # arrow.utcnow()
-        self.http_session: Optional[aiohttp.ClientSession] = None
+        self.config = config()
+        self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
+        self.http_session: t.Optional[aiohttp.ClientSession] = None
         self.dispatcher = Dispatcher()
 
         self._connector = None
@@ -58,7 +59,7 @@ class ModmailBot(commands.Bot):
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
         # listen to messages mentioning the bot or matching the prefix
         # ! NOTE: This needs to use the configuration system to get the prefix from the db once it exists.
-        prefix = commands.when_mentioned_or(CONFIG.bot.prefix)
+        prefix = self.determine_prefix
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
@@ -74,6 +75,15 @@ class ModmailBot(commands.Bot):
         super().__init__(
             **kwargs,
         )
+
+    @staticmethod
+    async def determine_prefix(bot: "ModmailBot", message: discord.Message) -> t.List[str]:
+        """Dynamically get the updated prefix on every command."""
+        prefixes = []
+        if bot.config.user.bot.prefix_when_mentioned:
+            prefixes.extend(commands.when_mentioned(bot, message))
+        prefixes.append(bot.config.user.bot.prefix)
+        return prefixes
 
     async def create_connectors(self, *args, **kwargs) -> None:
         """Re-create the connector and set up sessions before logging into Discord."""
@@ -150,7 +160,7 @@ class ModmailBot(commands.Bot):
         except NotImplementedError:
             pass
 
-        def stop_loop_on_completion(f: Any) -> None:
+        def stop_loop_on_completion(f: t.Any) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(self.start(*args, **kwargs), loop=loop)

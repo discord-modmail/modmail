@@ -1,5 +1,16 @@
 import logging
-from typing import Any
+from typing import Any, Union
+
+
+def get_log_level_from_name(name: Union[str, int]) -> int:
+    """Find the logging level given the provided name."""
+    if isinstance(name, int):
+        return name
+    name = name.upper()
+    value = getattr(logging, name, "")
+    if not isinstance(value, int):
+        raise TypeError("name must be an existing logging level.")
+    return value
 
 
 class ModmailLogger(logging.Logger):

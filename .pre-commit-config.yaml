@@ -1,8 +1,30 @@
 ## Pre-commit setup
 
 repos:
+  # its possible to put this at the bottom, but we want the pre-commit-hooks to check these files as well.
+  - repo: local
+    hooks:
+      - id: ensure-default-configuration-is-exported
+        name: Export default configuration
+        language: python
+        entry: poetry run python -m scripts.export_new_config_to_default_config
+        files: '(app\.json|template\.env|modmail\/(config\.py|default_config(\.toml|\.yaml)))$'
+        require_serial: true
+        additional_dependencies:
+          # so apparently these are needed, but the versions don't have to be pinned since it uses the local env
+          # go figure.
+          - atoml
+          - attrs
+          - click
+          - coloredlogs
+          - desert
+          - discord.py
+          - marshmallow
+          - python-dotenv
+          - pyyaml
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.2.0
     hooks:
       - id: check-case-conflict
       - id: check-added-large-files
@@ -11,6 +33,7 @@ repos:
       - id: check-yaml
         exclude: 'mkdocs.yml' # Exclude all mkdocs.yml as they use tags i.e. `!!!`
       - id: pretty-format-json
+        exclude: 'app.json'
         args: [--indent=4, --autofix]
       - id: end-of-file-fixer
       - id: no-commit-to-branch
@@ -42,19 +65,19 @@ repos:
       - id: python-use-type-annotations
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.9.3
+    rev: 5.10.1
     hooks:
       - id: isort
 
   - repo: https://github.com/asottile/blacken-docs
-    rev: v1.11.0
+    rev: v1.12.1
     hooks:
       - id: blacken-docs
         additional_dependencies:
           - black
 
   - repo: https://github.com/psf/black
-    rev: 21.8b0
+    rev: 22.3.0
     hooks:
       - id: black
         language_version: python3
