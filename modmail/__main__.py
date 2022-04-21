@@ -21,7 +21,7 @@ def main() -> None:
     """Run the bot."""
     patch_embed()
     bot = ModmailBot()
-    bot.run(bot.config.bot.token)
+    bot.run(bot.config.user.bot.token)
 
 
 if __name__ == "__main__":

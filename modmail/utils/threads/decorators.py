@@ -18,7 +18,7 @@ def is_modmail_thread() -> Callable:
         """
         return (
             isinstance(ctx.channel, Thread)
-            and ctx.channel.parent.id == ctx.bot.config.thread.relay_channel_id
+            and ctx.channel.parent.id == ctx.bot.config.user.threads.relay_channel_id
         )
 
     return commands.check(predicate)

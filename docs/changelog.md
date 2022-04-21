@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Messages can now be relayed between a user and a server.
     - NOTE: There is not a database yet, so none of these messages are stored.
 - Added Dispatcher system, although it is not hooked into important features like thread creation yet. (#71)
+- Officially support python 3.10 (#119)
+- Officially support windows and macos (#121)
+- Completely rewrote configuration system (#75)
 
 ### Changed
 

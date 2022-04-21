@@ -138,7 +138,7 @@ class TicketsCog(ModmailCog, name="Threads"):
         # a new configuration system
         self.relay_channel: Union[
             discord.TextChannel, discord.PartialMessageable
-        ] = self.bot.get_partial_messageable(self.bot.config.thread.relay_channel_id)
+        ] = self.bot.get_partial_messageable(self.bot.config.user.threads.relay_channel_id)
 
         self.dms_to_users: Dict[int, int] = dict()  # key: dm_channel.id, value: user.id
 
@@ -158,7 +158,7 @@ class TicketsCog(ModmailCog, name="Threads"):
 
     async def init_relay_channel(self) -> None:
         """Fetch the relay channel."""
-        self.relay_channel = await self.bot.fetch_channel(self.bot.config.thread.relay_channel_id)
+        self.relay_channel = await self.bot.fetch_channel(self.bot.config.user.threads.relay_channel_id)
 
     async def fetch_necessary_values(self) -> None:
         """Fetch the audit log permission."""
@@ -333,8 +333,8 @@ class TicketsCog(ModmailCog, name="Threads"):
                 everyone=False, users=False, roles=True, replied_user=False
             )
         # TODO: !CONFIG add to configuration system.
-        if self.bot.config.thread.thread_mention_role_id is not None:
-            mention = f"<@&{self.bot.config.thread.thread_mention_role_id}>"
+        if self.bot.config.user.threads.thread_mention_role_id is not None:
+            mention = f"<@&{self.bot.config.user.threads.thread_mention_role_id}>"
         else:
             mention = "@here"
 

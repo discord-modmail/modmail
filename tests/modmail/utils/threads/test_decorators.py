@@ -34,7 +34,7 @@ def threaded_ctx(channel_id=None, /):
 )
 def test_is_modmail_thread(ctx, is_modmail_thread, expected: bool, config_id: int):
     """Check that is_modmail_thread requires the channel to be a thread and with a parent of log channel."""
-    ctx.bot.config.thread.relay_channel_id = config_id
+    ctx.bot.config.user.threads.relay_channel_id = config_id
     result = is_modmail_thread(ctx)
 
     assert expected == result
