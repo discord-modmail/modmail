@@ -19,7 +19,6 @@ repos:
           - coloredlogs
           - desert
           - discord.py
-          - environs
           - marshmallow
           - python-dotenv
           - pyyaml

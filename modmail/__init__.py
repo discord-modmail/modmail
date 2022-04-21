@@ -5,13 +5,17 @@ import os
 from pathlib import Path
 
 import coloredlogs
-import environs
 
-from modmail.log import ModmailLogger
+from modmail.log import ModmailLogger, get_log_level_from_name
 
 
-env = environs.Env()
-env.read_env(".env", recurse=False)
+try:
+    import dotenv
+except ModuleNotFoundError:
+    pass
+else:
+    dotenv.load_dotenv(".env")
+
 # On windows aiodns's asyncio support relies on APIs like add_reader (which aiodns uses)
 # are not guaranteed to be available, and in particular are not available when using the
 # ProactorEventLoop on Windows, this method is only supported with Windows SelectorEventLoop
@@ -28,7 +32,7 @@ LOG_FILE_SIZE = 8 * (2 ** 10) ** 2  # 8MB, discord upload limit
 
 # this logging level is set to logging.TRACE because if it is not set to the lowest level,
 # the child level will be limited to the lowest level this is set to.
-ROOT_LOG_LEVEL = env.log_level("MODMAIL_LOG_LEVEL", logging.TRACE)
+ROOT_LOG_LEVEL = get_log_level_from_name(os.environ.get("MODMAIL_LOG_LEVEL", logging.TRACE))
 FMT = "%(asctime)s %(levelname)10s %(name)15s - [%(lineno)5d]: %(message)s"
 DATEFMT = "%Y/%m/%d %H:%M:%S"
 
