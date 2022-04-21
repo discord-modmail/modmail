@@ -1,17 +1,17 @@
 import asyncio
 import logging
 import signal
+import socket
 import typing as t
-from typing import Any
 
+import aiohttp
 import arrow
 import discord
-from aiohttp import ClientSession
 from discord import Activity, AllowedMentions, Intents
 from discord.client import _cleanup_loop
 from discord.ext import commands
 
-from modmail.config import CONFIG
+from modmail.config import config
 from modmail.dispatcher import Dispatcher
 from modmail.log import ModmailLogger
 from modmail.utils.extensions import EXTENSIONS, NO_UNLOAD, walk_extensions
@@ -39,16 +39,19 @@ class ModmailBot(commands.Bot):
     dispatcher: Dispatcher
 
     def __init__(self, **kwargs):
-        self.config = CONFIG
+        self.config = config()
         self.start_time: t.Optional[arrow.Arrow] = None  # arrow.utcnow()
-        self.http_session: t.Optional[ClientSession] = None
+        self.http_session: t.Optional[aiohttp.ClientSession] = None
         self.dispatcher = Dispatcher()
+
+        self._connector = None
+        self._resolver = None
 
         status = discord.Status.online
         activity = Activity(type=discord.ActivityType.listening, name="users dming me!")
         # listen to messages mentioning the bot or matching the prefix
         # ! NOTE: This needs to use the configuration system to get the prefix from the db once it exists.
-        prefix = commands.when_mentioned_or(CONFIG.bot.prefix)
+        prefix = self.determine_prefix
         # allow only user mentions by default.
         # ! NOTE: This may change in the future to allow roles as well
         allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
@@ -65,6 +68,33 @@ class ModmailBot(commands.Bot):
             **kwargs,
         )
 
+    @staticmethod
+    async def determine_prefix(bot: "ModmailBot", message: discord.Message) -> t.List[str]:
+        """Dynamically get the updated prefix on every command."""
+        prefixes = []
+        if bot.config.user.bot.prefix_when_mentioned:
+            prefixes.extend(commands.when_mentioned(bot, message))
+        prefixes.append(bot.config.user.bot.prefix)
+        return prefixes
+
+    async def create_connectors(self, *args, **kwargs) -> None:
+        """Re-create the connector and set up sessions before logging into Discord."""
+        # Use asyncio for DNS resolution instead of threads so threads aren't spammed.
+        self._resolver = aiohttp.AsyncResolver()
+
+        # Use AF_INET as its socket family to prevent HTTPS related problems both locally
+        # and in production.
+        self._connector = aiohttp.TCPConnector(
+            resolver=self._resolver,
+            family=socket.AF_INET,
+        )
+
+        # Client.login() will call HTTPClient.static_login() which will create a session using
+        # this connector attribute.
+        self.http.connector = self._connector
+
+        self.http_session = aiohttp.ClientSession(connector=self._connector)
+
     async def start(self, token: str, reconnect: bool = True) -> None:
         """
         Start the bot.
@@ -74,8 +104,8 @@ class ModmailBot(commands.Bot):
         """
         try:
             # create the aiohttp session
-            self.http_session = ClientSession(loop=self.loop)
-            self.logger.trace("Created ClientSession.")
+            await self.create_connectors()
+            self.logger.trace("Created aiohttp.ClientSession.")
             # set start time to when we started the bot.
             # This is now, since we're about to connect to the gateway.
             # This should also be before we load any extensions, since if they have a load time, it should
@@ -122,7 +152,7 @@ class ModmailBot(commands.Bot):
         except NotImplementedError:
             pass
 
-        def stop_loop_on_completion(f: Any) -> None:
+        def stop_loop_on_completion(f: t.Any) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(self.start(*args, **kwargs), loop=loop)
@@ -164,10 +194,16 @@ class ModmailBot(commands.Bot):
             except Exception:
                 self.logger.error(f"Exception occured while removing cog {cog.name}", exc_info=True)
 
+        await super().close()
+
         if self.http_session:
             await self.http_session.close()
 
-        await super().close()
+        if self._connector:
+            await self._connector.close()
+
+        if self._resolver:
+            await self._resolver.close()
 
     def load_extensions(self) -> None:
         """Load all enabled extensions."""

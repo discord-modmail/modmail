@@ -43,7 +43,7 @@ class Meta(ModmailCog):
         await ctx.send(
             embed=discord.Embed(
                 title="Current Prefix",
-                description=f"My currently configured prefix is `{self.bot.config.bot.prefix}`.",
+                description=f"My currently configured prefix is `{self.bot.config.user.bot.prefix}`.",
             )
         )
 
