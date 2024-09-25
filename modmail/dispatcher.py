@@ -80,7 +80,7 @@ class Dispatcher:
             if underlying_function not in self.pending_handlers:
                 continue
 
-            for (event_name, priority) in self.pending_handlers[underlying_function]:
+            for event_name, priority in self.pending_handlers[underlying_function]:
                 self._register_handler(event_name, priority, value)
             self.pending_handlers[underlying_function].clear()
 

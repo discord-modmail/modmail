@@ -3,6 +3,7 @@ Exports the configuration to the configuration default files.
 
 This is intended to be used as a local pre-commit hook, which runs if the modmail/config.py file is changed.
 """
+
 import difflib
 import json
 import os

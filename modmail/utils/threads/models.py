@@ -73,9 +73,9 @@ class Ticket:
         """
         self.thread = thread
         self.recipient = recipient
-        self.log_message: Union[
-            discord.Message, discord.PartialMessage
-        ] = log_message or self.thread.parent.get_partial_message(self.thread.id)
+        self.log_message: Union[discord.Message, discord.PartialMessage] = (
+            log_message or self.thread.parent.get_partial_message(self.thread.id)
+        )
         self.messages = MessageDict()
         self.close_after = self.thread.auto_archive_duration
         self.has_sent_initial_message = has_sent_initial_message

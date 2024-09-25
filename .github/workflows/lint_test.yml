@@ -36,22 +36,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        python_version: ['3.8', '3.9','3.10']
-    env:
-      PYTHON_VERSION: ${{ matrix.python_version }}
     steps:
       - name: Add custom PYTHONUSERBASE to PATH
         run: echo '${{ env.PYTHONUSERBASE }}/bin/' >> $GITHUB_PATH
 
       # Checks out the repository in the current folder.
       - name: Checks out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Set up the right version of Python
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         id: python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -62,7 +58,7 @@ jobs:
       #
       # Only when the context is exactly the same, we will restore the cache.
       - name: Python Dependency Caching
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: python_cache
         with:
           path: ${{ env.PYTHONUSERBASE }}
@@ -72,7 +68,7 @@ jobs:
 
       # Install our dependencies if we did not restore a dependency cache
       - name: Install dependencies using poetry
-        if: steps.python_cache.outputs.cache-hit != 'true'
+        # if: steps.python_cache.outputs.cache-hit != 'true'
         run: |
           pip install poetry
           poetry install --no-interaction --no-ansi
@@ -81,7 +77,7 @@ jobs:
       # do create a new environment when our pre-commit setup changes,
       # we create a cache key based on relevant factors.
       - name: Pre-commit Environment Caching
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ env.PRE_COMMIT_HOME }}
           key: "precommit-0-${{ runner.os }}-${{ env.PRE_COMMIT_HOME }}-\
@@ -93,14 +89,14 @@ jobs:
       # we set PIP_USER=0 to not do a user install.
       - name: Run pre-commit hooks
         id: pre-commit
-        run: export PIP_USER=0; SKIP="no-commit-to-branch,black,flake8" pre-commit run --all-files
+        run: export PIP_USER=0; SKIP="no-commit-to-branch,black,flake8" poetry run pre-commit run --all-files
 
       # Run black seperately as we don't want to reformat the files
       # just error if something isn't formatted correctly.
       - name: Check files with black
         id: black
         if: always() && (steps.pre-commit.outcome == 'success' || steps.pre-commit.outcome == 'failure')
-        run: black . --check --diff --color
+        run: poetry run black . --check --diff --color
 
       # Run flake8 and have it format the linting errors in the format of
       # the GitHub Workflow command to register error annotations. This
@@ -113,7 +109,7 @@ jobs:
       - name: Run flake8
         id: flake8
         if: always() && (steps.pre-commit.outcome == 'success' || steps.pre-commit.outcome == 'failure')
-        run: "flake8 \
+        run: "poetry run flake8 \
         --format='::error file=%(path)s,line=%(row)d,col=%(col)d::\
         [flake8] %(code)s: %(text)s'"
 
@@ -132,12 +128,12 @@ jobs:
 
       # Checks out the repository in the current folder.
       - name: Checks out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Set up the right version of Python
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         id: python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -148,7 +144,7 @@ jobs:
       #
       # Only when the context is exactly the same, we will restore the cache.
       - name: Python Dependency Caching
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: python_cache
         with:
           path: ${{ env.PYTHONUSERBASE }}
@@ -158,7 +154,7 @@ jobs:
 
       # Install our dependencies if we did not restore a dependency cache
       - name: Install dependencies using poetry
-        if: steps.python_cache.outputs.cache-hit != 'true'
+        # if: steps.python_cache.outputs.cache-hit != 'true'
         run: |
           python -m pip install poetry
           python -m poetry install --no-interaction --no-ansi
@@ -168,7 +164,7 @@ jobs:
       # coverage report to github.
       - name: Run tests and generate coverage report
         id: run_tests
-        run: python -m pytest tests -n auto --dist loadfile --cov --disable-warnings -q
+        run: python -m poetry run pytest tests -n auto --dist loadfile --cov --disable-warnings -q
 
       # This step will publish the coverage reports to coveralls.io and
       # print a "job" link in the output of the GitHub Action
@@ -183,7 +179,7 @@ jobs:
           COVERALLS_FLAG_NAME: coverage-${{ runner.os }}-python-${{ env.PYTHON_VERSION }}
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
-        run: python -m coveralls
+        run: python -m poetry run coveralls
 
   coveralls-finish:
     name: Indicate completion to coveralls.io
@@ -235,7 +231,7 @@ jobs:
       - name: Upload a Build Artifact
         if: always() && steps.prepare-artifact.outcome == 'success'
         continue-on-error: true
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: pull-request-payload
           path: pull_request_payload.json

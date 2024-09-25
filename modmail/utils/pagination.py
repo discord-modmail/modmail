@@ -3,6 +3,7 @@ Paginator.
 
 Originally adapated from: https://github.com/khk4912/EZPaginator/tree/84b5213741a78de266677b805c6f694ad94fedd6
 """
+
 from __future__ import annotations
 
 import logging

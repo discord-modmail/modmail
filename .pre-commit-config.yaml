@@ -11,20 +11,18 @@ repos:
         files: '(app\.json|template\.env|modmail\/(config\.py|default_config(\.toml|\.yaml)))$'
         require_serial: true
         additional_dependencies:
-          # so apparently these are needed, but the versions don't have to be pinned since it uses the local env
-          # go figure.
           - atoml
           - attrs
           - click
           - coloredlogs
           - desert
-          - discord.py
+          - https://github.com/Rapptz/discord.py/archive/45d498c1b76deaf3b394d17ccf56112fa691d160.zip
           - marshmallow
           - python-dotenv
           - pyyaml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.6.0
     hooks:
       - id: check-case-conflict
       - id: check-added-large-files
@@ -45,39 +43,45 @@ repos:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
 
-  - repo: local
-    hooks:
-    - id: generate_requirements.txt
-      name: Generate requirements.txt
-      entry: python -m scripts.export_requirements --docs
-      files: '(pyproject.toml|poetry.lock|requirements.txt|scripts\/export\_requirements\.py|docs\/.requirements.txt)$'
-      language: python
-      pass_filenames: false
-      require_serial: true
-      additional_dependencies:
-        - tomli~=1.2.1
-
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: python-check-blanket-noqa
       - id: python-check-blanket-type-ignore
       - id: python-use-type-annotations
 
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.8.0
+    hooks:
+    - id: poetry-check
+      name: Check poetry.lock is up to date
+
+  - repo: https://github.com/python-poetry/poetry-plugin-export
+    rev: 1.8.0
+    hooks:
+    - id: poetry-export
+      name: Generate requirements.txt
+      args: ['-qqq', -f, requirements.txt, --without-hashes, --output, requirements.txt]
+      files: '(pyproject.toml|poetry.lock|requirements.txt)$'
+    - id: poetry-export
+      name: Generate docs requirements.txt
+      args: ['-qqq', --only, docs, -f, constraints.txt, --without-hashes, --output, docs/.requirements.txt]
+      files: '(pyproject.toml|poetry.lock|docs\/.requirements.txt)$'
+
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.13.2
     hooks:
       - id: isort
 
   - repo: https://github.com/asottile/blacken-docs
-    rev: v1.12.1
+    rev: 1.18.0
     hooks:
       - id: blacken-docs
         additional_dependencies:
           - black
 
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 24.8.0
     hooks:
       - id: black
         language_version: python3

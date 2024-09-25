@@ -7,6 +7,7 @@ Plugins should be like normal discord cogs, but should subclass `PluginCog` from
 ```py
 from modmail.plugin_helpers import PluginCog
 
+
 class MyPlugin(PluginCog):
     pass
 ```
