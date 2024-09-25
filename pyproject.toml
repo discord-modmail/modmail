@@ -24,7 +24,7 @@ atoml = "^1.0.3"
 attrs = "^21.2.0"
 desert = "^2020.11.18"
 marshmallow = "~=3.13.0"
-PyYAML = { version = "^5.4.1", optional = true }
+PyYAML = { version = "^6.0.2", optional = true }
 typing-extensions = "^4.0.1"
 marshmallow-enum = "^1.5.1"
 
@@ -34,7 +34,7 @@ yaml = ["pyyaml"]
 
 [tool.poetry.dev-dependencies]
 # always needed
-pre-commit = "~=2.1"
+pre-commit = "^3.5.0"
 taskipy = "^1.6.0"
 # linting
 black = "^24.8.0"
