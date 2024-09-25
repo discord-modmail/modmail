@@ -25,7 +25,7 @@ attrs = "^21.2.0"
 desert = "^2020.11.18"
 marshmallow = "~=3.13.0"
 PyYAML = { version = "^5.4.1", optional = true }
-typing-extensions = "^3.10.0.2"
+typing-extensions = "^4.0.1"
 marshmallow-enum = "^1.5.1"
 
 
@@ -37,7 +37,7 @@ yaml = ["pyyaml"]
 pre-commit = "~=2.1"
 taskipy = "^1.6.0"
 # linting
-black = "^22.3.0"
+black = "^24.8.0"
 flake8 = "~=3.8"
 flake8-annotations = "~=2.3"
 flake8-bugbear = "~=20.1"
@@ -46,7 +46,7 @@ flake8-isort = "^4.0.0"
 flake8-string-format = "~=0.3"
 flake8-tidy-imports = "~=4.1"
 flake8-todo = "~=0.7"
-isort = "^5.9.2"
+isort = "^5.13.2"
 pep8-naming = "~=0.11"
 # testing
 aioresponses = "^0.7.2"
@@ -58,12 +58,13 @@ pytest-cov = "^3.0.0"
 pytest-dependency = "^0.5.1"
 pytest-sugar = "^0.9.4"
 pytest-xdist = { version = "^2.3.0", extras = ["psutil"] }
-# Documentation
+# Scripts
+click = "^8.0.3"
+
+[tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.1.2,<2.0.0"
 mkdocs-material = ">=7.1.9,<8.0.0"
 mkdocs-markdownextradata-plugin = ">=0.1.7,<0.2.0"
-# Scripts
-click = "^8.0.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
