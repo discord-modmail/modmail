@@ -168,7 +168,7 @@ jobs:
       # coverage report to github.
       - name: Run tests and generate coverage report
         id: run_tests
-        run: poetry run pytest tests -n auto --dist loadfile --cov --disable-warnings -q
+        run: python -m poetry run pytest tests -n auto --dist loadfile --cov --disable-warnings -q
 
       # This step will publish the coverage reports to coveralls.io and
       # print a "job" link in the output of the GitHub Action
@@ -183,7 +183,7 @@ jobs:
           COVERALLS_FLAG_NAME: coverage-${{ runner.os }}-python-${{ env.PYTHON_VERSION }}
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
-        run: poetry run coveralls
+        run: python -m poetry run coveralls
 
   coveralls-finish:
     name: Indicate completion to coveralls.io
