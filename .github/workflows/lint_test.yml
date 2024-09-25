@@ -46,12 +46,12 @@ jobs:
 
       # Checks out the repository in the current folder.
       - name: Checks out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Set up the right version of Python
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         id: python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -62,7 +62,7 @@ jobs:
       #
       # Only when the context is exactly the same, we will restore the cache.
       - name: Python Dependency Caching
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: python_cache
         with:
           path: ${{ env.PYTHONUSERBASE }}
@@ -81,7 +81,7 @@ jobs:
       # do create a new environment when our pre-commit setup changes,
       # we create a cache key based on relevant factors.
       - name: Pre-commit Environment Caching
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ env.PRE_COMMIT_HOME }}
           key: "precommit-0-${{ runner.os }}-${{ env.PRE_COMMIT_HOME }}-\
@@ -132,12 +132,12 @@ jobs:
 
       # Checks out the repository in the current folder.
       - name: Checks out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Set up the right version of Python
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         id: python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -148,7 +148,7 @@ jobs:
       #
       # Only when the context is exactly the same, we will restore the cache.
       - name: Python Dependency Caching
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: python_cache
         with:
           path: ${{ env.PYTHONUSERBASE }}
