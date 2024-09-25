@@ -202,9 +202,9 @@ class ConfigMetadata:
     # as a solution, I'm implementing a field which can provide a rich converter object,
     # in the style that discord.py uses. This will be called like discord py calls.
     discord_converter: discord.ext.commands.converter.Converter = attr.ib(default=None)
-    discord_converter_attribute: typing.Optional[
-        types.FunctionType
-    ] = None  # if we want an attribute off of the converted value
+    discord_converter_attribute: typing.Optional[types.FunctionType] = (
+        None  # if we want an attribute off of the converted value
+    )
 
     # hidden values do not show up in the bot configuration menu
     hidden: bool = False

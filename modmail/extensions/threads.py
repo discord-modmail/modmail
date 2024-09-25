@@ -136,9 +136,9 @@ class TicketsCog(ModmailCog, name="Threads"):
         super().__init__(bot)
         # validation for this configuration variable is be defered to fully implementing
         # a new configuration system
-        self.relay_channel: Union[
-            discord.TextChannel, discord.PartialMessageable
-        ] = self.bot.get_partial_messageable(self.bot.config.user.threads.relay_channel_id)
+        self.relay_channel: Union[discord.TextChannel, discord.PartialMessageable] = (
+            self.bot.get_partial_messageable(self.bot.config.user.threads.relay_channel_id)
+        )
 
         self.dms_to_users: Dict[int, int] = dict()  # key: dm_channel.id, value: user.id
 
