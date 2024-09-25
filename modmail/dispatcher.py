@@ -4,7 +4,7 @@ import inspect
 import logging
 from typing import Callable, Coroutine, Dict, List, Optional, Tuple, Union
 
-from modmail import ModmailLogger
+from modmail.log import ModmailLogger
 from modmail.utils.general import module_function_disidenticality
 
 

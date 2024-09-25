@@ -3,10 +3,8 @@ from typing import List, Tuple, Union
 import discord
 from discord.embeds import EmptyEmbed
 
-from modmail.config import CONFIG
+from modmail.config import config
 
-
-DEFAULT_COLOR = int(CONFIG.colors.embed_color.as_hex().lstrip("#"), 16)
 
 original_init = discord.Embed.__init__
 
@@ -35,7 +33,7 @@ def __init__(self: discord.Embed, description: str = None, **kwargs):  # noqa: N
     if ("description" in kwargs or description is not None) and "content" in kwargs:
         raise TypeError("Description and content are aliases for the same field, but both were provided.")
 
-    colour = kwargs.pop("color", kwargs.pop("colour", DEFAULT_COLOR))
+    colour = kwargs.pop("color", kwargs.pop("colour", config().user.colours.base_embed_color))
     if colour is None:
         colour = 0x2F3136
 
